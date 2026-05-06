@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AskMark — AI-Native Production OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Space+Grotesk:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0A0908;--s1:#111110;--s2:#1A1917;--s3:#222120;
+  --cream:#F2EDE3;--cream2:#C8C2B8;--muted:#6B6459;
+  --red:#C8330A;--border:rgba(255,255,255,0.07);
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--cream);font-family:'Space Grotesk',sans-serif;overflow-x:hidden;cursor:none;}
+
+/* CURSOR */
+#cursor{position:fixed;width:8px;height:8px;background:var(--red);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width 0.2s,height 0.2s;}
+#cursor-ring{position:fixed;width:32px;height:32px;border:1px solid rgba(200,51,10,0.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all 0.1s;}
+
+/* GRAIN */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:0.03;pointer-events:none;z-index:1000;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid transparent;transition:all 0.3s;}
+nav.scrolled{background:rgba(10,9,8,0.95);border-bottom-color:var(--border);backdrop-filter:blur(10px);}
+.nav-logo{font-family:'Playfair Display',serif;font-size:22px;color:var(--cream);text-decoration:none;}
+.nav-logo span{color:var(--red);font-style:italic;}
+.nav-links{display:flex;align-items:center;gap:32px;}
+.nav-links a{color:var(--muted);font-size:13px;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.2s;}
+.nav-links a:hover{color:var(--cream);}
+.nav-cta{background:var(--red);color:white !important;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:10px 20px;text-decoration:none;transition:background 0.2s;}
+.nav-cta:hover{background:#a82808;color:white !important;}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;padding:120px 40px 80px;position:relative;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(4,1fr);opacity:0.04;z-index:0;}
+.poster{background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:11px;color:var(--muted);letter-spacing:0.1em;}
+.hero-content{position:relative;z-index:1;max-width:900px;}
+.hero-eyebrow{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--red);font-family:'DM Mono',monospace;margin-bottom:20px;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(52px,8vw,96px);line-height:0.95;color:var(--cream);margin-bottom:24px;}
+.hero-title em{color:var(--red);font-style:italic;}
+.hero-subtitle{font-size:clamp(16px,2vw,20px);color:var(--cream2);line-height:1.6;max-width:600px;margin-bottom:16px;}
+.typewriter{font-size:clamp(14px,1.8vw,18px);color:var(--muted);font-family:'DM Mono',monospace;min-height:28px;margin-bottom:40px;}
+.typewriter span{color:var(--red);}
+.hero-ctas{display:flex;gap:16px;align-items:center;}
+.btn-primary{background:var(--red);color:white;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:14px 28px;text-decoration:none;transition:background 0.2s;display:inline-block;}
+.btn-primary:hover{background:#a82808;}
+.btn-secondary{color:var(--cream2);font-size:13px;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;display:flex;align-items:center;gap:8px;transition:color 0.2s;}
+.btn-secondary:hover{color:var(--cream);}
+.btn-secondary::after{content:'→';}
+
+/* MARQUEE */
+.marquee-wrap{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:14px 0;background:var(--s1);}
+.marquee-track{display:flex;gap:40px;animation:marquee 25s linear infinite;white-space:nowrap;}
+.marquee-item{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:40px;}
+.marquee-item::after{content:'·';color:var(--red);}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* SECTIONS */
+section{padding:100px 40px;}
+.section-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--red);font-family:'DM Mono',monospace;margin-bottom:16px;}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(36px,5vw,64px);color:var(--cream);line-height:1.05;margin-bottom:20px;}
+.section-body{font-size:16px;color:var(--cream2);line-height:1.7;max-width:560px;}
+
+/* WISHES */
+.wishes{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.wishes-grid{display:flex;flex-direction:column;gap:0;margin-top:48px;}
+.wish{padding:24px 0;border-bottom:1px solid var(--border);display:flex;gap:20px;align-items:flex-start;transition:all 0.2s;}
+.wish:last-child{border-bottom:none;}
+.wish-label{font-size:9px;font-family:'DM Mono',monospace;color:var(--red);letter-spacing:0.1em;text-transform:uppercase;padding-top:6px;width:80px;flex-shrink:0;}
+.wish-text{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(20px,3vw,32px);color:var(--cream);line-height:1.3;}
+
+/* HOW IT WORKS */
+.how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:60px;}
+.how-step{background:var(--s1);border:1px solid var(--border);padding:32px;position:relative;overflow:hidden;}
+.how-step::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);}
+.step-num{font-family:'Playfair Display',serif;font-size:64px;color:rgba(200,51,10,0.1);line-height:1;margin-bottom:16px;}
+.step-title{font-size:16px;font-weight:600;color:var(--cream);margin-bottom:10px;}
+.step-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+
+/* INTEGRATIONS */
+.integrations-hub{display:flex;flex-direction:column;align-items:center;margin-top:60px;gap:16px;}
+.hub-center{width:80px;height:80px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-size:28px;color:white;}
+.integration-cards{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;}
+.int-card{background:var(--s1);border:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--cream2);transition:border-color 0.2s;}
+.int-card:hover{border-color:rgba(200,51,10,0.4);}
+.int-icon{font-size:18px;}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:60px;}
+.feature-card{background:var(--s1);border:1px solid var(--border);padding:24px;transition:all 0.2s;}
+.feature-card:hover{border-color:rgba(200,51,10,0.4);transform:translateY(-2px);}
+.feature-icon{font-size:24px;margin-bottom:14px;}
+.feature-title{font-size:14px;font-weight:600;color:var(--cream);margin-bottom:8px;}
+.feature-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* CTA */
+.final-cta{text-align:center;background:var(--s1);border-top:1px solid var(--border);}
+.cta-watermark{font-family:'Playfair Display',serif;font-size:clamp(80px,15vw,200px);color:rgba(200,51,10,0.06);line-height:1;margin-bottom:-40px;letter-spacing:-0.02em;}
+.cta-title{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,64px);color:var(--cream);margin-bottom:20px;}
+.cta-sub{font-size:15px;color:var(--muted);margin-bottom:40px;}
+
+/* FOOTER */
+footer{padding:40px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.footer-logo{font-family:'Playfair Display',serif;font-size:18px;color:var(--cream);}
+.footer-logo span{color:var(--red);font-style:italic;}
+.footer-copy{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+.footer-email a{font-size:12px;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.footer-email a:hover{color:var(--red);}
+
+@media(max-width:768px){
+  nav{padding:16px 20px;}
+  .nav-links a:not(.nav-cta){display:none;}
+  .nav-cta{padding:8px 14px;font-size:11px;}
+  .hero{padding:90px 20px 60px;min-height:auto;}
+  .hero-title{font-size:clamp(40px,12vw,72px);}
+  .hero-ctas{flex-direction:column;align-items:flex-start;gap:14px;}
+  .btn-primary{width:100%;text-align:center;padding:16px 24px!important;font-size:14px!important;}
+  .btn-secondary{font-size:13px;}
+  .marquee-item{font-size:10px;}
+  section{padding:60px 20px;}
+  .how-steps{grid-template-columns:1fr;gap:16px;}
+  .features-grid{grid-template-columns:1fr 1fr;gap:12px;}
+  .feature-card{padding:18px;}
+  .integrations-hub{gap:12px;}
+  .integration-cards{gap:8px;}
+  .int-card{padding:10px 14px;font-size:12px;}
+  .wishes-grid{gap:0;}
+  .wish-text{font-size:clamp(16px,5vw,26px);}
+  .final-cta{padding:60px 20px;}
+  .cta-watermark{font-size:clamp(60px,18vw,140px);margin-bottom:-20px;}
+  footer{flex-direction:column;gap:12px;text-align:center;padding:28px 20px;}
+  .section-title{font-size:clamp(28px,8vw,52px);}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<nav id="nav">
+  <a href="/" class="nav-logo">M<span>.</span>ARK</a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="mailto:hello@askmark.co">Contact</a>
+    <a href="budget.html" class="nav-cta">Try Budget Tool</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg" id="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">AI-Native Production OS · Entertainment Industry</div>
+    <h1 class="hero-title">Ask <em>Mark.</em></h1>
+    <p class="hero-subtitle">From call sheets to contracts, crew communication to budget tracking — you focus on what's on set. Leave the backend to Mark.</p>
+    <div class="typewriter" id="typewriter">to <span id="tw-text"></span><span id="tw-cursor">|</span></div>
+    <div class="hero-ctas">
+      <a href="budget.html" class="btn-primary" style="font-size:15px;padding:18px 36px;">Generate a Budget Free →</a>
+      <a href="#how" class="btn-secondary">See how it works</a>
+    </div>
+    <div style="margin-top:16px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;">No account needed · Takes 60 seconds</div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track" id="marquee">
+    <div class="marquee-item">Ask Mark</div>
+    <div class="marquee-item">Call Sheets</div>
+    <div class="marquee-item">Budget Tracking</div>
+    <div class="marquee-item">Crew Contracts</div>
+    <div class="marquee-item">Location Permits</div>
+    <div class="marquee-item">Transportation</div>
+    <div class="marquee-item">Catering Logistics</div>
+    <div class="marquee-item">Cast NDAs</div>
+    <div class="marquee-item">Vendor Comms</div>
+    <div class="marquee-item">WhatsApp Sends</div>
+    <div class="marquee-item">Daily To-Do</div>
+    <div class="marquee-item">Script to Budget</div>
+    <div class="marquee-item">Ask Mark</div>
+    <div class="marquee-item">Call Sheets</div>
+    <div class="marquee-item">Budget Tracking</div>
+    <div class="marquee-item">Crew Contracts</div>
+    <div class="marquee-item">Location Permits</div>
+    <div class="marquee-item">Transportation</div>
+    <div class="marquee-item">Catering Logistics</div>
+    <div class="marquee-item">Cast NDAs</div>
+    <div class="marquee-item">Vendor Comms</div>
+    <div class="marquee-item">WhatsApp Sends</div>
+    <div class="marquee-item">Daily To-Do</div>
+    <div class="marquee-item">Script to Budget</div>
+  </div>
+</div>
+
+<!-- WISHES -->
+<section class="wishes">
+  <div class="section-label">02 · Your wish is Mark's command</div>
+  <div class="section-title">What will you<br/>ask Mark today?</div>
+  <div class="wishes-grid">
+    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"Send today's call sheet to all 40 crew on WhatsApp."</div></div>
+    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"What's left in the camera department budget?"</div></div>
+    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"Read this script and give me a full production budget."</div></div>
+    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"Send NDAs to the entire cast before Friday."</div></div>
+    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"What are my priorities for today's shoot?"</div></div>
+    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"Get location permits sorted for all shoot days."</div></div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-label">03 · How it works</div>
+  <div class="section-title">Three steps.<br/>Entire production covered.</div>
+  <div class="how-steps">
+    <div class="how-step">
+      <div class="step-num">01</div>
+      <div class="step-title">Input Your Project Details</div>
+      <div class="step-desc">One-time setup. Mark stores everything structured — script, crew, locations, budget, dates. You never repeat yourself.</div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">02</div>
+      <div class="step-title">Integrate & Sync</div>
+      <div class="step-desc">Connect Gmail, WhatsApp, Google Calendar and Drive. Mark becomes the hub for all your production communication and files.</div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">03</div>
+      <div class="step-title">Just Ask Mark</div>
+      <div class="step-desc">In plain English or Hindi. Mark builds call sheets, generates budgets, sends messages, tracks contracts — whatever the production needs.</div>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATIONS -->
+<section style="background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="section-label">04 · Integrations</div>
+  <div class="section-title">Everything<br/>connected through Mark.</div>
+  <div class="integrations-hub">
+    <div class="integration-cards">
+      <div class="int-card"><span class="int-icon">📧</span>Gmail</div>
+      <div class="int-card"><span class="int-icon">💬</span>WhatsApp</div>
+      <div class="int-card"><span class="int-icon">📅</span>Google Calendar</div>
+      <div class="int-card"><span class="int-icon">📁</span>Google Drive</div>
+      <div class="int-card"><span class="int-icon">✈️</span>Telegram</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="width:1px;height:24px;background:var(--border);"></div>
+      <div class="hub-center">M</div>
+      <div style="width:1px;height:24px;background:var(--border);"></div>
+    </div>
+    <div class="integration-cards">
+      <div class="int-card"><span class="int-icon">📋</span>Call Sheets Built & Sent</div>
+      <div class="int-card"><span class="int-icon">📄</span>Contracts Issued & Tracked</div>
+      <div class="int-card"><span class="int-icon">💷</span>Budget Monitored Live</div>
+      <div class="int-card"><span class="int-icon">🚘</span>Transport Coordinated</div>
+      <div class="int-card"><span class="int-icon">✅</span>Daily To-Do Generated</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">05 · What Mark handles</div>
+  <div class="section-title">Everything a production<br/>needs. One place.</div>
+  <div class="features-grid">
+    <a href="budget.html" class="feature-card" style="text-decoration:none;display:block;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><span class="feature-icon">🎬</span><span style="font-size:8px;background:rgba(46,125,50,0.2);color:#4CAF50;padding:3px 8px;font-family:'DM Mono',monospace;letter-spacing:0.08em;">● LIVE</span></div><div class="feature-title">Script → Budget</div><div class="feature-desc">Upload a script. Mark reads it, asks smart questions, outputs a full itemised budget in 30 seconds.</div></a>
+    <div class="feature-card"><div class="feature-icon">📋</div><div class="feature-title">Call Sheet Builder</div><div class="feature-desc">Build, approve and send branded call sheets to your entire crew via email and WhatsApp.</div></div>
+    <div class="feature-card"><div class="feature-icon">👥</div><div class="feature-title">Crew Directory</div><div class="feature-desc">Every crew member, role, rate, contact and contract — searchable, filterable, always up to date.</div></div>
+    <div class="feature-card"><div class="feature-icon">💷</div><div class="feature-title">Budget Tracker</div><div class="feature-desc">Estimated vs actual. Department breakdowns. Colour-coded alerts when you're running over.</div></div>
+    <div class="feature-card"><div class="feature-icon">📍</div><div class="feature-title">Locations</div><div class="feature-desc">Location details, permits, recce photos, maps and cut-off times — all in one place.</div></div>
+    <div class="feature-card"><div class="feature-icon">📄</div><div class="feature-title">Contracts & NDAs</div><div class="feature-desc">Generate, send and track contracts. Mark knows who has signed and who hasn't.</div></div>
+    <div class="feature-card"><div class="feature-icon">🎙️</div><div class="feature-title">Voice Notes</div><div class="feature-desc">Record a voice note on set. Mark transcribes it and turns it into an action.</div></div>
+    <div class="feature-card"><div class="feature-icon">🤖</div><div class="feature-title">Ask Mark AI</div><div class="feature-desc">Ask anything in plain English or Hindi. Mark knows your entire production inside out.</div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="final-cta">
+  <div class="cta-watermark">MARK</div>
+  <div class="section-label" style="justify-content:center;display:flex;">06 · Get started</div>
+  <div class="cta-title">Set up your production<br/><em style="color:var(--red);">now.</em></div>
+  <div class="cta-sub">Indian Cinema · Hollywood · UK & Europe</div>
+  <a href="budget.html" class="btn-primary">Try AskMark Free →</a>
+</section>
+
+<!-- CONTACT -->
+<section style="padding:60px 40px;text-align:center;background:var(--s1);border-top:1px solid var(--border);">
+  <div class="section-label" style="display:flex;justify-content:center;">Interested?</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,48px);color:var(--cream);margin-bottom:16px;">Speak to <em style="color:var(--red);">Mark.</em></h2>
+  <a href="mailto:hello@askmark.co" style="font-size:16px;color:var(--red);text-decoration:none;font-family:'DM Mono',monospace;letter-spacing:0.06em;">hello@askmark.co</a>
+</section>
+
+<footer>
+  <div class="footer-logo">M<span>.</span>ARK</div>
+  <div class="footer-copy">© 2025 Mark · Production OS · Built by Agemo</div>
+  <div class="footer-email"><a href="mailto:hello@askmark.co">hello@askmark.co</a></div>
+</footer>
+
+<script>
+// CURSOR
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+  setTimeout(() => { ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px'; }, 80);
+});
+
+// NAV SCROLL
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// HERO BACKGROUND POSTERS
+const titles = ['SHOLAY','GODFATHER','DDLJ','SCARFACE','KKHH','MUGHAL-E-AZAM','LAGAAN','ZANJEER','DEEWAR','BAAZIGAR','SILSILA','SHOLAY'];
+const bg = document.getElementById('hero-bg');
+titles.forEach(t => {
+  const d = document.createElement('div');
+  d.className = 'poster';
+  d.textContent = t;
+  bg.appendChild(d);
+});
+
+// TYPEWRITER
+const phrases = [
+  'create call sheets and send to all crew.',
+  'generate a budget from your script.',
+  'schedule shoot days.',
+  'track budgets live.',
+  'streamline crew communication.',
+  'create daily to-do lists.',
+  'do anything.'
+];
+let pi = 0, ci = 0, deleting = false;
+const twText = document.getElementById('tw-text');
+const twCursor = document.getElementById('tw-cursor');
+setInterval(() => { twCursor.style.opacity = twCursor.style.opacity === '0' ? '1' : '0'; }, 500);
+function type() {
+  const phrase = phrases[pi];
+  if(!deleting) {
+    twText.textContent = phrase.substring(0, ci + 1);
+    ci++;
+    if(ci === phrase.length) { deleting = true; setTimeout(type, 2000); return; }
+  } else {
+    twText.textContent = phrase.substring(0, ci - 1);
+    ci--;
+    if(ci === 0) { deleting = false; pi = (pi + 1) % phrases.length; }
+  }
+  setTimeout(type, deleting ? 18 : 35);
+}
+type();
+
+// SCROLL ANIMATIONS
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.style.opacity = '1'; });
+}, { threshold: 0.1 });
+document.querySelectorAll('.how-step, .feature-card, .wish').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transition = 'opacity 0.6s ease';
+  observer.observe(el);
+});
+</script>
+</body>
+</html>

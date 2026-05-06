@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+redis
+pydantic
+python-dotenv
+httpx
+python-multipart
+screenplay-pdf-to-json

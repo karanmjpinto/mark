@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AskMark — Script to Budget</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0A0908;--s1:#111110;--s2:#1A1917;--s3:#222120;
+  --cream:#F2EDE3;--cream2:#C8C2B8;--muted:#6B6459;--red:#C8330A;
+  --red-dim:rgba(200,51,10,0.12);--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+}
+body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;min-height:100vh;}
+#app{max-width:900px;margin:0 auto;padding:40px 24px;}
+
+/* HEADER */
+.back-btn{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.06em;text-decoration:none;margin-bottom:24px;cursor:pointer;transition:color 0.15s;background:none;border:none;}
+.back-btn:hover{color:var(--cream);}
+.eyebrow{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--red);font-family:'DM Mono',monospace;margin-bottom:6px;}
+.pg-title{font-family:'Playfair Display',serif;font-size:32px;color:var(--cream);line-height:1.1;margin-bottom:6px;}
+.pg-sub{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:28px;}
+
+/* STEPS */
+.step{display:none;}
+.step.active{display:block;}
+
+/* STEP INDICATOR */
+.step-indicator{display:flex;align-items:center;gap:0;margin-bottom:32px;}
+.si-item{display:flex;align-items:center;gap:8px;font-size:11px;font-family:'DM Mono',monospace;}
+.si-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.si-item.active .si-num{background:var(--red);color:white;}
+.si-item.done .si-num{background:#2E7D32;color:white;}
+.si-item.inactive .si-num{background:var(--s3);color:var(--muted);}
+.si-item.active .si-label{color:var(--cream);}
+.si-item.done .si-label{color:var(--cream2);}
+.si-item.inactive .si-label{color:var(--muted);}
+.si-line{flex:1;height:1px;background:var(--border);margin:0 12px;min-width:16px;}
+
+/* REGION CARDS */
+.region-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;}
+.region-card{background:var(--s1);border:2px solid var(--border);padding:24px 20px;text-align:center;cursor:pointer;transition:all 0.2s;}
+.region-card:hover{border-color:rgba(200,51,10,0.5);background:rgba(200,51,10,0.04);}
+.region-card.sel{border-color:var(--red);background:var(--red-dim);}
+.region-icon{font-size:32px;margin-bottom:10px;}
+.region-name{font-size:14px;font-weight:700;color:var(--cream);margin-bottom:5px;}
+.region-sub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.5;}
+.region-badge{display:inline-block;margin-top:8px;font-size:9px;font-family:'DM Mono',monospace;padding:3px 8px;background:var(--s3);color:var(--cream2);letter-spacing:0.06em;}
+.region-card.sel .region-badge{background:rgba(200,51,10,0.3);color:#F2A088;}
+
+/* PANELS */
+.panel{background:var(--s1);border:1px solid var(--border);padding:20px;margin-bottom:16px;}
+.panel-title{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;}
+textarea{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream2);font-family:'DM Mono',monospace;font-size:12px;padding:12px;resize:vertical;min-height:140px;outline:none;line-height:1.7;}
+textarea:focus{border-color:rgba(200,51,10,0.4);}
+textarea::placeholder{color:var(--muted);}
+.upload-zone{border:2px dashed rgba(200,51,10,0.35);background:rgba(200,51,10,0.04);padding:48px 28px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all 0.2s;border-radius:2px;}
+.upload-zone:hover{border-color:var(--red);background:rgba(200,51,10,0.08);}
+input[type=file]{display:none;}
+.btn-red{background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:14px 28px;cursor:pointer;transition:background 0.15s;}
+.btn-red:hover{background:#a82808;}
+.btn-ghost{background:var(--s2);border:1px solid var(--border2);color:var(--cream2);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:11px 18px;cursor:pointer;transition:all 0.15s;}
+.btn-ghost:hover{border-color:var(--red);color:var(--cream);}
+.demo-btns{display:flex;flex-wrap:wrap;gap:8px;}
+.or-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--muted);font-size:10px;font-family:'DM Mono',monospace;letter-spacing:0.1em;}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.input-section{transition:opacity 0.2s;}
+.input-section.dimmed{opacity:0.25;pointer-events:none;cursor:default;}
+.btn-red.disabled{opacity:0.35;pointer-events:none;cursor:default;}
+
+/* STEP 2 - QUESTIONS */
+.mark-intro{background:var(--red-dim);border:1px solid rgba(200,51,10,0.2);padding:16px;margin-bottom:20px;display:flex;gap:12px;}
+.mark-av{width:36px;height:36px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-size:16px;color:white;flex-shrink:0;}
+.intro-text{font-size:13px;color:var(--cream2);line-height:1.6;}
+.q-block{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.q-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.q-label{font-size:13px;font-weight:600;color:var(--cream);margin-bottom:10px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+.q-num{width:22px;height:22px;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;border-radius:50%;margin-top:1px;}
+.q-multi-hint{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;padding:2px 6px;background:var(--s3);letter-spacing:0.05em;margin-top:2px;}
+.q-opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.q-opt{padding:7px 14px;border:1px solid var(--border2);color:var(--cream2);font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.15s;background:var(--s2);letter-spacing:0.04em;user-select:none;}
+.q-opt:hover{border-color:rgba(200,51,10,0.5);color:var(--cream);}
+.q-opt.sel{border-color:var(--red);background:var(--red-dim);color:var(--cream);}
+.q-opt.q-other-opt{border-style:dashed;}
+.q-other-input{margin-top:10px;display:none;}
+.q-other-input input{width:100%;background:var(--s2);border:1px solid rgba(200,51,10,0.4);color:var(--cream);font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;outline:none;letter-spacing:0.03em;}
+.q-other-input input::placeholder{color:var(--muted);}
+
+/* STEP 3 - GENERATING */
+.generating{text-align:center;padding:80px 24px;}
+.gen-av{width:64px;height:64px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-size:26px;color:white;margin:0 auto 20px;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(200,51,10,0.4)}50%{box-shadow:0 0 0 20px rgba(200,51,10,0)}}
+.gen-title{font-family:'Playfair Display',serif;font-size:24px;color:var(--cream);margin-bottom:8px;}
+.gen-steps{max-width:360px;margin:24px auto 0;text-align:left;}
+.gs{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);}
+.gs:last-child{border-bottom:none;}
+.gs.active{color:var(--cream);}
+.gs.done{color:var(--cream2);}
+.gs-dot{width:8px;height:8px;border-radius:50%;background:var(--s3);flex-shrink:0;}
+.gs.active .gs-dot{background:var(--red);animation:blink 1s ease-in-out infinite;}
+.gs.done .gs-dot{background:#2E7D32;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* STEP 4 - BUDGET OUTPUT */
+.budget-topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.budget-proj{font-family:'Playfair Display',serif;font-size:24px;color:var(--cream);line-height:1.1;}
+.budget-meta-text{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:4px;}
+.action-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-sm{padding:7px 14px;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;cursor:pointer;border:none;font-family:'Syne',sans-serif;transition:all 0.15s;}
+.btn-export{background:var(--s3);color:var(--cream2);}
+.btn-export:hover{background:var(--s2);color:var(--cream);}
+.btn-lock{background:var(--red);color:white;}
+.btn-lock:hover{background:#a82808;}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.sum-card{background:var(--s1);border:1px solid var(--border);padding:14px;position:relative;}
+.sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);}
+.sum-label{font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:7px;}
+.sum-val{font-family:'Playfair Display',serif;font-size:22px;color:var(--cream);}
+.sum-sub{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px;}
+.conf-banner{padding:11px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;font-size:11px;background:rgba(184,134,11,0.1);border:1px solid rgba(184,134,11,0.3);color:#D4A017;line-height:1.5;}
+.flags-panel{background:rgba(200,51,10,0.06);border:1px solid rgba(200,51,10,0.2);padding:14px;margin-bottom:16px;}
+.flags-title{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);font-family:'DM Mono',monospace;margin-bottom:10px;}
+.flag-item{font-size:11px;color:var(--cream2);padding:5px 0;display:flex;gap:8px;border-bottom:1px solid var(--border);line-height:1.4;}
+.flag-item:last-child{border-bottom:none;}
+.flag-item::before{content:'⚠';color:var(--red);flex-shrink:0;}
+.section-hdr{display:flex;align-items:center;padding:9px 12px;background:var(--s2);border:1px solid var(--border);cursor:pointer;user-select:none;margin-bottom:1px;transition:background 0.15s;}
+.section-hdr:hover{background:var(--s3);}
+.sec-code{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.08em;width:50px;flex-shrink:0;}
+.sec-name{font-size:11px;font-weight:600;color:var(--cream);flex:1;}
+.sec-type-badge{font-size:8px;font-family:'DM Mono',monospace;padding:2px 6px;letter-spacing:0.05em;text-transform:uppercase;margin-right:8px;}
+.atl{background:rgba(59,106,253,0.15);color:#7B9EFF;}
+.btl{background:rgba(52,168,83,0.15);color:#6BCF8A;}
+.post{background:rgba(156,94,255,0.15);color:#BFA3FF;}
+.sec-total{font-family:'DM Mono',monospace;font-size:11px;color:var(--cream2);margin-right:8px;}
+.sec-arr{font-size:10px;color:var(--muted);transition:transform 0.2s;flex-shrink:0;}
+.sec-arr.open{transform:rotate(180deg);}
+.sec-body{display:none;margin-bottom:4px;}
+.sec-body.open{display:block;}
+.tbl-hdr{display:grid;grid-template-columns:24px 1fr 90px 80px 90px 30px;background:var(--s3);border:1px solid var(--border);border-top:none;}
+.th{font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:6px 8px;text-align:right;}
+.th:nth-child(2){text-align:left;}
+.th:first-child,.th:last-child{padding:6px 0;}
+.li-row{display:grid;grid-template-columns:24px 1fr 90px 80px 90px 30px;border-bottom:1px solid var(--border);align-items:center;}
+.li-row:last-child{border-bottom:none;}
+.li-row:hover{background:var(--s2);}
+.li-conf{display:flex;align-items:center;justify-content:center;padding:9px 0;}
+.cdot{width:7px;height:7px;border-radius:50%;}
+.cg{background:#2E7D32;}
+.ca{background:#B8860B;}
+.cr{background:#C8330A;}
+.li-desc{padding:9px 8px;font-size:10px;color:var(--cream2);line-height:1.3;}
+.li-desc-sub{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+.li-amt{font-family:'DM Mono',monospace;font-size:10px;color:var(--cream2);text-align:right;padding:9px 8px;}
+.li-gst{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-align:right;padding:9px 8px;}
+.li-tot{font-family:'DM Mono',monospace;font-size:10px;color:var(--cream);text-align:right;padding:9px 8px;font-weight:600;}
+.li-edit{display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:12px;padding:9px 0;}
+.li-edit:hover{color:var(--red);}
+.grand-row{background:var(--red);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.grand-label{font-size:11px;font-weight:700;color:white;letter-spacing:0.08em;text-transform:uppercase;}
+.grand-val{font-family:'Playfair Display',serif;font-size:26px;color:white;}
+.excl-note{background:var(--s1);border:1px solid var(--border);padding:12px 16px;margin-top:16px;font-size:10px;color:var(--muted);line-height:1.7;}
+.excl-note strong{color:var(--cream2);}
+.error-msg{background:rgba(200,51,10,0.1);border:1px solid rgba(200,51,10,0.3);padding:14px;color:#F2A088;font-size:12px;line-height:1.5;margin-bottom:16px;}
+
+@media(max-width:768px){
+  #app{padding:20px 16px;}
+  .back-btn{margin-bottom:16px;}
+  .step-indicator{gap:0;overflow-x:auto;}
+  .si-label{display:none;}
+  .si-line{min-width:12px;}
+  .region-grid{grid-template-columns:1fr 1fr;gap:10px;}
+  .region-card{padding:18px 12px;}
+  .region-icon{font-size:24px;}
+  .region-name{font-size:12px;}
+  .upload-zone{padding:32px 16px;}
+  .demo-btns{flex-direction:column;}
+  .demo-btns .btn-ghost{width:100%;text-align:left;}
+  .btn-red{width:100%;text-align:center;padding:16px;font-size:14px;}
+  .q-opts{gap:6px;}
+  .q-opt{padding:10px 12px;font-size:12px;}
+  .summary-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .sum-val{font-size:18px;}
+  .budget-topbar{flex-direction:column;gap:12px;}
+  .action-btns{width:100%;justify-content:flex-start;flex-wrap:wrap;}
+  .tbl-hdr,.li-row{grid-template-columns:20px 1fr 70px 60px;overflow:hidden;}
+  .tbl-hdr>div:nth-child(4),.li-row>div:nth-child(4),
+  .tbl-hdr>div:nth-child(6),.li-row>div:nth-child(6){display:none;}
+  .grand-row{flex-direction:column;gap:4px;text-align:center;}
+  .grand-val{font-size:22px;}
+  .conf-banner{font-size:10px;}
+  .generating{padding:40px 16px;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <button class="back-btn" onclick="window.location.href='index.html'">← Back to home</button>
+
+  <div style="text-align:center;padding:20px 0 36px;">
+    <div style="width:52px;height:52px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-size:24px;color:white;margin:0 auto 16px;">M</div>
+    <div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--cream);margin-bottom:8px;">Script to Budget</div>
+    <div style="font-size:14px;color:var(--cream2);max-width:480px;margin:0 auto;line-height:1.6;">Give Mark your script or a rough brief — he'll ask a few smart questions and generate a full itemised production budget in under a minute.</div>
+  </div>
+
+  <!-- STEP 0: MARKET SELECTOR -->
+  <div class="step active" id="step0">
+    <div class="step-indicator">
+      <div class="si-item active"><div class="si-num">1</div><div class="si-label">Your market</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">2</div><div class="si-label">Add script</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">3</div><div class="si-label">Questions</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Budget</div></div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-size:16px;font-weight:700;color:var(--cream);margin-bottom:6px;">Where is your production based?</div>
+      <div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;">This sets the currency and market rates for your budget.</div>
+    </div>
+
+    <div class="region-grid">
+      <div class="region-card" id="rc-india" onclick="selectRegion('india','₹','INR','Indian Rupee')">
+        <div class="region-name">Indian Cinema</div>
+        <div class="region-sub">Bollywood · South India</div>
+        <div class="region-badge">₹ INR</div>
+      </div>
+      <div class="region-card" id="rc-hollywood" onclick="selectRegion('hollywood','$','USD','US Dollar')">
+        <div class="region-name">Hollywood / North America</div>
+        <div class="region-badge">$ USD</div>
+      </div>
+      <div class="region-card" id="rc-uk" onclick="selectRegion('uk','£','GBP','British Pound')">
+        <div class="region-name">UK & Europe</div>
+        <div class="region-badge">£ GBP</div>
+      </div>
+      <div class="region-card" id="rc-other" onclick="selectRegion('other','','','')">
+        <div class="region-name">Other</div>
+        <div class="region-sub">Input custom industry and currency</div>
+        <div class="region-badge" id="rc-other-badge">Custom</div>
+      </div>
+    </div>
+
+    <!-- Custom inputs — shown only when Other is selected -->
+    <div id="custom-inputs" style="display:none;margin-top:16px;background:var(--s1);border:1px solid var(--border);padding:20px;display:none;">
+      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px;">Your Industry & Currency</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Industry / Market *</label>
+          <input id="custom-industry" type="text" placeholder="e.g. Korean Cinema" oninput="updateCustomRegion()" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Currency Symbol *</label>
+          <input id="custom-symbol" type="text" placeholder="e.g. €" maxlength="3" oninput="updateCustomRegion()" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Currency Code *</label>
+          <input id="custom-code" type="text" placeholder="e.g. EUR" maxlength="5" oninput="updateCustomRegion()" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;outline:none;text-transform:uppercase;"/>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;display:flex;justify-content:flex-end;">
+      <button class="btn-red" id="market-next-btn" onclick="proceedFromMarket()" style="opacity:0.4;pointer-events:none;">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: INPUT -->
+  <div class="step" id="step1">
+    <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">1</div><div class="si-label">Your market</div></div>
+      <div class="si-line"></div>
+      <div class="si-item active"><div class="si-num">2</div><div class="si-label">Add your script</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">3</div><div class="si-label">Answer questions</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Get your budget</div></div>
+    </div>
+
+    <div style="background:var(--s1);border:1px solid var(--border);padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+      <div id="market-display-icon" style="font-size:22px;"></div>
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:700;color:var(--cream);" id="market-display-name">Market selected</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;" id="market-display-currency">Currency set</div>
+      </div>
+      <button onclick="goTo('step0')" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;padding:5px 10px;cursor:pointer;letter-spacing:0.05em;">Change</button>
+    </div>
+
+    <!-- Upload zone — first -->
+    <div class="upload-zone input-section" id="upload-zone" onclick="document.getElementById('script-upload').click()">
+      <input type="file" id="script-upload" accept=".pdf" onchange="handleFile(this)"/>
+      <div id="upload-icon" style="font-size:32px;margin-bottom:10px;">📄</div>
+      <div id="upload-title" style="font-size:15px;font-weight:700;color:var(--cream);margin-bottom:4px;">Upload your script</div>
+      <div id="upload-sub" style="font-size:11px;color:var(--muted);">Click to browse · PDF only</div>
+    </div>
+
+    <div class="or-divider">or try a demo brief</div>
+
+    <!-- Demo briefs -->
+    <div class="panel input-section" id="demo-section" style="margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--cream2);margin-bottom:12px;font-weight:600;">No script yet? Start with a demo:</div>
+      <div class="demo-btns">
+        <button class="btn-ghost" onclick="loadDemo('tvc')">🎬 Nike TVC — 3 days</button>
+        <button class="btn-ghost" onclick="loadDemo('music')">🎵 Music Video — 2 days</button>
+        <button class="btn-ghost" onclick="loadDemo('ott')">📺 OTT Drama — 30 days</button>
+        <button class="btn-ghost" onclick="loadDemo('film')">🎥 Feature Film — 60 days</button>
+      </div>
+    </div>
+
+    <div class="or-divider">or paste a brief below</div>
+
+    <div class="panel input-section" id="paste-section">
+      <textarea id="script-text" oninput="setActiveInput('paste')" placeholder="Describe your shoot in plain English — type, locations, crew size, shoot days. Even one sentence works.&#10;&#10;e.g. 'Nike TVC. 3 shoot days. 2 athletes, 1 coach, 20 extras. No stunts. Handheld camera.'"></textarea>
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-red disabled" id="build-btn" onclick="startFlow()">Build My Budget →</button>
+      <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;">Mark asks a few questions first</span>
+    </div>
+
+    <input type="hidden" id="api-key" />
+    <div id="error-display" style="display:none;margin-top:16px;" class="error-msg"></div>
+  </div>
+
+  <!-- STEP 2: QUESTIONS -->
+  <div class="step" id="step2">
+    <div class="step-indicator" style="margin-bottom:32px;">
+      <div class="si-item done"><div class="si-num">1</div><div class="si-label">Market</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">2</div><div class="si-label">Script added</div></div>
+      <div class="si-line"></div>
+      <div class="si-item active"><div class="si-num">3</div><div class="si-label">Answer questions</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Get budget</div></div>
+    </div>
+    <div class="mark-intro">
+      <div class="mark-av">M</div>
+      <div class="intro-text" id="intro-text">Loading...</div>
+    </div>
+    <div class="panel">
+      <div id="questions-container"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn-red" onclick="submitAnswers()">Build My Budget →</button>
+      <button class="btn-ghost" onclick="goTo('step1')">← Back</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: GENERATING -->
+  <div class="step" id="step3">
+    <div class="step-indicator" style="margin-bottom:32px;">
+      <div class="si-item done"><div class="si-num">1</div><div class="si-label">Market</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">2</div><div class="si-label">Script added</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">3</div><div class="si-label">Questions answered</div></div>
+      <div class="si-line"></div>
+      <div class="si-item active"><div class="si-num">4</div><div class="si-label">Building budget</div></div>
+    </div>
+    <div class="generating">
+      <div class="gen-av">M</div>
+      <div class="gen-title">Mark is building your budget</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;" id="gen-subtitle">Applying market rate card · Budget codes 10000–14000</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0;">
+        <span id="build-badge" style="font-size:9px;font-family:'DM Mono',monospace;padding:3px 12px;background:rgba(200,51,10,0.15);color:var(--red);letter-spacing:0.06em;">Building<span id="build-dots"></span></span>
+        <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;">This usually takes 30–60 seconds</span>
+      </div>
+      <div class="gen-steps">
+        <div class="gs active" id="gs1"><div class="gs-dot"></div>Ingesting script and brief</div>
+        <div class="gs" id="gs2"><div class="gs-dot"></div>Extracting production elements</div>
+        <div class="gs" id="gs3"><div class="gs-dot"></div>Reasoning through cost interdependencies</div>
+        <div class="gs" id="gs4"><div class="gs-dot"></div>Applying location &amp; scale-adjusted rates</div>
+        <div class="gs" id="gs5"><div class="gs-dot"></div>Calculating taxes, contingency &amp; insurance</div>
+        <div class="gs" id="gs6"><div class="gs-dot"></div>Flagging amber &amp; red confidence items</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: BUDGET -->
+  <div class="step" id="step4">
+    <div class="budget-topbar">
+      <div>
+        <div class="budget-proj" id="b-title">Budget</div>
+        <div class="budget-meta-text" id="b-meta">AI Generated Draft</div>
+      </div>
+      <div class="action-btns">
+        <button class="btn-sm btn-export" onclick="exportExcel()">Export Excel</button>
+        <button class="btn-sm btn-export" onclick="window.print()">Export PDF</button>
+        <button class="btn-sm btn-lock" onclick="lockBudget()">Lock Budget</button>
+        <button class="btn-sm btn-ghost" onclick="startOver()" style="font-size:10px;">New Budget</button>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="sum-card"><div class="sum-label">Grand Total</div><div class="sum-val" id="s-grand">—</div><div class="sum-sub">incl. tax & contingency</div></div>
+      <div class="sum-card"><div class="sum-label">Below the Line</div><div class="sum-val" id="s-btl">—</div><div class="sum-sub">production costs</div></div>
+      <div class="sum-card"><div class="sum-label">Post Production</div><div class="sum-val" id="s-post">—</div><div class="sum-sub">edit, grade, sound</div></div>
+      <div class="sum-card"><div class="sum-label">Per Day Average</div><div class="sum-val" id="s-day">—</div><div class="sum-sub">shoot days only</div></div>
+    </div>
+
+    <div class="conf-banner">
+      ◐ <span id="conf-text">This is a draft budget generated by AI. Amber items are estimates — verify with your vendors. Red items need specific input from your team before locking.</span>
+    </div>
+
+    <div class="flags-panel" id="flags-panel">
+      <div class="flags-title">Items requiring your attention</div>
+      <div id="flags-list"></div>
+    </div>
+
+    <div id="budget-sections"></div>
+    <div class="excl-note" id="excl-note"></div>
+
+    <!-- FEEDBACK ─────────────────────────────────────────────────────────── -->
+    <div id="feedback-card" style="margin-top:32px;padding:18px 20px;background:var(--s2);border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--cream);">Was this budget useful?</div>
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:4px;">Tell Mark what worked and what didn't — every signal improves the next one.</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button id="fb-up" class="fb-btn" onclick="setFeedbackRating('up')" style="background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'DM Mono',monospace;font-size:13px;padding:8px 14px;cursor:pointer;">👍 Helpful</button>
+          <button id="fb-down" class="fb-btn" onclick="setFeedbackRating('down')" style="background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'DM Mono',monospace;font-size:13px;padding:8px 14px;cursor:pointer;">👎 Off</button>
+        </div>
+      </div>
+      <div id="fb-detail" style="display:none;margin-top:14px;">
+        <textarea id="fb-comment" placeholder="What was missing or wrong? (optional)" style="width:100%;min-height:70px;background:var(--s1);border:1px solid var(--border);color:var(--cream);font-family:'DM Mono',monospace;font-size:12px;padding:10px;outline:none;resize:vertical;"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+          <input id="fb-email" type="email" placeholder="Email (optional, for follow-up)" style="flex:1;min-width:200px;background:var(--s1);border:1px solid var(--border);color:var(--cream);font-family:'DM Mono',monospace;font-size:11px;padding:8px 10px;outline:none;"/>
+          <button onclick="submitFeedback()" style="background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:9px 16px;cursor:pointer;">Send feedback</button>
+        </div>
+      </div>
+      <div id="fb-thanks" style="display:none;margin-top:12px;font-size:12px;color:#4CAF50;font-family:'DM Mono',monospace;">Thanks — recorded.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── REGION / CURRENCY STATE ───────────────────────────────────────────────────
+let region = 'india';
+let currency = { symbol: '₹', code: 'INR', name: 'Indian Rupee' };
+const regionMeta = {
+  india:     { icon: '🎬', label: 'Indian Cinema', currencyLabel: '₹ INR — Indian Rupee' },
+  hollywood: { icon: '🎥', label: 'Hollywood / North America', currencyLabel: '$ USD — US Dollar' },
+  uk:        { icon: '🎭', label: 'UK & Europe', currencyLabel: '£ GBP — British Pound' },
+  other:     { icon: '🌍', label: 'Other / International', currencyLabel: '$ USD — US Dollar' },
+};
+
+function selectRegion(r, sym, code, name) {
+  region = r;
+  currency = { symbol: sym, code, name };
+  document.querySelectorAll('.region-card').forEach(c => c.classList.remove('sel'));
+  document.getElementById('rc-' + r).classList.add('sel');
+
+  const customBox = document.getElementById('custom-inputs');
+  if (r === 'other') {
+    customBox.style.display = 'block';
+    updateCustomRegion();
+  } else {
+    customBox.style.display = 'none';
+    const btn = document.getElementById('market-next-btn');
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+function updateCustomRegion() {
+  const industry = document.getElementById('custom-industry').value.trim();
+  const sym = document.getElementById('custom-symbol').value.trim();
+  const code = document.getElementById('custom-code').value.trim().toUpperCase();
+  const ready = industry && sym && code;
+  const btn = document.getElementById('market-next-btn');
+  btn.style.opacity = ready ? '1' : '0.4';
+  btn.style.pointerEvents = ready ? 'auto' : 'none';
+  if (ready) {
+    currency = { symbol: sym, code, name: industry };
+    document.getElementById('rc-other-badge').textContent = sym + ' ' + code;
+  }
+}
+
+function proceedFromMarket() {
+  if (region === 'other') {
+    const industry = document.getElementById('custom-industry').value.trim();
+    const sym = document.getElementById('custom-symbol').value.trim();
+    const code = document.getElementById('custom-code').value.trim().toUpperCase();
+    if (!industry || !sym || !code) return;
+    currency = { symbol: sym, code, name: industry };
+    regionMeta['other'] = {
+      icon: '',
+      label: industry,
+      currencyLabel: sym + ' ' + code + ' — ' + industry,
+    };
+  }
+  goTo('step1');
+  resetInputSections();
+}
+
+// ── RESTORE SAVED API KEY ─────────────────────────────────────────────────────
+const savedKey = localStorage.getItem('mark_api_key');
+if(savedKey) document.getElementById('api-key').value = savedKey;
+
+// ── DEMO BRIEFS ────────────────────────────────────────────────────────────────
+const demos = {
+  tvc: "Nike 60-second TVC. Production type: brand film / commercial. 3 shoot days. Locations: seaside promenade (exterior, golden hour), urban street lanes (exterior, high energy), and a sports court (interior/exterior). Principal cast: 2 professional athletes and 1 senior coach character. Supporting cast: approximately 20 young players. No stunts. Handheld camera, fast edit. Estimated crew: 35 people. No celebrity talent attached yet.",
+  music: "Hindi pop music video for a major label. 2 shoot days. Locations: beach exterior (day) and nightclub set build in a studio. Lead artist plus 10 backup dancers. Full choreography required. 2 costume changes per dancer, 3 for lead. Special LED lighting rig. Estimated crew: 25. No stunts. Post: colour grade and light visual effects only.",
+  ott: "OTT drama series for a major streaming platform. Budget for one episode. 30 shoot days over 3 months. Suburban practical locations, one police station set build, outdoor chase sequences (moderate stunt work), one 5-day outstation trip. Principal cast: 4 leads. Supporting cast: 25+. Post production: 4 months. Moderate VFX (city cleanup, a few digital extensions). Target delivery: 4K HDR.",
+  film: "Action feature film. 60 shoot days. Primary city locations plus 5 days outstation. Principal cast: 4 lead actors. Supporting cast: 40+. 3 song sequences requiring full choreography and dancers. Car chases and action sequences — moderate to complex stunt work. Stunt director required. VFX: backdrop extensions, some digital destruction sequences. Post production: 6 months."
+};
+
+function loadDemo(type) {
+  document.getElementById('script-text').value = demos[type];
+  setActiveInput('demo');
+}
+
+async function handleFile(input) {
+  if (!(input.files && input.files[0])) return;
+  const file = input.files[0];
+
+  const zone = document.getElementById('upload-zone');
+  const iconEl = document.getElementById('upload-icon');
+  const titleEl = document.getElementById('upload-title');
+  const subEl = document.getElementById('upload-sub');
+
+  iconEl.textContent = '⏳';
+  titleEl.textContent = 'Parsing script…';
+  subEl.textContent = file.name;
+  setActiveInput('upload');
+
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    const data = await markFetch('/script/parse', { form, timeoutMs: 60000 });
+    parsedBreakdown = data.summary || null;
+    // Store the extracted plain text so question generation + budget generation
+    // both have something real to read (instead of the placeholder we used to write).
+    scriptText = data.extracted_text || '';
+    document.getElementById('script-text').value = scriptText;
+
+    zone.style.borderColor = '#2E7D32';
+    zone.style.background = 'rgba(46,125,50,0.1)';
+    iconEl.textContent = '✓';
+    iconEl.style.color = '#4CAF50';
+    titleEl.textContent = parsedBreakdown
+      ? `Parsed · ${parsedBreakdown.total_scenes} scenes, ${parsedBreakdown.unique_locations.length} locations`
+      : 'Script uploaded';
+    titleEl.style.color = '#4CAF50';
+    subEl.textContent = file.name;
+  } catch (e) {
+    iconEl.textContent = '⚠';
+    titleEl.textContent = 'Could not parse PDF';
+    subEl.textContent = e.message + ' — paste the script as text instead.';
+    parsedBreakdown = null;
+  }
+}
+
+// ── BACKEND ───────────────────────────────────────────────────────────────────
+// FastAPI endpoint that proxies to the Flue agent harness.
+// Override with `?api=<url>` in the URL or by setting localStorage.mark_api.
+const MARK_API = (() => {
+  const url = new URL(window.location.href);
+  const fromQuery = url.searchParams.get('api');
+  if (fromQuery) localStorage.setItem('mark_api', fromQuery);
+  return localStorage.getItem('mark_api')
+    || (location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://askmark-backend.up.railway.app');
+})();
+const MARK_API_KEY = localStorage.getItem('mark_api_key_header') || '';
+
+// Standard fetch wrapper for the FastAPI backend. Owns headers, JSON-vs-FormData
+// body handling, abort timeouts, and FastAPI's `detail` error envelope so callers
+// don't reinvent it.
+async function markFetch(path, { json, form, timeoutMs = 60000, signal } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  if (signal) signal.addEventListener('abort', () => controller.abort());
+
+  const headers = {};
+  if (MARK_API_KEY) headers['X-API-Key'] = MARK_API_KEY;
+  let body;
+  if (form) {
+    body = form;
+  } else if (json !== undefined) {
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify(json);
+  }
+
+  try {
+    const resp = await fetch(`${MARK_API}${path}`, { method: 'POST', headers, body, signal: controller.signal });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || err.error?.message || `Server error ${resp.status}`);
+    }
+    return await resp.json();
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Request timed out — please try again.');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let scriptText = '';
+let questions = [];        // [{id, question, options}] — preserved so we can pair text with answers
+let answers = {};          // { qid: answerString }
+let parsedBreakdown = null; // structured screenplay breakdown from /script/parse, when available
+let budgetData = null;
+let activeInput = null;
+
+function setActiveInput(type) {
+  activeInput = type;
+  document.getElementById('upload-zone').classList.toggle('dimmed', type !== 'upload');
+  document.getElementById('demo-section').classList.toggle('dimmed', type !== 'demo');
+  document.getElementById('paste-section').classList.toggle('dimmed', type !== 'paste');
+  document.getElementById('build-btn').classList.remove('disabled');
+}
+
+function resetInputSections() {
+  activeInput = null;
+  ['upload-zone', 'demo-section', 'paste-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('dimmed');
+  });
+  const btn = document.getElementById('build-btn');
+  if (btn) btn.classList.add('disabled');
+}
+
+// ── FLOW ──────────────────────────────────────────────────────────────────────
+function goTo(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+
+  // Update market display bar when entering step1
+  if(id === 'step1' && region) {
+    const m = regionMeta[region];
+    document.getElementById('market-display-icon').textContent = m.icon;
+    document.getElementById('market-display-name').textContent = m.label;
+    document.getElementById('market-display-currency').textContent = m.currencyLabel;
+    document.getElementById('gen-subtitle').textContent =
+      'Applying ' + m.label + ' market rates · Budget codes 10000–14000';
+  }
+}
+
+function startOver() {
+  answers = {};
+  questions = [];
+  parsedBreakdown = null;
+  budgetData = null;
+  scriptText = '';
+  feedbackRating = null;
+  feedbackSent = false;
+  ['fb-detail', 'fb-thanks'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  ['fb-up', 'fb-down'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.borderColor = 'var(--border)'; el.disabled = false; }
+  });
+  const fbc = document.getElementById('fb-comment'); if (fbc) fbc.value = '';
+  const fbe = document.getElementById('fb-email'); if (fbe) fbe.value = '';
+  document.getElementById('script-text').value = '';
+  // Reset upload zone
+  const zone = document.getElementById('upload-zone');
+  zone.style.borderColor = '';
+  zone.style.background = '';
+  document.getElementById('upload-icon').textContent = '📄';
+  document.getElementById('upload-icon').style.color = '';
+  document.getElementById('upload-title').textContent = 'Upload your script';
+  document.getElementById('upload-title').style.color = '';
+  document.getElementById('upload-sub').textContent = 'Click to browse · PDF only';
+  resetInputSections();
+  goTo('step0');
+}
+
+async function startFlow() {
+  scriptText = document.getElementById('script-text').value.trim();
+  if(scriptText.length < 30) { showError('Please paste your script or brief — the more detail the better.'); return; }
+  hideError();
+  goTo('step2');
+  await generateQuestions(scriptText);
+}
+
+async function generateQuestions(script) {
+  const container = document.getElementById('questions-container');
+  container.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:20px;text-align:center;">Mark is reading your script...</div>';
+
+  const m = regionMeta[region];
+  const systemPrompt = `You are Mark, an expert ${m.label} film production budgeting AI. You have read a script/brief and need to ask the producer 6 smart questions before generating a budget. Return ONLY valid JSON, no markdown, no explanation:
+{
+  "intro": "Short warm intro referencing the script (1-2 sentences, mention what type of production you detected)",
+  "questions": [
+    {"id": "q1", "question": "Question text", "options": ["Option 1", "Option 2", "Option 3", "Option 4"]}
+  ]
+}
+Always ask about: 1) specific shoot locations or cities within the ${m.label} market, 2) budget scale tier (low/mid/high), 3) DOP attached or open market, 4) locations locked or estimating, 5) exact shoot days, 6) anything specific flagged by the script (stunts, VFX, choreography, etc). For location questions provide at least 4-6 specific options relevant to the ${m.label} market. Keep questions conversational not form-like.`;
+
+  try {
+    const response = await callMark(systemPrompt, `Read this script and generate pre-budget questions:\n\n${script.substring(0, 4000)}`, 1000);
+    const data = parseJSON(response);
+    document.getElementById('intro-text').innerHTML = data.intro;
+    questions = data.questions;   // preserve text + options so we can build qa pairs later
+    renderQuestions(questions, container);
+  } catch(e) {
+    showError('Error reading script: ' + e.message);
+    goTo('step1');
+  }
+}
+
+// ── QUESTION RENDERING ────────────────────────────────────────────────────────
+function renderQuestions(questions, container) {
+  container.innerHTML = '';
+  questions.forEach((q, i) => {
+    const isMulti = /location|city|cities|market|country|countries|where|region|markets|shoot/i.test(q.question);
+    const block = document.createElement('div');
+    block.className = 'q-block';
+    const opts = [...(q.options || []), 'Other'];
+    block.innerHTML = `
+      <div class="q-label">
+        <div class="q-num">${i+1}</div>
+        <span>${q.question}</span>
+        ${isMulti ? '<span class="q-multi-hint">select all that apply</span>' : ''}
+      </div>
+      <div class="q-opts" data-qid="${q.id}" data-multi="${isMulti}">
+        ${opts.map(o => `<div class="q-opt${o==='Other'?' q-other-opt':''}" onclick="selectOpt(this,'${q.id}')" data-val="${o.replace(/'/g,"\\'")}">
+          ${o}
+        </div>`).join('')}
+      </div>
+      <div class="q-other-input" id="other-${q.id}">
+        <input type="text" placeholder="${isMulti ? 'Add other locations or details...' : 'Please specify your answer...'}"
+          oninput="setOtherAnswer('${q.id}',this.value)"/>
+      </div>
+    `;
+    container.appendChild(block);
+  });
+}
+
+function setOtherAnswer(qid, val) {
+  const opts = document.querySelector(`[data-qid="${qid}"]`);
+  const otherDiv = document.getElementById('other-' + qid);
+  if (opts.dataset.multi === 'true') {
+    updateMultiAnswer(qid, opts, otherDiv);
+  } else {
+    answers[qid] = val;
+  }
+}
+
+function updateMultiAnswer(qid, opts, otherDiv) {
+  const otherInput = otherDiv ? otherDiv.querySelector('input') : null;
+  const selected = [...opts.querySelectorAll('.q-opt.sel')].map(o => {
+    if (o.classList.contains('q-other-opt')) {
+      return otherInput && otherInput.value ? otherInput.value : null;
+    }
+    return o.dataset.val;
+  }).filter(Boolean);
+  answers[qid] = selected.join(', ');
+}
+
+function selectOpt(el, qid) {
+  const opts = el.closest('.q-opts');
+  const isMulti = opts.dataset.multi === 'true';
+  const isOther = el.classList.contains('q-other-opt');
+  const otherDiv = document.getElementById('other-' + qid);
+
+  if (isMulti) {
+    el.classList.toggle('sel');
+    const otherSelected = opts.querySelector('.q-other-opt') && opts.querySelector('.q-other-opt').classList.contains('sel');
+    otherDiv.style.display = otherSelected ? 'block' : 'none';
+    updateMultiAnswer(qid, opts, otherDiv);
+  } else {
+    opts.querySelectorAll('.q-opt').forEach(o => o.classList.remove('sel'));
+    el.classList.add('sel');
+    if (isOther) {
+      otherDiv.style.display = 'block';
+      answers[qid] = otherDiv.querySelector('input').value || '';
+    } else {
+      otherDiv.style.display = 'none';
+      answers[qid] = el.dataset.val;
+    }
+  }
+}
+
+async function submitAnswers() {
+  goTo('step3');
+  runAnimation();
+  await generateBudget();
+}
+
+let _dotsTimer = null;
+let _stepsTimer = null;
+
+function stopAnimation() {
+  if (_dotsTimer) { clearInterval(_dotsTimer); _dotsTimer = null; }
+  if (_stepsTimer) { clearInterval(_stepsTimer); _stepsTimer = null; }
+}
+
+function runAnimation() {
+  stopAnimation();
+  const dotsEl = document.getElementById('build-dots');
+  if (dotsEl) {
+    let d = 0;
+    _dotsTimer = setInterval(() => { dotsEl.textContent = ['', '.', '..', '...'][d++ % 4]; }, 500);
+  }
+
+  const steps = ['gs1','gs2','gs3','gs4','gs5','gs6'];
+  let i = 0;
+  _stepsTimer = setInterval(() => {
+    if(i > 0) {
+      const prev = document.getElementById(steps[i-1]);
+      prev.classList.remove('active');
+      prev.classList.add('done');
+      prev.querySelector('.gs-dot').style.background = '#2E7D32';
+      prev.querySelector('.gs-dot').style.animation = 'none';
+    }
+    if(i < steps.length) {
+      document.getElementById(steps[i]).classList.add('active');
+      i++;
+    } else {
+      stopAnimation();
+    }
+  }, 8000);
+}
+
+// ── FEEDBACK ──────────────────────────────────────────────────────────────────
+let feedbackRating = null;
+let feedbackSent = false;
+
+function setFeedbackRating(value) {
+  if (feedbackSent) return;
+  feedbackRating = value;
+  document.getElementById('fb-up').style.borderColor = value === 'up' ? '#4CAF50' : 'var(--border)';
+  document.getElementById('fb-down').style.borderColor = value === 'down' ? '#c8330a' : 'var(--border)';
+  document.getElementById('fb-detail').style.display = 'block';
+}
+
+async function submitFeedback() {
+  if (feedbackSent || !feedbackRating) return;
+  const comment = document.getElementById('fb-comment').value.trim();
+  const email = document.getElementById('fb-email').value.trim();
+
+  const payload = {
+    context_type: 'budget',
+    rating: feedbackRating,
+    comment,
+    user_email: email || null,
+    page: 'budget.html',
+    snapshot: budgetData,           // attach the budget the user is rating, for quality review
+    user_agent: navigator.userAgent,
+  };
+
+  try {
+    await markFetch('/feedback/create', { json: payload, timeoutMs: 15000 });
+    feedbackSent = true;
+    document.getElementById('fb-detail').style.display = 'none';
+    document.getElementById('fb-thanks').style.display = 'block';
+    document.getElementById('fb-up').disabled = true;
+    document.getElementById('fb-down').disabled = true;
+  } catch (e) {
+    document.getElementById('fb-thanks').textContent = 'Could not send feedback: ' + e.message;
+    document.getElementById('fb-thanks').style.color = '#c8330a';
+    document.getElementById('fb-thanks').style.display = 'block';
+  }
+}
+
+// Pair every answered question with its full text + offered options, so the
+// agent never sees a bare `q1: "Mumbai"` and has to guess what was asked.
+function buildQAPairs() {
+  return questions
+    .map(q => ({
+      id: q.id,
+      question: q.question,
+      answer: (answers[q.id] || '').toString().trim(),
+      options: q.options || [],
+    }))
+    .filter(p => p.answer.length > 0);
+}
+
+async function generateBudget() {
+  const qa = buildQAPairs();
+  const payload = {
+    script: scriptText.substring(0, 8000),
+    region,
+    currency: { code: currency.code, symbol: currency.symbol },
+    qa,
+  };
+  if (parsedBreakdown) payload.breakdown = parsedBreakdown;
+
+  try {
+    const data = await markFetch('/budget/generate', { json: payload, timeoutMs: 180000 });
+    if (!data.budget || !data.budget.budget_data) {
+      throw new Error('Unexpected response shape from backend');
+    }
+    budgetData = data.budget.budget_data;
+    renderBudget(budgetData);
+    goTo('step4');
+  } catch (e) {
+    showError('Budget generation error: ' + e.message);
+    goTo('step1');
+  }
+}
+
+// ── MARK API CALL ─────────────────────────────────────────────────────────────
+async function callMark(system, user, maxTokens = 3000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 55000);
+  try {
+    const resp = await fetch('https://askmark-proxy.vercel.app/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system, user, max_tokens: maxTokens }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if(resp.ok) {
+      const data = await resp.json();
+      if(data.content && data.content[0]) return data.content[0].text;
+      throw new Error(data.error?.message || 'Unexpected response from server');
+    }
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'Server error ' + resp.status);
+  } catch(e) {
+    clearTimeout(timeout);
+    if(e.name === 'AbortError') throw new Error('Request timed out — please try again.');
+    throw e;
+  }
+}
+
+function parseJSON(text) {
+  let t = text.trim();
+  if(t.startsWith('```')) { t = t.replace(/^```json?\n?/, '').replace(/\n?```$/, ''); }
+  // Strip any leading text before the first {
+  const start = t.indexOf('{');
+  if(start > 0) t = t.substring(start);
+  return JSON.parse(t);
+}
+
+// ── FORMAT CURRENCY ───────────────────────────────────────────────────────────
+function fmtAmt(n) {
+  n = Math.round(Number(n) || 0);
+  const sym = currency.symbol;
+  if(region === 'india') {
+    if(n >= 10000000) return sym + (n/10000000).toFixed(2) + ' Cr';
+    if(n >= 100000) return sym + (n/100000).toFixed(1) + 'L';
+    return sym + n.toLocaleString('en-IN');
+  }
+  return sym + n.toLocaleString('en-US');
+}
+
+// ── RENDER BUDGET ─────────────────────────────────────────────────────────────
+function renderBudget(data) {
+  const m = regionMeta[region];
+  document.getElementById('b-title').textContent = data.title || 'AI Budget';
+  document.getElementById('b-meta').textContent =
+    (data.production_type || '') + ' · ' + (data.shoot_days || '?') + ' Shoot Days · ' +
+    m.label + ' · ' + currency.symbol + currency.code + ' · AI Draft v1.0 · ' +
+    new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+
+  let totalATL = 0, totalBTL = 0, totalPost = 0;
+  const flagsList = [];
+
+  data.sections.forEach(s => {
+    s.items.forEach(li => {
+      const amt = Number(li.amount) || 0;
+      const gst = Math.round(amt * (Number(li.gst_rate) || 0));
+      li._gst = gst;
+      li._total = amt + gst;
+      if(li.conf === 'red' && li.note) flagsList.push(li.code + ' ' + li.desc + ' — ' + li.note);
+    });
+    const st = s.items.reduce((sum, li) => sum + li._total, 0);
+    s._total = st;
+    if(s.type === 'above_the_line') totalATL += st;
+    else if(s.type === 'below_the_line') totalBTL += st;
+    else totalPost += st;
+  });
+
+  const insurance = Math.round(totalBTL * 0.01);
+  const contingency = Math.round((totalATL + totalBTL) * 0.10);
+  const grandTotal = totalATL + totalBTL + totalPost + insurance + contingency;
+  const shootDays = Number(data.shoot_days) || 1;
+
+  document.getElementById('s-grand').textContent = fmtAmt(grandTotal);
+  document.getElementById('s-btl').textContent = fmtAmt(totalBTL);
+  document.getElementById('s-post').textContent = fmtAmt(totalPost);
+  document.getElementById('s-day').textContent = fmtAmt(Math.round(grandTotal / shootDays));
+
+  if(data.confidence_note) document.getElementById('conf-text').textContent = data.confidence_note;
+
+  const flagsEl = document.getElementById('flags-list');
+  if(flagsList.length) {
+    flagsEl.innerHTML = flagsList.slice(0, 6).map(f => `<div class="flag-item">${f}</div>`).join('');
+  } else {
+    document.getElementById('flags-panel').style.display = 'none';
+  }
+
+  const container = document.getElementById('budget-sections');
+  container.innerHTML = '';
+
+  const typeBadge = t => t === 'above_the_line'
+    ? '<span class="sec-type-badge atl">ATL</span>'
+    : t === 'below_the_line'
+    ? '<span class="sec-type-badge btl">BTL</span>'
+    : '<span class="sec-type-badge post">POST</span>';
+
+  data.sections.forEach(s => {
+    const id = 'sec-' + s.code;
+    const wrap = document.createElement('div');
+    wrap.style.marginBottom = '2px';
+    wrap.innerHTML = `
+      <div class="section-hdr" onclick="toggleSec('${id}')">
+        <span class="sec-code">${s.code}</span>
+        <span class="sec-name">${s.name}</span>
+        ${typeBadge(s.type)}
+        <span class="sec-total">${fmtAmt(s._total)}</span>
+        <span class="sec-arr" id="arr-${id}">▼</span>
+      </div>
+      <div class="sec-body" id="${id}">
+        <div class="tbl-hdr">
+          <div class="th"></div><div class="th">Description</div>
+          <div class="th">Amount</div><div class="th">Tax</div>
+          <div class="th">Total</div><div class="th"></div>
+        </div>
+        ${s.items.map(li => `
+          <div class="li-row">
+            <div class="li-conf"><div class="cdot ${li.conf==='green'?'cg':li.conf==='amber'?'ca':'cr'}" title="${li.note||''}"></div></div>
+            <div class="li-desc"><div>${li.code} · ${li.desc}</div><div class="li-desc-sub">${li.sub||''}</div></div>
+            <div class="li-amt">${fmtAmt(li.amount)}</div>
+            <div class="li-gst">${li._gst>0?fmtAmt(li._gst):'—'}</div>
+            <div class="li-tot">${fmtAmt(li._total)}</div>
+            <div class="li-edit" title="Edit">✎</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(wrap);
+  });
+
+  [['13700','INSURANCE','1% of below-the-line', insurance],
+   ['14000','CONTINGENCY','10% of total pre-contingency', contingency]].forEach(([code,name,sub,amt]) => {
+    const wrap = document.createElement('div');
+    wrap.style.marginBottom = '2px';
+    wrap.innerHTML = `<div class="section-hdr"><span class="sec-code">${code}</span><span class="sec-name">${name}</span><span style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;flex:1;">${sub}</span><span class="sec-total">${fmtAmt(amt)}</span><span class="sec-arr"></span></div>`;
+    container.appendChild(wrap);
+  });
+
+  const gt = document.createElement('div');
+  gt.className = 'grand-row';
+  gt.innerHTML = `<span class="grand-label">Grand Total (incl. tax & contingency)</span><span class="grand-val">${fmtAmt(grandTotal)}</span>`;
+  container.appendChild(gt);
+
+  const excl = data.excluded || [];
+  document.getElementById('excl-note').innerHTML = `<strong>Excluded from this budget:</strong> ${excl.join(' · ')}`;
+}
+
+function toggleSec(id) {
+  document.getElementById(id).classList.toggle('open');
+  document.getElementById('arr-' + id).classList.toggle('open');
+}
+
+// ── EXPORT EXCEL ──────────────────────────────────────────────────────────────
+function exportExcel() {
+  if(!budgetData) { alert('No budget to export yet.'); return; }
+
+  const sym = currency.symbol;
+  const cod = currency.code;
+  const m = regionMeta[region];
+  const title = budgetData.title || 'Production Budget';
+  const locs = (budgetData.locations || []).join(' · ') || m.label;
+  const shootDays = budgetData.shoot_days || '';
+
+  // Group sections
+  const atl  = budgetData.sections.filter(s => s.type === 'above_the_line');
+  const btl  = budgetData.sections.filter(s => s.type === 'below_the_line');
+  const post = budgetData.sections.filter(s => s.type !== 'above_the_line' && s.type !== 'below_the_line');
+
+  function grpSums(secs) {
+    return secs.reduce((acc, s) => {
+      const a = s.items.reduce((t, li) => t + (Number(li.amount)||0), 0);
+      const g = s.items.reduce((t, li) => t + (li._gst||0), 0);
+      return { amt: acc.amt + a, gst: acc.gst + g };
+    }, { amt:0, gst:0 });
+  }
+
+  const atlS = grpSums(atl), btlS = grpSums(btl), postS = grpSums(post);
+  const insAmt = Math.round((atlS.amt + btlS.amt) * 0.01);
+  const insGst = Math.round(insAmt * 0.18);
+  const contAmt = Math.round((atlS.amt + btlS.amt) * 0.10);
+  const grandTotal = atlS.amt + atlS.gst + btlS.amt + btlS.gst + postS.amt + postS.gst + insAmt + insGst + contAmt;
+
+  // ── SHEET 1: TOP SHEET ──────────────────────────────────────────────────────
+  const T = [];
+  T.push(['', 'SUMMARY SHEET - ' + title.toUpperCase(), 'ACTIVITY', 'MONTHS', 'LOCATION', 'SHOOT DAYS', '', '']);
+  T.push(['', '', 'PRE PRODUCTION', '', locs, shootDays, '', '']);
+  T.push(['', '', 'SHOOT', '', '', '', '', '']);
+  T.push(['', '', 'POST PRODUCTION', '', '', '', '', '']);
+  T.push([]);
+  T.push(['CODE', 'EXPENSE HEAD', 'FIXED', 'VARIABLE', 'TOTAL', 'GST / VAT', 'GRAND TOTAL', '']);
+
+  function tRow(s) {
+    const a = s.items.reduce((t,li) => t+(Number(li.amount)||0), 0);
+    const g = s.items.reduce((t,li) => t+(li._gst||0), 0);
+    T.push([s.code, s.name.toUpperCase(), '', a, a, g, a+g, '']);
+  }
+  function tTotal(label, sums) {
+    T.push(['', label, '', sums.amt, sums.amt, sums.gst, sums.amt+sums.gst, '']);
+  }
+
+  atl.forEach(tRow);
+  tTotal('TOTAL ABOVE THE LINE', atlS);
+  btl.forEach(tRow);
+  tTotal('TOTAL BELOW THE LINE', btlS);
+  post.forEach(tRow);
+  tTotal('TOTAL POST PRODUCTION', postS);
+  T.push(['13700', 'INSURANCE', '', insAmt, insAmt, insGst, insAmt+insGst, '']);
+  T.push(['14000', 'CONTINGENCY (10%)', '', contAmt, contAmt, 0, contAmt, '']);
+  T.push([]);
+  T.push(['', 'GRAND TOTAL (' + sym + ' ' + cod + ')', '', '', '', '', grandTotal, '']);
+  T.push([]);
+  T.push(['', 'Market: ' + m.label + '  |  Currency: ' + sym + ' ' + cod + '  |  AI Draft generated: ' + new Date().toLocaleDateString('en-GB'), '', '', '', '', '', '']);
+  if(budgetData.excluded && budgetData.excluded.length) {
+    T.push(['', 'EXCLUDED FROM BUDGET: ' + budgetData.excluded.join(', '), '', '', '', '', '', '']);
+  }
+
+  const ws1 = XLSX.utils.aoa_to_sheet(T);
+  ws1['!cols'] = [{wch:8},{wch:38},{wch:14},{wch:16},{wch:16},{wch:16},{wch:18},{wch:4}];
+
+  // ── SHEET 2: DETAILED BUDGET ────────────────────────────────────────────────
+  const D = [];
+  D.push(['', 'DETAILED BUDGET - ' + title.toUpperCase(), 'ACTIVITY', 'MONTHS', '', 'LOCATION', 'SHOOT DAYS', '', '', '', '', '', '', '', '']);
+  D.push(['', '', 'SHOOT', '', '', locs, shootDays, '', '', '', '', '', '', '', '']);
+  D.push([]);
+  D.push(['BUDGET CODE','BUDGET HEADS','MAJOR HEAD','LOCATION','BASIS','DAYS / MONTHS','UOM','X','CURRENCY','RATE','AMOUNT','TOTAL AMOUNT','TAX','SUB-TOTAL','REMARKS / CONFIDENCE']);
+
+  function addSec(s) {
+    D.push([s.code, s.name.toUpperCase(), s.name.toUpperCase(), '', '', '', '', '', '', '', '', '', '', '', '']);
+    s.items.forEach(li => {
+      const a = Number(li.amount)||0;
+      const g = li._gst||0;
+      const conf = li.conf !== 'green' ? '[' + (li.conf||'').toUpperCase() + '] ' : '';
+      D.push([
+        li.code, li.desc, s.name.toUpperCase(),
+        locs.split(' · ')[0] || m.label,
+        'LUMPSUM', 1, 'LUMPSUM', 1, cod,
+        a, a, a, g, a+g,
+        conf + (li.note || li.sub || '')
+      ]);
+    });
+    const sa = s.items.reduce((t,li) => t+(Number(li.amount)||0), 0);
+    const sg = s.items.reduce((t,li) => t+(li._gst||0), 0);
+    D.push(['', 'ACCOUNT TOTAL FOR ' + s.code, s.name.toUpperCase(), '', '', '', '', '', '', '', '', sa, sg, sa+sg, '']);
+    D.push([]);
+  }
+
+  atl.forEach(addSec);
+  D.push(['', 'TOTAL ABOVE THE LINE', '', '', '', '', '', '', '', '', '', atlS.amt, atlS.gst, atlS.amt+atlS.gst, '']);
+  D.push([]);
+  btl.forEach(addSec);
+  D.push(['', 'TOTAL BELOW THE LINE', '', '', '', '', '', '', '', '', '', btlS.amt, btlS.gst, btlS.amt+btlS.gst, '']);
+  D.push([]);
+  post.forEach(addSec);
+  D.push(['', 'TOTAL POST PRODUCTION', '', '', '', '', '', '', '', '', '', postS.amt, postS.gst, postS.amt+postS.gst, '']);
+  D.push([]);
+  D.push(['13700','INSURANCE (1%)','INSURANCE','','','','','','',cod,insAmt,insAmt,insGst,insAmt+insGst,'']);
+  D.push(['14000','CONTINGENCY (10%)','CONTINGENCY','','','','','','',cod,contAmt,contAmt,0,contAmt,'']);
+  D.push([]);
+  D.push(['','GRAND TOTAL (' + sym + ' ' + cod + ')','','','','','','','','','','','',grandTotal,'']);
+
+  const ws2 = XLSX.utils.aoa_to_sheet(D);
+  ws2['!cols'] = [
+    {wch:10},{wch:34},{wch:28},{wch:16},{wch:10},{wch:12},{wch:8},{wch:4},
+    {wch:8},{wch:14},{wch:14},{wch:14},{wch:12},{wch:16},{wch:30}
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, 'Top Sheet');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Detailed Budget');
+
+  // ── DEPARTMENT TEMPLATE SHEETS ──────────────────────────────────────────────
+  function getDeptHeaders(code) {
+    const c = parseInt(code) || 0;
+    if (c <= 10500 || [10600,10700,10800,11000,11200,11900,12000].includes(c))
+      return ['SR NO','CATEGORY / ROLE','PER DAY RATE','ALLOWANCES / DAY','ONE TIME','NO OF PERSONS','PRE DAYS','SHOOT DAYS','BREAK DAYS','TOTAL AMOUNT','REMARKS'];
+    if ([11100,11300,11400,11500,11600].includes(c))
+      return ['SR NO','ITEM / DESCRIPTION','UNIT RATE / DAY','QTY','PRE DAYS','SHOOT DAYS','BREAK DAYS','TOTAL AMOUNT','REMARKS'];
+    if (c === 12300)
+      return ['SR NO','VEHICLE TYPE','RATE PER DAY','NO OF VEHICLES','PRE DAYS','SHOOT DAYS','BREAK DAYS','TOTAL AMOUNT'];
+    if (c === 12400)
+      return ['SR NO','LOCATION / DESCRIPTION','TYPE','RATE','DAYS','TOTAL AMOUNT','REMARKS'];
+    if (c === 12600)
+      return ['SR NO','CATEGORY','NO OF PERSONS','RATE PER DAY','PRE DAYS','SHOOT DAYS','BREAK DAYS','TOTAL AMOUNT'];
+    if (c === 12800)
+      return ['SR NO','DEPARTMENT','PAX','DAYS','ROOM CATEGORY','ROOM RATE / NIGHT','TRAVEL CLASS','TRAVEL RATE','TOTAL AMOUNT'];
+    if (c >= 12900 && c <= 13600)
+      return ['SR NO','SERVICE / ITEM','VENDOR','RATE','DURATION','TOTAL AMOUNT','REMARKS'];
+    return ['SR NO','DESCRIPTION','BASIS','RATE','QTY / DAYS','TOTAL AMOUNT','REMARKS'];
+  }
+
+  budgetData.sections.forEach(s => {
+    const secAmt = s.items.reduce((t,li) => t+(Number(li.amount)||0), 0);
+    const hdrs = getDeptHeaders(s.code);
+    const totalIdx = hdrs.indexOf('TOTAL AMOUNT');
+    const SD = [];
+    SD.push([s.code + ' — ' + s.name.toUpperCase()]);
+    SD.push(['AI ESTIMATED TOTAL: ' + sym + ' ' + secAmt.toLocaleString('en-IN')]);
+    SD.push([]);
+    SD.push(hdrs);
+    for (let i = 1; i <= 15; i++) {
+      const row = [i];
+      for (let j = 1; j < hdrs.length; j++) row.push('');
+      SD.push(row);
+    }
+    const totRow = new Array(hdrs.length).fill('');
+    totRow[0] = 'TOTAL';
+    if (totalIdx >= 0) totRow[totalIdx] = secAmt;
+    SD.push(totRow);
+    const ws = XLSX.utils.aoa_to_sheet(SD);
+    ws['!cols'] = hdrs.map((h,i) => ({ wch: i===0?6 : h==='REMARKS'?24 : h==='CATEGORY / ROLE'||h==='ITEM / DESCRIPTION'||h==='LOCATION / DESCRIPTION'||h==='SERVICE / ITEM'||h==='DESCRIPTION'?28 : 14 }));
+    const safeName = s.name.replace(/[:\\/?\[\]*]/g,'').trim();
+    const sheetName = (s.code + ' ' + safeName).slice(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  XLSX.writeFile(wb, title.replace(/[^a-zA-Z0-9_\-\s]/g,'_') + '_AskMark_Budget.xlsx');
+}
+
+function lockBudget() {
+  if(confirm('Lock this budget? You will not be able to edit it after locking.')) {
+    document.querySelector('.btn-lock').textContent = '✓ Locked';
+    document.querySelector('.btn-lock').style.background = '#2E7D32';
+  }
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function showError(msg) {
+  const el = document.getElementById('error-display');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('error-display').style.display = 'none';
+}
+</script>
+</body>
+</html>

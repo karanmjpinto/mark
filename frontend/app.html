@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AskMark — App</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0A0908;--s1:#111110;--s2:#1A1917;--s3:#222120;
+  --cream:#F2EDE3;--cream2:#C8C2B8;--muted:#6B6459;--red:#C8330A;
+  --red-dim:rgba(200,51,10,0.12);--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+}
+body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;overflow:hidden;height:100vh;}
+
+/* ROOT LAYOUT */
+#app{display:flex;height:100vh;overflow:hidden;}
+
+/* SIDEBAR */
+#sidebar{width:240px;min-width:240px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+#sb-top{padding:16px 14px 12px;border-bottom:1px solid var(--border);}
+#logo{font-family:'Playfair Display',serif;font-size:18px;color:var(--cream);margin-bottom:14px;}
+#logo span{color:var(--red);font-style:italic;}
+#new-btn{width:100%;background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.15s;}
+#new-btn:hover{background:#a82808;}
+#new-btn .plus{width:16px;height:16px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:14px;}
+#sb-search{padding:10px 14px;border-bottom:1px solid var(--border);}
+#sb-search input{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:12px;padding:7px 10px;outline:none;}
+#sb-search input::placeholder{color:var(--muted);}
+#proj-label{padding:12px 14px 6px;font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;}
+#proj-list{flex:1;overflow-y:auto;padding:0 8px 8px;}
+#proj-list::-webkit-scrollbar{width:2px;}
+#proj-list::-webkit-scrollbar-thumb{background:var(--border2);}
+.pi{padding:10px;cursor:pointer;border-left:2px solid transparent;margin-bottom:2px;transition:all 0.15s;}
+.pi:hover{background:var(--s2);}
+.pi.active{background:var(--red-dim);border-left-color:var(--red);}
+.pi-name{font-size:12px;font-weight:600;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.pi-meta{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px;}
+.pi-badge{font-size:8px;padding:2px 5px;background:var(--s3);color:var(--cream2);letter-spacing:0.05em;text-transform:uppercase;}
+.pi.active .pi-badge{background:rgba(200,51,10,0.3);color:#F2A088;}
+#sb-user{padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.u-av{width:28px;height:28px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;}
+.u-name{font-size:12px;font-weight:600;color:var(--cream);}
+.u-role{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* TOPNAV */
+#topnav{background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;height:48px;gap:4px;flex-shrink:0;}
+#proj-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--cream);margin-right:14px;white-space:nowrap;}
+#proj-title em{color:var(--red);font-style:italic;}
+.ntab{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;height:48px;display:flex;align-items:center;gap:6px;transition:all 0.15s;white-space:nowrap;user-select:none;}
+.ntab:hover{color:var(--cream2);}
+.ntab.active{color:var(--cream);border-bottom-color:var(--red);}
+.ntab.soon{opacity:0.4;cursor:not-allowed;}
+.soon-pill{font-size:7px;background:var(--s3);color:var(--muted);padding:2px 5px;border-radius:2px;letter-spacing:0.05em;font-weight:600;}
+.nav-sp{flex:1;}
+#status-badge{font-size:9px;font-family:'DM Mono',monospace;padding:3px 8px;background:rgba(52,168,83,0.15);color:#4CAF50;letter-spacing:0.06em;}
+/* SHARE */
+#share-wrap{position:relative;margin-left:10px;}
+#share-btn{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border2);color:var(--cream2);font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:6px 12px;cursor:pointer;transition:all 0.2s;}
+#share-btn:hover{border-color:rgba(200,51,10,0.5);color:var(--cream);}
+#share-dd{position:absolute;top:calc(100% + 8px);right:0;width:220px;background:var(--s1);border:1px solid var(--border2);z-index:500;display:none;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+#share-dd.open{display:flex;}
+.sd-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;}
+.sd-opt{padding:12px 14px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid var(--border);}
+.sd-opt:last-child{border-bottom:none;}
+.sd-opt:hover{background:var(--s2);}
+.sd-title{font-size:12px;font-weight:600;color:var(--cream);margin-bottom:2px;}
+.sd-desc{font-size:10px;color:var(--muted);line-height:1.4;}
+
+/* WORKSPACE */
+#workspace{flex:1;overflow-y:auto;padding:24px;background:var(--bg);}
+#workspace::-webkit-scrollbar{width:3px;}
+#workspace::-webkit-scrollbar-thumb{background:var(--border2);}
+.page{display:none;}
+.page.active{display:block;}
+.eyebrow{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--red);font-family:'DM Mono',monospace;margin-bottom:6px;}
+.pg-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--cream);line-height:1.1;}
+.pg-sub{font-size:11px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;margin-bottom:22px;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--s1);border:1px solid var(--border);padding:16px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);opacity:0;transition:opacity 0.2s;}
+.stat-card:hover::before{opacity:1;}
+.stat-label{font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:8px;}
+.stat-value{font-family:'Playfair Display',serif;font-size:28px;color:var(--cream);line-height:1;margin-bottom:3px;}
+.stat-sub{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;}
+.stat-bar{height:3px;background:var(--s3);margin-top:10px;}
+.stat-bar-fill{height:100%;background:var(--red);}
+
+/* PANELS */
+.panel{background:var(--s1);border:1px solid var(--border);padding:16px;margin-bottom:16px;}
+.panel-title{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;}
+
+/* TASKS */
+.task-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.task-item:last-child{border-bottom:none;}
+.task-check{width:16px;height:16px;border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.task-check:hover{border-color:var(--red);}
+.task-check.done{background:var(--red);border-color:var(--red);}
+.task-check.done::after{content:'✓';font-size:9px;color:white;}
+.task-text{font-size:11px;color:var(--cream2);flex:1;line-height:1.4;}
+.task-text.done{text-decoration:line-through;color:var(--muted);}
+.task-tag{font-size:8px;font-family:'DM Mono',monospace;padding:2px 6px;letter-spacing:0.05em;text-transform:uppercase;}
+.tag-urgent{background:rgba(200,51,10,0.2);color:#F2A088;}
+.tag-today{background:rgba(251,188,4,0.15);color:#F9C74F;}
+.tag-pending{background:var(--s3);color:var(--muted);}
+
+/* KEY DATES */
+.dates-grid{display:grid;grid-template-columns:repeat(3,1fr);}
+.date-col{padding:0 14px;}
+.date-col:first-child{padding-left:0;}
+.date-col:not(:first-child){border-left:1px solid var(--border);}
+.date-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.date-row:last-child{border-bottom:none;}
+.date-label{font-size:10px;color:var(--muted);}
+.date-val{font-size:10px;color:var(--cream);font-family:'DM Mono',monospace;}
+.date-val.red{color:var(--red);}
+
+/* CREW PAGE */
+.crew-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.crew-toolbar input{flex:1;background:var(--s1);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:12px;padding:8px 12px;outline:none;}
+.crew-toolbar input::placeholder{color:var(--muted);}
+.crew-toolbar select{background:var(--s1);border:1px solid var(--border);color:var(--cream2);font-family:'DM Mono',monospace;font-size:11px;padding:8px 10px;outline:none;cursor:pointer;}
+.add-crew{background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:8px 14px;cursor:pointer;white-space:nowrap;}
+.crew-table{width:100%;border-collapse:collapse;}
+.crew-table th{text-align:left;padding:8px 12px;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);background:var(--s1);font-weight:400;}
+.crew-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--cream2);vertical-align:middle;font-size:11px;}
+.crew-table tr:hover td{background:var(--s1);}
+.crew-table tr:last-child td{border-bottom:none;}
+.cn{color:var(--cream);font-weight:600;font-size:12px;}
+.ce{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;}
+.dp{font-size:8px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em;text-transform:uppercase;}
+.dp-camera{background:rgba(59,106,253,0.15);color:#7B9EFF;}
+.dp-dir{background:rgba(200,51,10,0.15);color:#F2A088;}
+.dp-prod{background:rgba(52,168,83,0.15);color:#6BCF8A;}
+.dp-light{background:rgba(251,188,4,0.15);color:#F9C74F;}
+.dp-sound{background:rgba(156,94,255,0.15);color:#BFA3FF;}
+.dp-art{background:rgba(255,127,80,0.15);color:#FFB088;}
+.rate{font-family:'DM Mono',monospace;font-size:11px;}
+
+/* BUDGET PAGE */
+.upload-zone{border:1px dashed rgba(200,51,10,0.4);background:rgba(200,51,10,0.04);padding:32px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all 0.2s;}
+.upload-zone:hover{border-color:var(--red);background:rgba(200,51,10,0.08);}
+.upload-zone input[type=file]{display:none;}
+.uz-icon{font-size:28px;margin-bottom:10px;}
+.uz-title{font-size:13px;font-weight:600;color:var(--cream);margin-bottom:4px;}
+.uz-sub{font-size:10px;color:var(--muted);}
+.uz-fmt{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:6px;}
+textarea{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream2);font-family:'DM Mono',monospace;font-size:11px;padding:12px;resize:vertical;min-height:100px;outline:none;line-height:1.6;}
+textarea:focus{border-color:rgba(200,51,10,0.4);}
+textarea::placeholder{color:var(--muted);}
+.btn-red{background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 18px;cursor:pointer;transition:background 0.15s;}
+.btn-red:hover{background:#a82808;}
+.btn-ghost{background:var(--s2);border:1px solid var(--border2);color:var(--cream2);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:10px 16px;cursor:pointer;transition:all 0.15s;}
+.btn-ghost:hover{border-color:var(--red);color:var(--cream);}
+
+/* MARK BAR */
+#mark-bar{background:var(--s1);border-top:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+#mark-av-bar{width:36px;height:36px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-size:16px;color:white;flex-shrink:0;}
+#mark-plus{width:32px;height:32px;background:var(--s2);border:1px solid var(--border2);color:var(--cream2);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s;position:relative;}
+#mark-plus:hover{border-color:var(--red);color:var(--cream);}
+#plus-menu{position:absolute;bottom:calc(100% + 8px);left:0;width:180px;background:var(--s1);border:1px solid var(--border2);display:none;flex-direction:column;box-shadow:0 -8px 24px rgba(0,0,0,0.5);}
+#plus-menu.open{display:flex;}
+.pm-item{padding:10px 14px;font-size:11px;color:var(--cream2);cursor:pointer;display:flex;align-items:center;gap:9px;transition:background 0.15s;border-bottom:1px solid var(--border);}
+.pm-item:last-child{border-bottom:none;}
+.pm-item:hover{background:var(--s2);color:var(--cream);}
+#mark-input-wrap{flex:1;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;}
+#mark-input-wrap:focus-within{border-color:rgba(200,51,10,0.5);box-shadow:0 0 0 3px rgba(200,51,10,0.06);}
+#mark-m-label{font-family:'Playfair Display',serif;font-size:13px;font-style:italic;color:var(--red);flex-shrink:0;border-right:1px solid var(--border);padding-right:10px;}
+#mark-input{flex:1;background:transparent;border:none;color:var(--cream);font-family:'Syne',sans-serif;font-size:13px;padding:12px 0;outline:none;}
+#mark-input::placeholder{color:var(--muted);}
+#mark-send{width:38px;height:38px;background:var(--red);border:none;color:white;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s;border-radius:2px;}
+#mark-send:hover{background:#a82808;}
+
+/* MARK CHAT PANEL */
+#mark-panel{background:var(--bg);border-top:1px solid var(--border);overflow:hidden;max-height:0;transition:max-height 0.25s ease;display:flex;flex-direction:column;flex-shrink:0;}
+#mark-panel.open{max-height:260px;}
+#mark-msgs{flex:1;overflow-y:auto;padding:14px 20px;display:flex;flex-direction:column;gap:10px;}
+#mark-msgs::-webkit-scrollbar{width:2px;}
+.msg{display:flex;flex-direction:column;gap:3px;max-width:65%;}
+.msg.mark{align-self:flex-start;}
+.msg.user{align-self:flex-end;}
+.msg-sender{font-size:8px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.06em;}
+.msg.mark .msg-sender{color:var(--red);}
+.msg-bubble{padding:8px 12px;font-size:11px;line-height:1.5;color:var(--cream2);}
+.msg.mark .msg-bubble{background:var(--s1);border:1px solid var(--border);}
+.msg.user .msg-bubble{background:var(--red-dim);border:1px solid rgba(200,51,10,0.25);color:var(--cream);}
+.typing-dot{width:5px;height:5px;background:var(--muted);border-radius:50%;display:inline-block;animation:td 1.2s ease-in-out infinite;}
+.typing-dot:nth-child(2){animation-delay:0.2s}.typing-dot:nth-child(3){animation-delay:0.4s}
+@keyframes td{0%,100%{transform:translateY(0);opacity:0.4}50%{transform:translateY(-3px);opacity:1}}
+
+/* HAMBURGER */
+#hamburger{display:none;background:none;border:none;color:var(--cream);font-size:22px;cursor:pointer;padding:4px 8px;flex-shrink:0;}
+#sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;}
+#sidebar-overlay.open{display:block;}
+
+@media(max-width:768px){
+  body{overflow:auto;}
+  #app{flex-direction:column;height:auto;min-height:100vh;}
+  #hamburger{display:flex;}
+  #sidebar{position:fixed;left:-260px;top:0;bottom:0;z-index:300;transition:left 0.25s ease;width:260px;}
+  #sidebar.open{left:0;}
+  #main{width:100%;height:auto;}
+  #topnav{padding:0 12px;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  #topnav::-webkit-scrollbar{display:none;}
+  #proj-title{font-size:13px;margin-right:8px;flex-shrink:0;}
+  .ntab{padding:6px 10px;font-size:9px;}
+  #status-badge{display:none;}
+  #share-wrap{display:none;}
+  #workspace{padding:16px;overflow-y:auto;}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:10px;}
+  .stat-value{font-size:22px;}
+  .dates-grid{grid-template-columns:1fr;}
+  .date-col{padding:0;border-left:none!important;}
+  .date-col:not(:first-child){margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+  .crew-toolbar{flex-wrap:wrap;}
+  .crew-toolbar input{min-width:100%;}
+  .crew-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  #mark-bar{padding:10px 12px;gap:8px;}
+  #mark-av-bar{width:30px;height:30px;font-size:13px;flex-shrink:0;}
+  #mark-input{font-size:12px;padding:10px 0;}
+  #mark-send{width:34px;height:34px;}
+  #mark-panel.open{max-height:220px;}
+  .msg{max-width:90%;}
+  #modal-overlay>div{width:calc(100vw - 32px);padding:20px;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="sb-top">
+      <div id="logo">M<span>.</span>ARK</div>
+      <button id="new-btn" onclick="newProject()"><div class="plus">+</div>New Production</button>
+    </div>
+    <div id="sb-search"><input type="text" placeholder="Search productions..." oninput="filterProjects(this.value)"/></div>
+    <div id="proj-label">Productions</div>
+    <div id="proj-list">
+      <div class="pi active" onclick="selProj(this,'Nike — Spirit of India','TVC','3 Jun – 5 Jun')">
+        <div class="pi-name">Nike — Spirit of India</div>
+        <div class="pi-meta"><span class="pi-badge">TVC</span>3 Jun – 5 Jun 2025</div>
+      </div>
+      <div class="pi" onclick="selProj(this,'Dharma — Untitled Film','Feature','Jul – Nov 2025')">
+        <div class="pi-name">Dharma — Untitled Film</div>
+        <div class="pi-meta"><span class="pi-badge">Feature</span>Jul – Nov 2025</div>
+      </div>
+      <div class="pi" onclick="selProj(this,'Spotify — New Drop','Music Video','12 Jun 2025')">
+        <div class="pi-name">Spotify — New Drop</div>
+        <div class="pi-meta"><span class="pi-badge">Music Video</span>12 Jun 2025</div>
+      </div>
+      <div class="pi" onclick="selProj(this,'Amazon Prime — Series Ep.1','OTT','Q3 2025')">
+        <div class="pi-name">Amazon Prime — Series Ep.1</div>
+        <div class="pi-meta"><span class="pi-badge">OTT</span>Q3 2025</div>
+      </div>
+    </div>
+    <div id="sb-user">
+      <div class="u-av">RP</div>
+      <div><div class="u-name">Rahul Productions</div><div class="u-role">Producer · Entertainment</div></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- TOPNAV -->
+    <div id="topnav">
+      <button id="hamburger" onclick="toggleSidebar()">☰</button>
+      <div id="proj-title">Nike — <em>Spirit of India</em></div>
+      <div class="ntab active" onclick="switchTab(this,'dashboard')">Dashboard</div>
+      <div class="ntab" onclick="window.location.href='budget.html'">Budget ↗</div>
+      <div class="ntab" onclick="switchTab(this,'crew')">Crew</div>
+      <div class="ntab soon">Call Sheets<span class="soon-pill">Soon</span></div>
+      <div class="ntab soon">Locations<span class="soon-pill">Soon</span></div>
+      <div class="ntab soon">Schedule<span class="soon-pill">Soon</span></div>
+      <div class="nav-sp"></div>
+      <div id="status-badge">● Pre-Production</div>
+      <div id="share-wrap">
+        <button id="share-btn" onclick="toggleShare()">↗ Share</button>
+        <div id="share-dd">
+          <div class="sd-header">Share this production</div>
+          <div class="sd-opt" onclick="copyLink('private')">
+            <div class="sd-title">🔒 Private link</div>
+            <div class="sd-desc">Only people you invite can view this project.</div>
+          </div>
+          <div class="sd-opt" onclick="copyLink('public')">
+            <div class="sd-title">🌐 Anyone with the link</div>
+            <div class="sd-desc">Anyone who has the link can view. Good for clients.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARK CHAT PANEL -->
+    <div id="mark-panel">
+      <div id="mark-msgs">
+        <div class="msg mark">
+          <div class="msg-sender">MARK</div>
+          <div class="msg-bubble">Namaste. Nike — Spirit of India loaded. 24 crew, ₹48L budget, shoot in 12 days. What do you need?</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div id="workspace">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="eyebrow">01 · Overview</div>
+        <div class="pg-title">Nike — Spirit of India</div>
+        <div class="pg-sub">TVC · 3 shoot days · Bandra & Dharavi, Mumbai</div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Budget</div>
+            <div class="stat-value">₹48L</div>
+            <div class="stat-sub">₹31.2L committed</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width:65%"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Crew</div>
+            <div class="stat-value">24</div>
+            <div class="stat-sub">18 confirmed · 6 pending</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width:75%"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Tasks</div>
+            <div class="stat-value">7</div>
+            <div class="stat-sub">3 urgent · 4 today</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width:40%;background:#F9C74F"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Shoot Starts</div>
+            <div class="stat-value">12</div>
+            <div class="stat-sub" style="color:#F2A088">days from now</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width:100%;background:rgba(200,51,10,0.4)"></div></div>
+          </div>
+        </div>
+
+        <!-- Budget tool quick launch -->
+        <div style="background:var(--red-dim);border:1px solid rgba(200,51,10,0.25);padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:16px;">
+          <div style="font-size:28px;">🎬</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--cream);margin-bottom:3px;">Generate a Budget</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.5;">Upload your script and get a full itemised production budget in under a minute.</div>
+          </div>
+          <button onclick="window.location.href='budget.html'" style="background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:10px 18px;cursor:pointer;white-space:nowrap;">Open Tool →</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Pending Tasks</div>
+          <div class="task-item" onclick="toggleTask(this)"><div class="task-check"></div><div class="task-text">Confirm Bandra Bandstand location permit</div><span class="task-tag tag-urgent">Urgent</span></div>
+          <div class="task-item" onclick="toggleTask(this)"><div class="task-check"></div><div class="task-text">Send call sheet for Day 1 to all crew</div><span class="task-tag tag-urgent">Urgent</span></div>
+          <div class="task-item" onclick="toggleTask(this)"><div class="task-check"></div><div class="task-text">Chase Sneha Mehta (Gaffer) for confirmation</div><span class="task-tag tag-today">Today</span></div>
+          <div class="task-item" onclick="toggleTask(this)"><div class="task-check"></div><div class="task-text">Book catering for 24 crew — 3 days</div><span class="task-tag tag-today">Today</span></div>
+          <div class="task-item" onclick="toggleTask(this)"><div class="task-check"></div><div class="task-text">Upload final shooting script to Drive</div><span class="task-tag tag-pending">Pending</span></div>
+          <div class="task-item" onclick="toggleTask(this)"><div class="task-check done"></div><div class="task-text done">Book DOP — Vikram Malhotra</div><span class="task-tag tag-pending">Done</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Key Dates</div>
+          <div class="dates-grid">
+            <div class="date-col">
+              <div class="date-row"><div class="date-label">Pre-production lock</div><div class="date-val">25 May 2025</div></div>
+              <div class="date-row"><div class="date-label">Shoot Day 1</div><div class="date-val red">3 Jun 2025</div></div>
+            </div>
+            <div class="date-col">
+              <div class="date-row"><div class="date-label">Shoot Day 2</div><div class="date-val">4 Jun 2025</div></div>
+              <div class="date-row"><div class="date-label">Shoot Day 3</div><div class="date-val">5 Jun 2025</div></div>
+            </div>
+            <div class="date-col">
+              <div class="date-row"><div class="date-label">Edit delivery</div><div class="date-val">20 Jun 2025</div></div>
+              <div class="date-row"><div class="date-label">Client delivery</div><div class="date-val">30 Jun 2025</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUDGET PAGE -->
+      <div class="page" id="page-budget">
+        <div class="eyebrow">02 · Budget</div>
+        <div class="pg-title">Script → Budget</div>
+        <div class="pg-sub">Upload your script. Mark reads it, asks smart questions, builds a real production budget.</div>
+        <div class="panel" style="display:flex;align-items:center;gap:16px;">
+          <div style="width:44px;height:44px;background:var(--red-dim);border:1px solid rgba(200,51,10,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📄</div>
+          <div style="flex:1;">
+            <div style="font-family:'Playfair Display',serif;font-size:16px;color:var(--cream);margin-bottom:4px;">AI Budget Generator</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.5;">Upload a script or paste your brief. Mark analyses scenes, locations and crew needs — then maps everything to market rates with real budget codes (10000–14000).</div>
+          </div>
+          <button class="btn-red" onclick="openBudgetTool()">Generate Budget →</button>
+        </div>
+        <div class="upload-zone" onclick="document.getElementById('script-file').click()">
+          <input type="file" id="script-file" accept=".pdf,.txt,.fdx,.fountain" onchange="handleFileUpload(this)"/>
+          <div class="uz-icon">⬆</div>
+          <div class="uz-title">Drop your script here</div>
+          <div class="uz-sub">or click to browse files</div>
+          <div class="uz-fmt">PDF · FDX · FOUNTAIN · TXT</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Or paste script / brief directly</div>
+          <textarea id="script-ta" placeholder="Paste your script, treatment or brief here. Even a rough paragraph works — the more detail you give Mark, the better the budget output.&#10;&#10;Example: 'Nike 60-second TVC. 3 shoot days. Mumbai — Bandra sea-face, Dharavi lanes, basketball court in Andheri. 2 athlete leads + 1 coach. ~20 background players. No stunts. Handheld camera. Bilingual Hindi-English.'"></textarea>
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+            <button class="btn-red" onclick="openBudgetTool()">Ask Mark to Build Budget →</button>
+            <span style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;">Mark will ask ~6 questions before generating</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREW PAGE -->
+      <div class="page" id="page-crew">
+        <div class="eyebrow">03 · Crew</div>
+        <div class="pg-title">Crew Directory</div>
+        <div class="pg-sub">24 members · 18 confirmed · 6 pending</div>
+        <div class="crew-toolbar">
+          <input type="text" placeholder="Search by name or role..." oninput="filterCrew(this.value)"/>
+          <select onchange="filterCrewDept(this.value)">
+            <option value="">All Departments</option>
+            <option>Camera</option><option>Direction</option><option>Production</option>
+            <option>Lighting & Grip</option><option>Sound</option><option>Art Department</option>
+            <option>Costume & Makeup</option><option>Locations</option>
+          </select>
+          <button class="add-crew" onclick="addCrewMember()">+ Add Crew</button>
+        </div>
+        <table class="crew-table" id="crew-table">
+          <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Day Rate</th><th>Notes</th><th></th></tr></thead>
+          <tbody id="crew-tbody">
+            <tr><td><div class="cn">Vikram Malhotra</div><div class="ce">vikram@gmail.com · +91 98200 00001</div></td><td>DOP</td><td><span class="dp dp-camera">Camera</span></td><td class="rate">₹45,000</td><td style="font-size:10px;color:var(--muted);">—</td><td><button style="background:none;border:1px solid var(--border);color:var(--muted);font-size:9px;padding:3px 8px;cursor:pointer;font-family:'DM Mono',monospace;" onclick="editCrew(this)">Edit</button></td></tr>
+            <tr><td><div class="cn">Priya Sharma</div><div class="ce">priya.s@hotmail.com · +91 98200 00002</div></td><td>1st AD</td><td><span class="dp dp-dir">Direction</span></td><td class="rate">₹22,000</td><td style="font-size:10px;color:#F9C74F;font-family:'DM Mono',monospace;">Awaiting reply</td><td><button style="background:none;border:1px solid var(--border);color:var(--muted);font-size:9px;padding:3px 8px;cursor:pointer;font-family:'DM Mono',monospace;" onclick="editCrew(this)">Edit</button></td></tr>
+            <tr><td><div class="cn">Arun Kapoor</div><div class="ce">arun.k@production.in · +91 98200 00003</div></td><td>Line Producer</td><td><span class="dp dp-prod">Production</span></td><td class="rate">₹35,000</td><td style="font-size:10px;color:var(--muted);">—</td><td><button style="background:none;border:1px solid var(--border);color:var(--muted);font-size:9px;padding:3px 8px;cursor:pointer;font-family:'DM Mono',monospace;" onclick="editCrew(this)">Edit</button></td></tr>
+            <tr><td><div class="cn">Sneha Mehta</div><div class="ce">sneha.m@gmail.com · +91 98200 00004</div></td><td>Gaffer</td><td><span class="dp dp-light">Lighting & Grip</span></td><td class="rate">₹18,000</td><td style="font-size:10px;color:#F9C74F;font-family:'DM Mono',monospace;">Awaiting reply</td><td><button style="background:none;border:1px solid var(--border);color:var(--muted);font-size:9px;padding:3px 8px;cursor:pointer;font-family:'DM Mono',monospace;" onclick="editCrew(this)">Edit</button></td></tr>
+            <tr><td><div class="cn">Rajesh Nair</div><div class="ce">raj.nair@sound.in · +91 98200 00005</div></td><td>Sound Recordist</td><td><span class="dp dp-sound">Sound</span></td><td class="rate">₹16,000</td><td style="font-size:10px;color:var(--muted);">—</td><td><button style="background:none;border:1px solid var(--border);color:var(--muted);font-size:9px;padding:3px 8px;cursor:pointer;font-family:'DM Mono',monospace;" onclick="editCrew(this)">Edit</button></td></tr>
+            <tr><td><div class="cn">Deepa Iyer</div><div class="ce">deepa@artdept.com · +91 98200 00006</div></td><td>Art Director</td><td><span class="dp dp-art">Art Department</span></td><td class="rate">₹28,000</td><td style="font-size:10px;color:var(--muted);">—</td><td><button style="background:none;border:1px solid var(--border);color:var(--muted);font-size:9px;padding:3px 8px;cursor:pointer;font-family:'DM Mono',monospace;" onclick="editCrew(this)">Edit</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /workspace -->
+
+    <!-- MARK BAR -->
+    <div id="mark-bar">
+      <div id="mark-av-bar">M</div>
+      <div id="mark-plus" onclick="togglePlus()">
+        +
+        <div id="plus-menu">
+          <div class="pm-item" onclick="handlePlus('file')">📎 Attach file</div>
+          <div class="pm-item" onclick="handlePlus('photo')">🖼 Add photo</div>
+          <div class="pm-item" onclick="handlePlus('project')">🎬 Add to project</div>
+          <div class="pm-item" onclick="handlePlus('script')">📄 Upload script</div>
+        </div>
+      </div>
+      <div id="mark-input-wrap">
+        <span id="mark-m-label">Mark</span>
+        <input type="text" id="mark-input" placeholder="Ask Mark anything — budget, crew, tasks, dates..." onkeydown="handleKey(event)" onfocus="openMarkPanel()"/>
+      </div>
+      <button id="mark-send" onclick="sendMsg()">→</button>
+    </div>
+
+  </div><!-- /main -->
+<div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+</div><!-- /app -->
+
+<!-- NEW PROJECT MODAL -->
+<div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,9,8,0.9);z-index:500;align-items:center;justify-content:center;">
+  <div style="background:var(--s1);border:1px solid var(--border2);width:480px;max-width:90vw;padding:28px;">
+    <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--cream);margin-bottom:4px;">New Production</div>
+    <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:24px;">Fill in the details to set up your project</div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Project Name *</label><input id="new-proj-name" type="text" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;outline:none;" placeholder="Nike — Spirit of India"/></div>
+      <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Project Type</label><select id="new-proj-type" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;outline:none;"><option>TVC / Brand Film</option><option>Music Video</option><option>Feature Film</option><option>OTT Series</option><option>Documentary</option></select></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Shoot Start</label><input id="new-proj-start" type="date" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'DM Mono',monospace;font-size:12px;padding:9px 12px;outline:none;"/></div>
+        <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Shoot End</label><input id="new-proj-end" type="date" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'DM Mono',monospace;font-size:12px;padding:9px 12px;outline:none;"/></div>
+      </div>
+      <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Total Budget (₹)</label><input id="new-proj-budget" type="text" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'DM Mono',monospace;font-size:13px;padding:9px 12px;outline:none;" placeholder="4800000"/></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;">
+      <button class="btn-red" onclick="createProject()" style="flex:1;">Create Production →</button>
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const markReplies = [
+  "18 crew confirmed, 6 still pending. Want me to draft a WhatsApp to chase them?",
+  "Camera budget is ₹12.4L of your ₹48L. ₹8.2L remaining after confirmed bookings.",
+  "Bandra Bandstand permit is applied — waiting for approval. I'll flag you the moment it clears.",
+  "Vikram Malhotra (DOP) confirmed at ₹45,000/day for 3 days = ₹1.35L total.",
+  "5 tasks still open. The two urgent ones are the location permit and Day 1 call sheet.",
+  "Based on similar Nike TVCs in Mumbai — ₹48L is tight for 3 days. Lock catering and transport first.",
+  "Delivery is June 30. 25 days from wrap for a graded TVC is tight. Should I flag this to the director?",
+  "Deepa Iyer (Art Director) submitted her prop list. 3 items marked urgent — want me to pull those up?",
+];
+let replyIdx = 0;
+
+function switchTab(el, page) {
+  if(el.classList.contains('soon')) return;
+  document.querySelectorAll('.ntab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-' + page).classList.add('active');
+}
+
+function selProj(el, name, type, dates) {
+  document.querySelectorAll('.pi').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const parts = name.split(' — ');
+  document.getElementById('proj-title').innerHTML = parts[0] + ' — <em>' + parts[1] + '</em>';
+}
+
+function toggleShare() { document.getElementById('share-dd').classList.toggle('open'); }
+
+function copyLink(type) {
+  document.getElementById('share-dd').classList.remove('open');
+  const msg = type === 'private' ? 'Private link copied to clipboard.' : 'Public link copied. Anyone with this link can view the project.';
+  openMark(msg);
+}
+
+function toggleTask(el) {
+  el.querySelector('.task-check').classList.toggle('done');
+  el.querySelector('.task-text').classList.toggle('done');
+}
+
+function togglePlus() { document.getElementById('plus-menu').classList.toggle('open'); }
+
+function handlePlus(type) {
+  document.getElementById('plus-menu').classList.remove('open');
+  const msgs = { file:'Attach a file and I\'ll link it to this production.', photo:'Drop a photo and I\'ll add it to the project files.', project:'Which project do you want to link this to?', script:'Upload your script and I\'ll start the budget build.' };
+  openMark(msgs[type]);
+}
+
+function openMarkPanel() {
+  document.getElementById('mark-panel').classList.add('open');
+}
+
+function openMark(msg) {
+  openMarkPanel();
+  if(msg) {
+    setTimeout(() => {
+      const msgs = document.getElementById('mark-msgs');
+      const m = document.createElement('div');
+      m.className = 'msg mark';
+      m.innerHTML = '<div class="msg-sender">MARK</div><div class="msg-bubble">' + msg + '</div>';
+      msgs.appendChild(m);
+      msgs.scrollTop = msgs.scrollHeight;
+    }, 300);
+  }
+  document.getElementById('mark-input').focus();
+}
+
+function sendMsg() {
+  const input = document.getElementById('mark-input');
+  const text = input.value.trim();
+  if(!text) return;
+  openMarkPanel();
+  const msgs = document.getElementById('mark-msgs');
+  const u = document.createElement('div');
+  u.className = 'msg user';
+  u.innerHTML = '<div class="msg-sender">YOU</div><div class="msg-bubble">' + text + '</div>';
+  msgs.appendChild(u);
+  input.value = '';
+  msgs.scrollTop = msgs.scrollHeight;
+  const t = document.createElement('div');
+  t.className = 'msg mark';
+  t.innerHTML = '<div class="msg-sender">MARK</div><div class="msg-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>';
+  msgs.appendChild(t);
+  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(() => {
+    msgs.removeChild(t);
+    const r = document.createElement('div');
+    r.className = 'msg mark';
+    r.innerHTML = '<div class="msg-sender">MARK</div><div class="msg-bubble">' + markReplies[replyIdx % markReplies.length] + '</div>';
+    replyIdx++;
+    msgs.appendChild(r);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 1100);
+}
+
+function handleKey(e) { if(e.key === 'Enter') sendMsg(); }
+
+function openBudgetTool() {
+  window.location.href = '/budget.html';
+}
+
+function handleFileUpload(input) {
+  if(input.files && input.files[0]) {
+    const file = input.files[0];
+    document.getElementById('script-ta').value = '[Script file loaded: ' + file.name + ' — Mark will read this when you click Generate Budget]';
+  }
+}
+
+function newProject() {
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+function createProject() {
+  const name = document.getElementById('new-proj-name').value.trim();
+  if(!name) return;
+  const type = document.getElementById('new-proj-type').value;
+  const start = document.getElementById('new-proj-start').value;
+  const end = document.getElementById('new-proj-end').value;
+  const list = document.getElementById('proj-list');
+  const item = document.createElement('div');
+  item.className = 'pi';
+  item.innerHTML = '<div class="pi-name">' + name + '</div><div class="pi-meta"><span class="pi-badge">' + type.split('/')[0].trim() + '</span>' + (start || 'TBD') + '</div>';
+  item.onclick = function() { selProj(this, name + ' — ' + name, type, start); };
+  list.prepend(item);
+  closeModal();
+  item.click();
+  openMark('New production "' + name + '" created. Want me to help you set up the crew list or generate a budget from a script?');
+}
+
+function addCrewMember() {
+  openMark('Tell me the crew member details — name, role, department, day rate and contact — and I\'ll add them to the directory.');
+}
+
+function editCrew(btn) {
+  const row = btn.closest('tr');
+  const name = row.querySelector('.cn').textContent;
+  openMark('Sure — what do you want to change for ' + name + '?');
+}
+
+function filterProjects(val) {
+  document.querySelectorAll('.pi').forEach(pi => {
+    pi.style.display = pi.querySelector('.pi-name').textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function filterCrew(val) {
+  document.querySelectorAll('#crew-tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function filterCrewDept(val) {
+  document.querySelectorAll('#crew-tbody tr').forEach(row => {
+    row.style.display = !val || row.querySelector('.dp').textContent.includes(val) ? '' : 'none';
+  });
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+
+document.addEventListener('click', e => {
+  if(!e.target.closest('#share-wrap')) document.getElementById('share-dd').classList.remove('open');
+  if(!e.target.closest('#mark-plus')) document.getElementById('plus-menu').classList.remove('open');
+  if(e.target === document.getElementById('modal-overlay')) closeModal();
+});
+</script>
+</body>
+</html>
