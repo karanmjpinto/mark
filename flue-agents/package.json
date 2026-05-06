@@ -14,5 +14,8 @@
   "devDependencies": {
     "@flue/cli": "^0.3.10",
     "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

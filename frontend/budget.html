@@ -561,7 +561,7 @@ const MARK_API = (() => {
   const fromQuery = url.searchParams.get('api');
   if (fromQuery) localStorage.setItem('mark_api', fromQuery);
   return localStorage.getItem('mark_api')
-    || (location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://askmark-backend.up.railway.app');
+    || (location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://backend-production-6ea4.up.railway.app');
 })();
 const MARK_API_KEY = localStorage.getItem('mark_api_key_header') || '';
 
