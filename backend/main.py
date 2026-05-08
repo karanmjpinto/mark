@@ -620,6 +620,10 @@ async def generate_budget(data: BudgetGenerate, _=Depends(require_api_key)):
 
     run_id = data.project_id or str(uuid.uuid4())
     agent_result = await _flue_call("generate-budget", run_id, payload)
+    # Flue wraps `session.prompt({result: schema})` returns in `{result: ...}` on the wire.
+    # Unwrap so callers see the flat budget object the schema describes.
+    if isinstance(agent_result, dict) and set(agent_result.keys()) == {"result"}:
+        agent_result = agent_result["result"]
 
     if not data.project_id:
         # Standalone (scriptless) flow — return without persisting.
@@ -655,6 +659,8 @@ async def enrich_crew_member(data: CrewEnrich, _=Depends(require_api_key)):
         data.crew_id,
         {"crew_member": member, "project": project},
     )
+    if isinstance(enrichment, dict) and set(enrichment.keys()) == {"result"}:
+        enrichment = enrichment["result"]
     return {"success": True, "crew_id": data.crew_id, "enrichment": enrichment}
 
 # ── CLAUDE PROXY ──────────────────────────────────────────────────────────────
