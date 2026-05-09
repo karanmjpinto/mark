@@ -204,6 +204,19 @@ class BudgetGenerate(BaseModel):
     breakdown: Optional[dict] = None  # output of /script/parse summary, when available
     version: Optional[str] = "1.0"
 
+class CallSheetRefine(BaseModel):
+    callsheet: dict
+    instruction: str
+
+class CallSheetSave(BaseModel):
+    callsheet: dict
+    project_id: Optional[str] = None
+
+class CallSheetSend(BaseModel):
+    callsheet: dict
+    channels: list  # ["email", "whatsapp"]
+    project_id: Optional[str] = None
+
 class BudgetRefine(BaseModel):
     # Standalone flow: pass the budget JSON directly. Project flow: pass project_id.
     project_id: Optional[str] = None
@@ -900,6 +913,108 @@ async def refine_budget(data: BudgetRefine, _=Depends(require_api_key)):
     db_set(f"budget:{bid}", budget)
     db_sadd(f"project:{data.project_id}:budgets", bid)
     return {"success": True, "budget_id": bid, "budget": budget}
+
+@app.post("/callsheet/refine")
+async def refine_callsheet(data: CallSheetRefine, _=Depends(require_api_key)):
+    """Apply a producer's free-text instruction to a call sheet via the
+    refine-callsheet Flue agent. Standalone — no persistence by default;
+    the frontend holds state. /callsheet/save is the persistence path."""
+    if not (data.instruction or "").strip():
+        raise HTTPException(400, "instruction is required")
+    if not data.callsheet:
+        raise HTTPException(400, "callsheet is required")
+
+    payload = {"callsheet": data.callsheet, "instruction": data.instruction.strip()}
+    run_id = str(uuid.uuid4())
+    agent_result = await _flue_call("refine-callsheet", run_id, payload)
+    if isinstance(agent_result, dict) and set(agent_result.keys()) == {"result"}:
+        agent_result = agent_result["result"]
+    return {
+        "success": True,
+        "callsheet": agent_result.get("callsheet", data.callsheet),
+        "revision_notes": agent_result.get("revision_notes", []),
+        "source": "flue:refine-callsheet",
+    }
+
+@app.post("/callsheet/save")
+async def save_callsheet(data: CallSheetSave, _=Depends(require_api_key)):
+    """Persist a call-sheet snapshot under a stable id. Used by the frontend
+    when the producer wants to come back to it later. Project linkage is
+    optional — V1 does not require a Project record."""
+    csid = str(uuid.uuid4())
+    record = {
+        "id": csid,
+        "project_id": data.project_id,
+        "callsheet": data.callsheet,
+        "created_at": now(),
+    }
+    db_set(f"callsheet:{csid}", record)
+    if data.project_id:
+        db_sadd(f"project:{data.project_id}:callsheets", csid)
+    return {"success": True, "callsheet_id": csid}
+
+@app.post("/callsheet/get")
+async def get_callsheet(data: dict = None, _=Depends(require_api_key)):
+    csid = (data or {}).get("callsheet_id")
+    if not csid:
+        raise HTTPException(400, "callsheet_id is required")
+    record = db_get(f"callsheet:{csid}")
+    if not record:
+        raise HTTPException(404, "Call sheet not found")
+    return {"success": True, "record": record}
+
+@app.post("/callsheet/send")
+async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
+    """V1 mocked send. Logs intent + recipients to Redis so we can audit who
+    *would* have received what. Real Gmail OAuth + WhatsApp Business API
+    wiring is a Phase-2 lift; the UI surfaces the mocked status."""
+    cs = data.callsheet or {}
+    crew = cs.get("crew") or []
+    channels = data.channels or []
+    if not crew:
+        raise HTTPException(400, "callsheet has no crew to send to")
+    if not channels:
+        raise HTTPException(400, "at least one send channel is required")
+
+    # Filter recipients by channel — email needs an email; WhatsApp needs a phone.
+    email_recipients = [c for c in crew if (c.get("email") or "").strip()] if "email" in channels else []
+    whatsapp_recipients = [c for c in crew if (c.get("phone") or "").strip()] if "whatsapp" in channels else []
+
+    sid = str(uuid.uuid4())
+    record = {
+        "id": sid,
+        "project_id": data.project_id,
+        "channels": channels,
+        "shoot_date": (cs.get("shoot") or {}).get("date"),
+        "shoot_day": (cs.get("shoot") or {}).get("day_number"),
+        "unit_call": (cs.get("shoot") or {}).get("unit_call"),
+        "wrap_time": (cs.get("shoot") or {}).get("wrap_time"),
+        "email_count": len(email_recipients),
+        "whatsapp_count": len(whatsapp_recipients),
+        "crew_total": len(crew),
+        "status": "mocked",   # flips to "sent" once real integrations land
+        "created_at": now(),
+    }
+    db_set(f"callsheet-send:{sid}", record)
+    db_sadd("callsheet-sends:all", sid)
+
+    parts = []
+    if email_recipients:
+        parts.append(f"{len(email_recipients)} via email")
+    if whatsapp_recipients:
+        parts.append(f"{len(whatsapp_recipients)} via WhatsApp")
+    msg = "Mocked send logged: " + ", ".join(parts) + ". Gmail / WhatsApp integration is the next deploy."
+
+    return {
+        "success": True,
+        "send_id": sid,
+        "status": "mocked",
+        "message": msg,
+        "recipients": {
+            "email": [r.get("email") for r in email_recipients],
+            "whatsapp": [r.get("phone") for r in whatsapp_recipients],
+        },
+    }
 
 @app.post("/crew/enrich")
 async def enrich_crew_member(data: CrewEnrich, _=Depends(require_api_key)):
