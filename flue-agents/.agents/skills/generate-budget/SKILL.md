@@ -109,8 +109,9 @@ Conditionally — only if `qa` answers or script imply them:
 ## Rates and tax
 
 - Use mid-tier rates for the region unless `scale_tier` from `qa` says otherwise.
-- India: GST 18% on crew/equipment, 5% on catering, 12% on transport, 0% on contingency.
-- UK: VAT 20% where applicable; many film crew services are VAT-exempt → use `gst_rate: 0`.
+- `gst_rate` is a **decimal multiplier**, NOT a percent. Use `0.18` for 18%, never `18`. The renderer does `amount × gst_rate` directly.
+- India: GST → `gst_rate: 0.18` (crew/equipment), `0.05` (catering), `0.12` (transport), `0` (contingency).
+- UK: VAT → `gst_rate: 0.2` where applicable; many film crew services VAT-exempt → `0`.
 - USA / other: `gst_rate: 0` for all items.
 
 ## Confidence
