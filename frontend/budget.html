@@ -929,7 +929,7 @@ input[type=file]{display:none;}
       </div>
       <!-- Row 2: Headline totals -->
       <div class="summary-row totals">
-        <div class="sum-card emphasis"><div class="sum-label">Grand Total</div><div class="sum-val" id="s-grand">—</div><div class="sum-sub">incl. tax & contingency</div></div>
+        <div class="sum-card emphasis"><div class="sum-label">Grand Total</div><div class="sum-val" id="s-grand">—</div><div class="sum-sub" id="s-grand-sub">incl. tax & contingency</div></div>
         <div class="sum-card"><div class="sum-label">Per Day Average</div><div class="sum-val" id="s-day">—</div><div class="sum-sub">shoot days only</div></div>
       </div>
       <!-- Row 3: ATL / BTL / Post breakdown -->
@@ -2063,6 +2063,14 @@ function renderBudget(data) {
   const totalOthers = insurance + contingency;
   const grandTotal = totalATL + totalBTL + totalPost + totalOthers;
   const shootDays = Number(data.shoot_days) || 1;
+
+  // Make tax legibility explicit: producers were getting confused that the
+  // GST + insurance + contingency stack looked bigger than the line items.
+  // Surfacing the tax % directly on the Grand Total card answers that.
+  const totalGst = data.sections.reduce((sum, s) => sum + s.items.reduce((t, li) => t + (li._gst || 0), 0), 0);
+  const taxPct = grandTotal > 0 ? Math.round((totalGst / grandTotal) * 100) : 0;
+  const grandSub = document.getElementById('s-grand-sub');
+  if (grandSub) grandSub.textContent = `tax ${taxPct}% · incl. contingency`;
 
   // Bar-draw stagger: 8 cards now (3 + 2 + 3), so step a touch faster.
   const sumCards = document.querySelectorAll('.summary-stack .sum-card');

@@ -41,6 +41,21 @@ This is the most important rule. Each `qa` entry is something the producer told 
 
 A budget that ignores or contradicts a `qa` answer is a failure of this skill. If you find yourself producing a line item that doesn't reconcile with the answers, stop and reconcile first.
 
+## Never invent quantities
+
+Producers caught Mark hallucinating "catering for a 35-person crew" when no input mentioned 35 people. That kind of fabrication breaks trust faster than any other failure mode.
+
+**Hard rules:**
+- Crew sizes, day rates, talent fees, and unit counts MUST come from `qa`, `breakdown`, or `crew`. If the producer didn't say it, you don't know it.
+- If you need a number that isn't in the inputs, do ONE of these — not both:
+  1. Use a published market default for the region. Note the source in `sub` (e.g. "mid-tier ${region} day rate, 2026 market reference").
+  2. Mark the line `conf: "red"` with `note: "Confirm crew size before locking"` and use a placeholder estimate.
+- Never write "for a 35-person crew" in `sub` or `note` unless the producer told you the crew is 35. "Standard TVC crew" is fine; specific numbers are not.
+
+## Production : Post-production ratio
+
+For Indian TVCs, music videos, and feature work without heavy VFX, post production typically lands at 15–25% of the production budget (sections 12900 + 13100 vs everything else below-the-line). If you find yourself emitting post at <12% of production with no VFX section, stop — you've under-built post. Add Editorial (12900) covering offline + online edit, Post Sound (13100) covering mix + foley, and grade if missing.
+
 ## Output shape
 
 Return JSON matching this exact structure (the frontend renders it directly):

@@ -19,6 +19,7 @@ import redis as redis_lib
 from datetime import datetime, timezone
 import httpx
 import time
+import hashlib
 import collections
 from dotenv import load_dotenv
 
@@ -572,6 +573,78 @@ async def parse_script(file: UploadFile = File(...), _=Depends(require_api_key))
 
 _FLUE_BASE_URL = os.getenv("FLUE_BASE_URL", "http://localhost:3583")
 
+# ── BUDGET ENGINE GUARDRAILS ──────────────────────────────────────────────────
+# Same input → same output. Krish's biggest complaint from the test runs was
+# that running NIKE TVC twice with identical answers produced ₹1.95Cr vs
+# ₹3.21Cr. LLM determinism is impossible at temp>0, so we hash the inputs and
+# cache the result. TTL = 7 days (long enough for a producer to share a link
+# with their team and have it look identical, short enough that a tweaked
+# prompt or rate card eventually invalidates).
+_BUDGET_CACHE_TTL_SECONDS = 7 * 24 * 3600
+
+def _budget_cache_key(payload: dict) -> str:
+    # Stable serialisation: sort_keys + drop None so two semantically equal
+    # inputs hash the same. Project state isn't included — caching across
+    # producers is fine, but project_id is.
+    canon = {
+        "script": payload.get("script", "").strip(),
+        "region": payload.get("region", "india"),
+        "currency": payload.get("currency"),
+        "qa": payload.get("qa") or [],
+        "breakdown": payload.get("breakdown"),
+    }
+    blob = json.dumps(canon, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(blob.encode("utf-8")).hexdigest()[:24]
+    return f"budget-cache:{digest}"
+
+def _budget_cache_get(payload: dict) -> Optional[dict]:
+    if not r:  # in-memory fallback isn't persistent enough to be worth caching
+        return None
+    key = _budget_cache_key(payload)
+    raw = r.get(key)
+    return json.loads(raw) if raw else None
+
+def _budget_cache_set(payload: dict, result: dict) -> None:
+    if not r:
+        return
+    key = _budget_cache_key(payload)
+    r.setex(key, _BUDGET_CACHE_TTL_SECONDS, json.dumps(result))
+
+# Production : Post-production sanity check. Indian TVCs typically run
+# post at 15–25% of production unless heavy VFX is flagged. Anything below
+# 10% with no VFX section means the agent under-built post — happens because
+# Haiku sometimes drops the 12900/13100 sections altogether under prompt
+# pressure. Returns a corrective hint string we feed back to the agent for
+# one retry, or None if the budget looks balanced.
+def _post_ratio_hint(budget: dict) -> Optional[str]:
+    sections = budget.get("sections") or []
+    prod_total = 0
+    post_total = 0
+    has_vfx = False
+    for s in sections:
+        items_total = sum(float(li.get("amount") or 0) for li in (s.get("items") or []))
+        stype = s.get("type", "")
+        code = str(s.get("code") or "")
+        if stype == "below_the_line" or stype == "above_the_line":
+            prod_total += items_total
+        elif stype == "post" or code.startswith("129") or code.startswith("131") or code.startswith("133"):
+            post_total += items_total
+        if code == "13300" or "vfx" in (s.get("name") or "").lower():
+            has_vfx = True
+    if prod_total <= 0:
+        return None
+    ratio = post_total / prod_total
+    if ratio < 0.12 and not has_vfx:
+        return (
+            f"POST PRODUCTION IS UNDERWEIGHT: post_total={post_total:.0f} is only "
+            f"{ratio*100:.1f}% of production_total={prod_total:.0f}. For Indian TVC/film "
+            f"productions without significant VFX, post should be at least 15–25% of "
+            f"production. Expand sections 12900 (Editorial), 13100 (Post Sound), and add "
+            f"colour grade if missing. Resend the full budget with corrected post."
+        )
+    return None
+
+
 async def _flue_call(agent_name: str, run_id: str, payload: dict) -> dict:
     url = f"{_FLUE_BASE_URL}/agents/{agent_name}/{run_id}"
     try:
@@ -623,20 +696,53 @@ async def generate_budget(data: BudgetGenerate, _=Depends(require_api_key)):
     }
     if data.breakdown:
         payload["breakdown"] = data.breakdown
+
+    # Cache lookup — same canonical inputs always return the same budget.
+    # Project context (project record + crew) doesn't go into the cache key
+    # because it would defeat the point: producers want NIKE TVC + same QA
+    # to render the same number every time, regardless of project metadata.
+    cached = _budget_cache_get(payload)
+
     if project:
         payload["project"] = project
         payload["crew"] = crew
 
     run_id = data.project_id or str(uuid.uuid4())
-    agent_result = await _flue_call("generate-budget", run_id, payload)
-    # Flue wraps `session.prompt({result: schema})` returns in `{result: ...}` on the wire.
-    # Unwrap so callers see the flat budget object the schema describes.
-    if isinstance(agent_result, dict) and set(agent_result.keys()) == {"result"}:
-        agent_result = agent_result["result"]
+
+    if cached is not None:
+        agent_result = cached
+        cache_hit = True
+    else:
+        agent_result = await _flue_call("generate-budget", run_id, payload)
+        # Flue wraps `session.prompt({result: schema})` returns in `{result: ...}` on the wire.
+        # Unwrap so callers see the flat budget object the schema describes.
+        if isinstance(agent_result, dict) and set(agent_result.keys()) == {"result"}:
+            agent_result = agent_result["result"]
+
+        # Post:Production ratio guardrail — one retry if the agent
+        # under-built post production. We append a corrective hint to the
+        # script field so the prompt sees the issue without changing the
+        # schema.
+        hint = _post_ratio_hint(agent_result) if isinstance(agent_result, dict) else None
+        if hint:
+            retry_payload = {**payload, "script": (payload.get("script") or "") + "\n\n[CORRECTION]\n" + hint}
+            retry_result = await _flue_call("generate-budget", run_id, retry_payload)
+            if isinstance(retry_result, dict) and set(retry_result.keys()) == {"result"}:
+                retry_result = retry_result["result"]
+            # Only accept the retry if it actually fixed the imbalance.
+            if isinstance(retry_result, dict) and not _post_ratio_hint(retry_result):
+                agent_result = retry_result
+
+        # Persist successful (post-guardrail) results to the cache.
+        cache_payload = dict(payload)
+        cache_payload.pop("project", None)
+        cache_payload.pop("crew", None)
+        _budget_cache_set(cache_payload, agent_result)
+        cache_hit = False
 
     if not data.project_id:
         # Standalone (scriptless) flow — return without persisting.
-        return {"success": True, "budget": {"budget_data": agent_result, "qa": qa, "source": "flue:generate-budget"}}
+        return {"success": True, "budget": {"budget_data": agent_result, "qa": qa, "source": "flue:generate-budget", "cache_hit": cache_hit}}
 
     bid = str(uuid.uuid4())
     budget = {
@@ -648,6 +754,7 @@ async def generate_budget(data: BudgetGenerate, _=Depends(require_api_key)):
         "created_at": now(),
         "locked": False,
         "source": "flue:generate-budget",
+        "cache_hit": cache_hit,
     }
     db_set(f"budget:{data.project_id}:latest", budget)
     db_set(f"budget:{bid}", budget)
