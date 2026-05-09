@@ -1385,30 +1385,217 @@ async function startFlow() {
   await generateQuestions(scriptText);
 }
 
+// Every Mark question must declare which budget code(s) it influences. A
+// question that doesn't move money (e.g. "are locations locked?") is noise
+// and gets rejected here — that was Krish's #7, #8, #10. Section codes
+// match flue-agents/.flue/agents/generate-budget.ts.
+const BUDGET_CODES = new Set([
+  '10000','10300','10600','10700','10800',
+  '11000','11200','11300','11400','11500','11800','11900',
+  '12000','12300','12400','12600','12800','12900',
+  '13100','13300','13700','14000',
+]);
+
+function validateQuestionBatch(batch) {
+  if (!batch || !Array.isArray(batch.questions) || !batch.questions.length) {
+    throw new Error('Mark didn\'t return any questions');
+  }
+  batch.questions.forEach((q, i) => {
+    if (!q.question || typeof q.question !== 'string') {
+      throw new Error(`Question ${i+1} missing text`);
+    }
+    if (!Array.isArray(q.affects) || !q.affects.length) {
+      throw new Error(`Question ${i+1} ("${q.question.slice(0,40)}…") didn\'t declare which budget codes it influences`);
+    }
+    const bad = q.affects.filter(c => !BUDGET_CODES.has(String(c)));
+    if (bad.length) {
+      throw new Error(`Question ${i+1} cites unknown budget codes: ${bad.join(', ')}`);
+    }
+    if (!Array.isArray(q.options) || q.options.length < 2) {
+      throw new Error(`Question ${i+1} needs at least 2 options`);
+    }
+  });
+  return batch;
+}
+
+// Try the LLM call up to twice; if both pass return null on the second one,
+// surface the second error. Validation runs in between.
+async function callQuestionPrompt(systemPrompt, userPrompt, attempts = 2) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const response = await callMark(systemPrompt, userPrompt, 1200);
+      const data = parseJSON(response);
+      validateQuestionBatch(data);
+      return data;
+    } catch (e) {
+      lastErr = e;
+      // On retry, append the error so the model knows what it got wrong.
+      userPrompt = userPrompt + `\n\nPREVIOUS ATTEMPT FAILED VALIDATION: ${e.message}\nFix it and respond again.`;
+    }
+  }
+  throw lastErr;
+}
+
 async function generateQuestions(script) {
   const container = document.getElementById('questions-container');
-  container.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:20px;text-align:center;">Mark is reading your script...</div>';
-
-  const m = regionMeta[region];
-  const systemPrompt = `You are Mark, an expert ${m.label} film production budgeting AI. You have read a script/brief and need to ask the producer 6 smart questions before generating a budget. Return ONLY valid JSON, no markdown, no explanation:
-{
-  "intro": "Short warm intro referencing the script (1-2 sentences, mention what type of production you detected)",
-  "questions": [
-    {"id": "q1", "question": "Question text", "options": ["Option 1", "Option 2", "Option 3", "Option 4"]}
-  ]
-}
-Always ask about: 1) specific shoot locations or cities within the ${m.label} market, 2) budget scale tier (low/mid/high), 3) DOP attached or open market, 4) locations locked or estimating, 5) exact shoot days, 6) anything specific flagged by the script (stunts, VFX, choreography, etc). For location questions provide at least 4-6 specific options relevant to the ${m.label} market. Keep questions conversational not form-like.`;
+  container.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:20px;text-align:center;">Mark is reading your script…</div>';
 
   try {
-    const response = await callMark(systemPrompt, `Read this script and generate pre-budget questions:\n\n${script.substring(0, 4000)}`, 1000);
-    const data = parseJSON(response);
-    document.getElementById('intro-text').innerHTML = data.intro;
-    questions = data.questions;   // preserve text + options so we can build qa pairs later
+    // Pass 1 — three grounding questions (location, scale, shoot days). These
+    // shape rate band + day multiplier + location lines, so they ALWAYS move
+    // money. We need them before generating Pass 2 since follow-ups depend
+    // on these answers.
+    const pass1 = await generateGroundingQuestions(script);
+    document.getElementById('intro-text').innerHTML = pass1.intro;
+
+    // Render Pass 1 questions immediately — producer can start answering
+    // while Pass 2 generates in the background.
+    questions = pass1.questions;
     renderQuestions(questions, container);
+    appendFollowUpPlaceholder(container);
+
+    // Pass 2 — three contextual follow-ups. Conditioned on what Pass 1
+    // asked (so the script context is known) but NOT on Pass 1 answers
+    // (those come from the producer in real-time). This keeps the UX
+    // synchronous: producer sees all 6 questions at once, but the LLM had
+    // two cracks at making them relevant. Fire and forget; if it fails
+    // silently we'll fall back to a static set.
+    try {
+      const pass2 = await generateContextualQuestions(script, pass1.questions);
+      questions = pass1.questions.concat(pass2.questions);
+      // Re-render with the full 6-question batch, preserving Pass 1 answers.
+      const preservedAnswers = { ...answers };
+      renderQuestions(questions, container);
+      Object.assign(answers, preservedAnswers);
+      Object.entries(preservedAnswers).forEach(([qid, val]) => restoreAnswerSelection(qid, val));
+      refreshSubmitGate();
+    } catch (e) {
+      console.warn('Pass 2 failed, falling back to defaults:', e.message);
+      questions = pass1.questions.concat(fallbackContextualQuestions());
+      const preserved = { ...answers };
+      renderQuestions(questions, container);
+      Object.assign(answers, preserved);
+      Object.entries(preserved).forEach(([qid, val]) => restoreAnswerSelection(qid, val));
+      refreshSubmitGate();
+    }
   } catch(e) {
     showError('Error reading script: ' + e.message);
     goTo('step1');
   }
+}
+
+// Pass 1: foundational questions. Always 3, always cost-mover, always
+// answerable from the script alone. The model is told what each question
+// must achieve — not just what to ask.
+async function generateGroundingQuestions(script) {
+  const m = regionMeta[region];
+  const sys = `You are Mark, an expert ${m.label} production-budget AI. You will read a script/brief and ask exactly 3 grounding questions that DIRECTLY change line-item amounts on the budget. Return ONLY valid JSON, no markdown.
+
+OUTPUT SHAPE
+{
+  "intro": "1-2 warm sentences referencing what kind of production this is (TVC, music video, OTT, feature, etc.) — speak as Mark.",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Question text — conversational, not form-like.",
+      "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+      "affects": ["12400"]
+    }
+  ]
+}
+
+QUESTION DESIGN RULES
+- Every question MUST list \`affects\`: an array of one or more budget codes from this set: 10000, 10300, 10600, 10700, 10800, 11000, 11200, 11300, 11400, 11500, 11800, 11900, 12000, 12300, 12400, 12600, 12800, 12900, 13100, 13300, 13700, 14000.
+- A question whose answer doesn't change a line item's AMOUNT is forbidden. Do NOT ask about whether locations are "locked" vs estimating, whether a DOP is attached vs open market, or any project-management workflow status.
+- The 3 grounding questions must cover, in this order:
+  1. Specific cities/locations within the ${m.label} market for the shoot. Provide 4–6 region-specific options (no generic "City A"). Affects 12400, 12300.
+  2. Budget scale tier (low / mid / high) with explicit ${m.label} rate-band ranges in the option labels. Affects 10300, 10600, 11300, 11500 (i.e. drives rate band).
+  3. Exact shoot days as a number. Provide options like "1 day", "2 days", "3–5 days", "6–10 days", "10+ days" — whatever fits the script. Affects 10800, 11300, 11500, 12300, 12600 (any day-rate item).
+- Options must be discrete and exhaustive enough to be useful. Always include "Other" as an implicit fallback (the UI adds it).`;
+
+  const user = `Read this script/brief and generate the 3 grounding questions:\n\n${script.substring(0, 4000)}`;
+  return await callQuestionPrompt(sys, user, 2);
+}
+
+// Pass 2: contextual follow-ups. Always 3, conditioned on the script. These
+// are the cost-movers that depend on what's actually in the script: lead
+// cast handling, crew size, and any flagged extras (stunts/VFX/choreography).
+async function generateContextualQuestions(script, pass1) {
+  const m = regionMeta[region];
+  const askedQs = pass1.map((q, i) => `${i+1}. ${q.question}`).join('\n');
+  const sys = `You are Mark, continuing the producer briefing for a ${m.label} production. Three grounding questions have been asked already. Generate THREE more cost-mover questions, each starting at id "q4". Return ONLY valid JSON, no markdown.
+
+OUTPUT SHAPE — same as before
+{
+  "questions": [
+    { "id": "q4", "question": "...", "options": ["..."], "affects": ["10700"] }
+  ]
+}
+
+QUESTION DESIGN RULES
+- Same \`affects\` requirement: every question lists ≥1 budget code from {10000, 10300, 10600, 10700, 10800, 11000, 11200, 11300, 11400, 11500, 11800, 11900, 12000, 12300, 12400, 12600, 12800, 12900, 13100, 13300, 13700, 14000}.
+- Every question must change a line-item AMOUNT. Forbidden: workflow questions ("are X locked", "is Y attached"), preference questions that don't drive cost.
+- The 3 follow-ups must cover, with priority, in this order — PICK from these patterns based on what the script implies:
+  • Principal cast fee handling — "Should I include lead cast fees in this budget, or exclude them as out-of-budget? If included, at roughly what day rate or total fee?" Affects 10700. ALWAYS ASK THIS unless the script makes it impossible (e.g. animation with no actors).
+  • Crew headcount — "What crew size are you planning for? (drives catering and transport)" with options like "Small (≤20)", "Mid (20–40)", "Large (40–80)", "XL (80+)". Affects 12600, 12300, 10800.
+  • Extras flagged in the script — pick the most prominent special element (stunts → 11200; choreography/dancers → 11900; VFX → 13300; outstation travel → 12800; major set build → 11000). Ask in concrete terms: "How many days of stunt work?" not "do you need stunts?".
+
+Already-asked Pass 1 questions (do not repeat):
+${askedQs}`;
+
+  const user = `Script/brief:\n\n${script.substring(0, 4000)}`;
+  return await callQuestionPrompt(sys, user, 2);
+}
+
+// Used when Pass 2 fails — keeps the producer flow moving with sensible
+// defaults instead of a hard failure. Each question still declares
+// `affects` so the rest of the pipeline holds invariants.
+function fallbackContextualQuestions() {
+  return [
+    {
+      id: 'q4',
+      question: 'Should I include lead cast fees in this budget, or exclude them?',
+      options: ['Exclude — out-of-budget', 'Include at standard rate', 'Include at premium rate'],
+      affects: ['10700'],
+    },
+    {
+      id: 'q5',
+      question: 'What crew size are you planning for?',
+      options: ['Small (under 20)', 'Mid (20–40)', 'Large (40–80)', 'XL (80+)'],
+      affects: ['12600', '12300', '10800'],
+    },
+    {
+      id: 'q6',
+      question: 'Are there any special elements that need their own budget — stunts, VFX, choreography, outstation travel?',
+      options: ['None', 'Stunts', 'VFX', 'Choreography', 'Outstation travel'],
+      affects: ['11200', '11900', '12800', '13300'],
+    },
+  ];
+}
+
+// When Pass 2 lands, we re-render the full question list. That nukes the DOM
+// for Pass 1 questions, so we replay each prior answer onto the new DOM
+// before rendering. Keeps producers from losing their answers.
+function restoreAnswerSelection(qid, value) {
+  const opts = document.querySelector(`[data-qid="${qid}"]`);
+  if (!opts) return;
+  const isMulti = opts.dataset.multi === 'true';
+  const values = isMulti ? value.split(',').map(s => s.trim()) : [value];
+  values.forEach(v => {
+    const target = [...opts.querySelectorAll('.q-opt')].find(o => o.dataset.val === v);
+    if (target) target.classList.add('sel');
+  });
+}
+
+// Rendered inside the questions container while Pass 2 is in flight. Tells
+// the producer Mark is still thinking so they don't submit early.
+function appendFollowUpPlaceholder(container) {
+  const ph = document.createElement('div');
+  ph.id = 'pass2-placeholder';
+  ph.style.cssText = 'padding:18px;text-align:center;font-size:11px;color:var(--muted);font-family:DM Mono,monospace;letter-spacing:0.06em;border-top:1px dashed var(--rule);margin-top:12px;';
+  ph.textContent = 'Mark is preparing 3 more contextual questions…';
+  container.appendChild(ph);
 }
 
 // ── QUESTION RENDERING ────────────────────────────────────────────────────────
