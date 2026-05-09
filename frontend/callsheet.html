@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AskMark — Call Sheet Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --paper:#F5F1E8;
+  --paper-deep:#EBE5D2;
+  --paper-edge:#E0D9C2;
+  --paper-shadow:rgba(20,17,13,0.04);
+  --ink:#14110D;
+  --ink-soft:#3A352D;
+  --muted:#8A8275;
+  --rule:rgba(20,17,13,0.10);
+  --rule-strong:rgba(20,17,13,0.16);
+  --accent:#C8330A;
+  --accent-deep:#8A2306;
+  --accent-tint:rgba(200,51,10,0.08);
+  --gold:#B8842D;
+  --green:#2E6B3E;
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-soft:cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:'Inter',-apple-system,sans-serif;font-size:16px;
+  font-feature-settings:"ss01","cv11";min-height:100vh;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:200;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:0.05;mix-blend-mode:multiply;
+}
+#app{max-width:1100px;margin:0 auto;padding:48px 28px 80px;position:relative;z-index:1;}
+.num{font-feature-settings:"tnum","cv11";font-variant-numeric:tabular-nums;}
+
+/* HEADER */
+.back-btn{
+  display:inline-flex;align-items:center;gap:10px;color:var(--muted);
+  font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;
+  text-decoration:none;margin-bottom:32px;cursor:pointer;background:none;border:none;
+  transition:color 0.2s var(--ease-out);
+}
+.back-btn:hover{color:var(--ink);}
+.back-btn .arr{display:inline-block;transition:transform 0.25s var(--ease-out);}
+.back-btn:hover .arr{transform:translateX(-4px);}
+
+.brand-mark{
+  width:56px;height:56px;border-radius:50%;
+  background:var(--ink);color:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:26px;
+  margin:0 auto 18px;
+  box-shadow:0 1px 0 rgba(255,255,255,0.6) inset, 0 8px 24px rgba(20,17,13,0.12);
+}
+.hero-title{
+  font-family:'Fraunces',serif;font-weight:600;font-size:clamp(34px,5vw,54px);
+  color:var(--ink);line-height:1.05;letter-spacing:-0.015em;margin-bottom:10px;
+  font-variation-settings:"opsz" 144;
+}
+.hero-title em{font-style:italic;font-weight:400;color:var(--accent);}
+.hero-sub{font-size:15px;color:var(--ink-soft);max-width:560px;margin:0 auto;line-height:1.6;}
+
+/* STEPS */
+.step{display:none;animation:stepIn 0.5s var(--ease-out);}
+.step.active{display:block;}
+@keyframes stepIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.step-indicator{
+  display:flex;align-items:center;gap:0;margin-bottom:36px;
+  padding:14px 18px;background:var(--paper-deep);border:1px solid var(--rule);
+}
+.si-item{display:flex;align-items:center;gap:10px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;}
+.si-num{
+  width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:600;flex-shrink:0;font-family:'Fraunces',serif;font-style:italic;
+  transition:all 0.3s var(--ease-out);
+}
+.si-item.active .si-num{background:var(--ink);color:var(--paper);}
+.si-item.done .si-num{background:transparent;color:var(--ink);border:1px solid var(--ink);}
+.si-item.inactive .si-num{background:transparent;color:var(--muted);border:1px solid var(--rule-strong);}
+.si-item.active .si-label{color:var(--ink);}
+.si-item.done .si-label{color:var(--ink-soft);}
+.si-item.inactive .si-label{color:var(--muted);}
+.si-line{flex:1;height:1px;background:var(--rule-strong);margin:0 14px;min-width:16px;}
+
+/* PANELS, INPUTS, BUTTONS */
+.panel{background:var(--paper-deep);border:1px solid var(--rule);padding:24px;margin-bottom:18px;}
+.panel-title{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px;}
+.panel-title em{color:var(--accent);font-style:italic;}
+
+textarea, input[type=text], input[type=email], input[type=tel], input[type=date], select{
+  width:100%;background:var(--paper);border:1px solid var(--rule);color:var(--ink);
+  font-family:'Inter',sans-serif;font-size:14px;padding:12px 14px;outline:none;line-height:1.6;
+  transition:border-color 0.2s,background 0.2s;
+}
+textarea{resize:vertical;min-height:120px;}
+textarea:focus, input:focus, select:focus{border-color:var(--ink);background:var(--paper);}
+input::placeholder, textarea::placeholder{color:var(--muted);}
+label.field-label{
+  display:block;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);
+  font-family:'DM Mono',monospace;margin-bottom:6px;
+}
+
+.btn-red{
+  background:var(--ink);border:none;color:var(--paper);
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  padding:14px 28px;cursor:pointer;position:relative;overflow:hidden;
+  transition:transform 0.25s var(--ease-out),background 0.2s;
+}
+.btn-red::after{
+  content:'';position:absolute;inset:0;background:var(--accent);
+  transform:translateY(101%);transition:transform 0.4s var(--ease-out);z-index:0;
+}
+.btn-red>span{position:relative;z-index:1;}
+.btn-red:hover::after{transform:translateY(0);}
+.btn-red:hover{transform:translateY(-1px);}
+.btn-red.disabled{opacity:0.35;pointer-events:none;cursor:default;}
+.btn-red.disabled::after{display:none;}
+
+.btn-ghost{
+  background:transparent;border:1px solid var(--rule-strong);color:var(--ink-soft);
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;
+  padding:11px 18px;cursor:pointer;
+  transition:border-color 0.2s,color 0.2s,background 0.2s;
+}
+.btn-ghost:hover{border-color:var(--ink);color:var(--ink);background:var(--paper);}
+
+.btn-sm{
+  padding:8px 14px;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+  cursor:pointer;border:1px solid var(--rule-strong);font-family:'Inter',sans-serif;
+  background:transparent;color:var(--ink-soft);transition:all 0.2s;
+}
+.btn-sm:hover{border-color:var(--ink);color:var(--ink);background:var(--paper);}
+.btn-sm-accent{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.btn-sm-accent:hover{background:var(--accent);border-color:var(--accent);color:var(--paper);}
+
+/* MODE TABS (for brief input + crew input) */
+.mode-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid var(--rule);}
+.mode-tab{
+  padding:10px 18px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--muted);background:transparent;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;transition:all 0.2s;
+}
+.mode-tab:hover{color:var(--ink-soft);}
+.mode-tab.active{color:var(--ink);border-bottom-color:var(--accent);}
+
+.mode-pane{display:none;}
+.mode-pane.active{display:block;animation:stepIn 0.3s var(--ease-out);}
+
+/* DEMO BUTTONS */
+.demo-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.demo-btn{
+  display:flex;align-items:center;gap:14px;padding:14px 18px;
+  background:var(--paper);border:1px solid var(--rule);color:var(--ink);
+  font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;
+  transition:border-color 0.2s,transform 0.3s var(--ease-out),box-shadow 0.3s;
+  text-align:left;
+}
+.demo-btn:hover{border-color:var(--ink);transform:translateY(-1px);box-shadow:0 2px 12px var(--paper-shadow);}
+.demo-btn.sel{border-color:var(--ink);background:var(--paper-deep);box-shadow:0 2px 12px var(--paper-shadow);}
+.demo-btn.sel .demo-num{color:var(--accent-deep);}
+.demo-num{
+  font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:24px;
+  color:var(--accent);line-height:1;flex-shrink:0;letter-spacing:-0.01em;
+}
+.demo-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.06em;margin-top:2px;}
+
+/* UPLOAD ZONE */
+.upload-zone{
+  border:1px dashed var(--rule-strong);background:var(--paper);padding:36px 24px;
+  text-align:center;cursor:pointer;position:relative;overflow:hidden;
+  transition:border-color 0.25s,background 0.25s;
+}
+.upload-zone:hover{border-color:var(--ink);}
+.upload-zone.drag-active{border-color:var(--ink);border-style:solid;background:var(--paper-deep);}
+input[type=file]{display:none;}
+
+/* CREW TABLE */
+.crew-table{
+  background:var(--paper);border:1px solid var(--rule);overflow:hidden;
+}
+.crew-row{
+  display:grid;grid-template-columns:1.4fr 1.2fr 1.4fr 1.4fr 1fr 32px;gap:1px;
+  background:var(--rule);border-bottom:1px solid var(--rule);
+}
+.crew-row:last-child{border-bottom:none;}
+.crew-row.crew-hdr{background:var(--paper-edge);}
+.crew-row.crew-hdr > div{
+  padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--muted);font-family:'DM Mono',monospace;background:var(--paper-edge);
+}
+.crew-cell{background:var(--paper);padding:0;}
+.crew-cell input, .crew-cell select{
+  border:none;padding:11px 12px;background:transparent;font-size:13px;
+}
+.crew-cell input:focus, .crew-cell select:focus{background:var(--paper-deep);}
+.crew-remove{
+  background:var(--paper);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--muted);font-size:14px;transition:color 0.2s;
+}
+.crew-remove:hover{color:var(--accent);}
+.crew-add-btn{
+  display:inline-flex;align-items:center;gap:8px;margin-top:12px;
+  padding:8px 14px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;
+  background:transparent;border:1px solid var(--rule-strong);color:var(--ink-soft);cursor:pointer;
+  text-transform:uppercase;transition:all 0.2s;
+}
+.crew-add-btn:hover{border-color:var(--ink);color:var(--ink);}
+
+/* SHOOT DETAILS GRID */
+.shoot-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.shoot-grid > .full{grid-column:1/-1;}
+
+/* CALL SHEET PREVIEW */
+.callsheet-doc{
+  background:#fff;color:#14110D;border:1px solid var(--rule);padding:0;
+  font-family:'Inter',sans-serif;font-size:11px;line-height:1.5;
+  max-width:840px;margin:0 auto 18px;box-shadow:0 4px 24px var(--paper-shadow);
+}
+.cs-header{
+  display:grid;grid-template-columns:1.2fr 2fr 1.4fr;
+  border-bottom:2px solid #14110D;
+}
+.cs-header > div{padding:14px 18px;border-right:1px solid var(--rule);}
+.cs-header > div:last-child{border-right:none;}
+.cs-h-label{
+  font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:#8A8275;
+  font-family:'DM Mono',monospace;margin-bottom:4px;
+}
+.cs-h-val{font-family:'Fraunces',serif;font-size:14px;font-weight:500;}
+.cs-banner{
+  background:#14110D;color:#F5F1E8;padding:14px 22px;
+  display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;
+}
+.cs-banner-item{text-align:center;}
+.cs-banner-item:first-child{text-align:left;}
+.cs-banner-item:last-child{text-align:right;}
+.cs-banner-label{
+  font-size:8px;letter-spacing:0.16em;text-transform:uppercase;
+  font-family:'DM Mono',monospace;opacity:0.7;margin-bottom:4px;
+}
+.cs-banner-val{
+  font-family:'Fraunces',serif;font-size:24px;font-weight:500;letter-spacing:-0.01em;
+  color:#C8330A;font-variant-numeric:tabular-nums;
+}
+.cs-section{padding:14px 22px;border-bottom:1px solid var(--rule);}
+.cs-section:last-child{border-bottom:none;}
+.cs-section-title{
+  font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#C8330A;
+  font-family:'DM Mono',monospace;margin-bottom:10px;font-weight:600;
+}
+.cs-text{font-size:12px;line-height:1.65;white-space:pre-wrap;}
+.cs-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.cs-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.cs-emergency-item .cs-section-title{margin-bottom:4px;}
+
+.cs-crew-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;}
+.cs-crew-table th{
+  text-align:left;padding:6px 10px;background:var(--paper-edge);
+  font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8275;
+  font-family:'DM Mono',monospace;font-weight:600;
+}
+.cs-crew-table td{padding:7px 10px;border-bottom:1px solid var(--rule);}
+.cs-crew-table tr:last-child td{border-bottom:none;}
+.cs-dept-row td{
+  background:var(--paper-deep);font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:0.12em;text-transform:uppercase;color:#3A352D;font-weight:600;
+  padding:6px 10px;
+}
+.cs-footer{
+  padding:12px 22px;background:var(--paper-deep);
+  font-size:9px;color:#8A8275;font-family:'DM Mono',monospace;letter-spacing:0.06em;
+  text-align:center;
+}
+
+/* STEP 4 — REFINE (split view) */
+.refine-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:18px;}
+@media (max-width:920px){.refine-grid{grid-template-columns:1fr;}}
+.refine-chat{
+  background:var(--paper-deep);border:1px solid var(--rule);
+  display:flex;flex-direction:column;min-height:520px;max-height:75vh;
+}
+.refine-chat-title{
+  padding:14px 18px;border-bottom:1px solid var(--rule);
+  font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);
+}
+.refine-chat-title em{color:var(--accent);font-style:italic;}
+.chat-log{flex:1;padding:14px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+.chat-msg{font-size:13px;line-height:1.55;}
+.chat-msg.user{align-self:flex-end;background:var(--ink);color:var(--paper);padding:10px 14px;max-width:80%;}
+.chat-msg.mark{
+  align-self:flex-start;background:var(--paper);border:1px solid var(--rule);padding:10px 14px;max-width:90%;
+  color:var(--ink-soft);
+}
+.chat-msg.mark .chat-mark-tag{
+  font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);
+  font-family:'DM Mono',monospace;margin-bottom:4px;display:block;
+}
+.chat-suggestions{
+  padding:10px 18px;display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--rule);
+}
+.chat-chip{
+  font-size:11px;padding:6px 12px;background:var(--paper);border:1px solid var(--rule-strong);
+  cursor:pointer;color:var(--ink-soft);font-family:'Inter',sans-serif;
+  transition:all 0.2s;
+}
+.chat-chip:hover{border-color:var(--ink);color:var(--ink);}
+.chat-input-row{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--rule);background:var(--paper);}
+.chat-input-row input{padding:10px 12px;font-size:13px;}
+.chat-send-btn{
+  padding:10px 18px;background:var(--ink);color:var(--paper);border:none;cursor:pointer;
+  font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;
+  transition:background 0.2s;
+}
+.chat-send-btn:hover{background:var(--accent);}
+.chat-send-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+.refine-preview-pane{
+  background:var(--paper-deep);border:1px solid var(--rule);padding:14px;
+  max-height:75vh;overflow-y:auto;
+}
+
+/* STEP 5 — SEND */
+.channel-toggle{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:18px 20px;background:var(--paper);border:1px solid var(--rule);
+  margin-bottom:10px;cursor:pointer;transition:all 0.2s;
+}
+.channel-toggle:hover{border-color:var(--rule-strong);}
+.channel-toggle.sel{border-color:var(--ink);background:var(--paper-deep);}
+.channel-info{flex:1;}
+.channel-name{font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);}
+.channel-desc{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-top:3px;}
+.channel-tag{
+  font-size:9px;font-family:'DM Mono',monospace;padding:3px 8px;
+  border:1px solid var(--gold);color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;
+}
+.channel-toggle .channel-check{
+  width:22px;height:22px;border:2px solid var(--rule-strong);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:13px;font-weight:700;color:transparent;transition:all 0.2s;
+}
+.channel-toggle.sel .channel-check{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+
+.send-summary{
+  background:var(--paper-deep);border:1px solid var(--rule);padding:18px 22px;
+  margin-bottom:14px;
+}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;}
+.summary-row:not(:last-child){border-bottom:1px solid var(--rule);}
+.summary-label{color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;}
+.summary-val{color:var(--ink);font-weight:500;}
+
+.next-day-banner{
+  background:var(--ink);color:var(--paper);padding:18px 22px;margin-top:18px;
+  display:none;
+}
+.next-day-banner.show{display:block;}
+.next-day-title{font-family:'Fraunces',serif;font-weight:500;font-size:17px;margin-bottom:4px;}
+.next-day-title em{color:var(--accent);font-style:italic;}
+.next-day-sub{font-size:12px;opacity:0.8;font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;}
+.next-day-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.next-day-actions button{
+  background:transparent;color:var(--paper);border:1px solid rgba(245,241,232,0.4);
+  padding:9px 16px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;
+  text-transform:uppercase;cursor:pointer;transition:all 0.2s;
+}
+.next-day-actions button:hover{border-color:var(--paper);background:rgba(245,241,232,0.08);}
+.next-day-actions button.primary{background:var(--accent);border-color:var(--accent);}
+.next-day-actions button.primary:hover{background:var(--accent-deep);border-color:var(--accent-deep);}
+
+/* SOFT EMAIL GATE */
+.gate-overlay{
+  position:fixed;inset:0;background:rgba(20,17,13,0.55);z-index:300;
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+.gate-overlay.active{display:flex;animation:stepIn 0.25s var(--ease-out);}
+.gate-card{
+  background:var(--paper);border:1px solid var(--rule-strong);max-width:440px;width:100%;
+  padding:30px 32px;box-shadow:0 20px 60px rgba(20,17,13,0.20);
+}
+.gate-eyebrow{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);font-family:'DM Mono',monospace;margin-bottom:8px;}
+.gate-title{font-family:'Fraunces',serif;font-weight:500;font-size:24px;color:var(--ink);letter-spacing:-0.01em;margin-bottom:8px;}
+.gate-title em{font-style:italic;color:var(--accent);font-weight:400;}
+.gate-sub{font-size:13px;color:var(--ink-soft);line-height:1.55;margin-bottom:18px;}
+.gate-form{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.gate-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
+.gate-skip{background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;padding:6px 10px;}
+.gate-error{font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;margin-top:6px;display:none;}
+.gate-error.show{display:block;}
+
+/* ERRORS / TOASTS */
+.error-msg{background:transparent;border:1px solid var(--accent);padding:14px 18px;color:var(--accent);font-size:13px;line-height:1.5;margin-bottom:18px;}
+.success-msg{background:transparent;border:1px solid var(--green);padding:14px 18px;color:var(--green);font-size:13px;line-height:1.5;margin-bottom:18px;}
+
+@media print {
+  body{background:#fff;}
+  body::after{display:none;}
+  .step:not(#step3):not(#print-target){display:none !important;}
+  .step-indicator,.back-btn,.action-btns,#hero-block{display:none !important;}
+  .callsheet-doc{box-shadow:none;border:none;max-width:none;}
+  #app{padding:0;max-width:none;}
+}
+
+@media (max-width:768px){
+  #app{padding:24px 16px 60px;}
+  .step-indicator{padding:10px 12px;overflow-x:auto;}
+  .si-label{display:none;}
+  .si-line{min-width:12px;margin:0 8px;}
+  .demo-btns{grid-template-columns:1fr;}
+  .shoot-grid{grid-template-columns:1fr;}
+  .crew-row{grid-template-columns:1fr 1fr;font-size:12px;}
+  .crew-row > div:nth-child(n+3){display:none;}
+  .crew-row.crew-hdr > div:nth-child(n+3){display:none;}
+  .cs-header,.cs-banner{grid-template-columns:1fr;}
+  .cs-header > div, .cs-banner-item{text-align:left !important;border-right:none;border-bottom:1px solid var(--rule);}
+  .cs-grid-2,.cs-grid-3{grid-template-columns:1fr;}
+  .btn-red{width:100%;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <button class="back-btn" id="back-btn" onclick="goBack()"><span class="arr">←</span> <span id="back-btn-label">Back to home</span></button>
+
+  <div id="hero-block" style="text-align:center;padding:8px 0 36px;">
+    <div class="brand-mark">M</div>
+    <h1 class="hero-title">Brief to <em>Call Sheet.</em></h1>
+    <p class="hero-sub">Mark builds your call sheet from a brief and a crew list, lets you refine it in plain English, then sends it to your whole team. Input once, never again.</p>
+  </div>
+
+  <!-- STEP 1: BRIEF + CREW -->
+  <div class="step active" id="step1">
+    <div class="step-indicator">
+      <div class="si-item active"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">3</div><div class="si-label">Preview</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Refine</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Send</div></div>
+    </div>
+
+    <!-- BRIEF -->
+    <div class="panel">
+      <div class="panel-title">Production <em>brief</em></div>
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="type" onclick="setBriefMode('type')">Type brief</button>
+        <button class="mode-tab" data-mode="upload" onclick="setBriefMode('upload')">Upload script</button>
+        <button class="mode-tab" data-mode="demo" onclick="setBriefMode('demo')">Use demo</button>
+      </div>
+      <div class="mode-pane active" id="brief-type">
+        <textarea id="brief-text" placeholder="e.g. Royal Enfield Bullet 650 commercial. Night shoot at Royal Albert Hall. Client: Royal Enfield India. Director: Tarun Achpal. Unit call 20:00, wrap 08:00."></textarea>
+      </div>
+      <div class="mode-pane" id="brief-upload">
+        <div class="upload-zone" id="brief-upload-zone"
+             onclick="document.getElementById('brief-file').click()"
+             ondragover="briefDragOver(event)" ondragleave="briefDragLeave(event)" ondrop="briefDrop(event)">
+          <input type="file" id="brief-file" accept=".pdf,.txt,.fdx,.fountain" onchange="handleBriefFile(this.files[0])"/>
+          <div id="brief-upload-icon" style="margin-bottom:10px;">
+            <svg width="36" height="44" viewBox="0 0 40 48" fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4 L24 4 L36 16 L36 44 L4 44 Z"/>
+              <path d="M24 4 L24 16 L36 16"/>
+              <line x1="10" y1="24" x2="30" y2="24"/>
+              <line x1="10" y1="30" x2="30" y2="30"/>
+              <line x1="10" y1="36" x2="22" y2="36"/>
+            </svg>
+          </div>
+          <div id="brief-upload-title" style="font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload script</div>
+          <div id="brief-upload-sub" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — PDF, FDX, TXT, Fountain</div>
+        </div>
+      </div>
+      <div class="mode-pane" id="brief-demo">
+        <div class="demo-btns">
+          <button class="demo-btn" data-demo="music" onclick="loadDemoBrief('music')">
+            <span class="demo-num">01</span>
+            <span><div>Music Video</div><div class="demo-meta">Urban · night shoot · high energy</div></span>
+          </button>
+          <button class="demo-btn" data-demo="commercial" onclick="loadDemoBrief('commercial')">
+            <span class="demo-num">02</span>
+            <span><div>Commercial</div><div class="demo-meta">Studio · multi-talent · luxury</div></span>
+          </button>
+          <button class="demo-btn" data-demo="documentary" onclick="loadDemoBrief('documentary')">
+            <span class="demo-num">03</span>
+            <span><div>Documentary</div><div class="demo-meta">Outdoor · small crew · flexible</div></span>
+          </button>
+          <button class="demo-btn" data-demo="film" onclick="loadDemoBrief('film')">
+            <span class="demo-num">04</span>
+            <span><div>Film</div><div class="demo-meta">Narrative · large crew · 5am call</div></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREW -->
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="panel-title" style="margin-bottom:0;">Crew &amp; <em>cast</em></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-sm" onclick="document.getElementById('crew-csv').click()">Upload CSV</button>
+          <input type="file" id="crew-csv" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleCrewCsv(this.files[0])"/>
+        </div>
+      </div>
+      <div class="crew-table" id="crew-table">
+        <div class="crew-row crew-hdr">
+          <div>Name *</div><div>Role *</div><div>Department</div><div>Email *</div><div>Phone</div><div></div>
+        </div>
+        <!-- crew rows injected by JS -->
+      </div>
+      <button class="crew-add-btn" onclick="addCrewRow()">+ Add row</button>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-red disabled" id="step1-next" onclick="goTo('step2')"><span>Continue →</span></button>
+      <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;" id="step1-progress">Add a brief and at least one crew member</span>
+    </div>
+    <div id="step1-error" style="display:none;margin-top:14px;" class="error-msg"></div>
+  </div>
+
+  <!-- STEP 2: SHOOT DETAILS -->
+  <div class="step" id="step2">
+    <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
+      <div class="si-line"></div>
+      <div class="si-item active"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">3</div><div class="si-label">Preview</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Refine</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Send</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Shoot day <em>specifics</em></div>
+      <div class="shoot-grid">
+        <div>
+          <label class="field-label">Shoot date *</label>
+          <input type="date" id="shoot-date"/>
+        </div>
+        <div>
+          <label class="field-label">Shooting day *</label>
+          <select id="shoot-day-num">
+            <option value="">Select day</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Unit call time *</label>
+          <select id="shoot-call-time"></select>
+        </div>
+        <div>
+          <label class="field-label">Estimated wrap *</label>
+          <select id="shoot-wrap-time"></select>
+        </div>
+        <div class="full">
+          <label class="field-label">Scenes being shot</label>
+          <input type="text" id="shoot-scenes" placeholder="e.g. Scenes 1, 4, 7B — or short description"/>
+        </div>
+        <div class="full">
+          <label class="field-label">Shooting location(s) *</label>
+          <textarea id="shoot-locations" placeholder="Full address. Multiple locations on separate lines." style="min-height:90px;"></textarea>
+        </div>
+        <div>
+          <label class="field-label">Nearest A&amp;E hospital</label>
+          <textarea id="shoot-hospital" placeholder="Address + phone" style="min-height:70px;"></textarea>
+        </div>
+        <div>
+          <label class="field-label">Nearest police station</label>
+          <textarea id="shoot-police" placeholder="Address + phone" style="min-height:70px;"></textarea>
+        </div>
+        <div class="full">
+          <label class="field-label">Weather</label>
+          <input type="text" id="shoot-weather" placeholder="Auto-fetched in full build · type if known (max/min, wind, sunrise, sunset)"/>
+        </div>
+        <div class="full">
+          <label class="field-label">Production notes</label>
+          <textarea id="shoot-notes" placeholder="H&amp;S rules, site access, social media policy, parking — anything the crew needs to know."></textarea>
+        </div>
+        <div class="full">
+          <label class="field-label">Invoice address</label>
+          <textarea id="shoot-invoice" placeholder="Company address + email + job reference" style="min-height:70px;"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-red disabled" id="step2-next" onclick="finishStep2()"><span>Generate call sheet →</span></button>
+      <button class="btn-ghost" onclick="goTo('step1')">← Back</button>
+      <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;" id="step2-progress">Fill the required fields</span>
+    </div>
+  </div>
+
+  <!-- STEP 3: PREVIEW -->
+  <div class="step" id="step3">
+    <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
+      <div class="si-line"></div>
+      <div class="si-item active"><div class="si-num">3</div><div class="si-label">Preview</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Refine</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Send</div></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
+      <div>
+        <div style="font-family:'Fraunces',serif;font-weight:500;font-size:24px;color:var(--ink);">Your <em>call sheet.</em></div>
+        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-top:4px;">Review it. If it needs edits, talk to Mark in the next step.</div>
+      </div>
+      <div class="action-btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-sm" onclick="gateAction('export', () => window.print())">Download PDF</button>
+        <button class="btn-sm btn-sm-accent" onclick="goTo('step4')">Refine with Mark →</button>
+      </div>
+    </div>
+
+    <div id="callsheet-render"></div>
+
+    <div style="display:flex;gap:12px;margin-top:18px;">
+      <button class="btn-ghost" onclick="goTo('step2')">← Edit details</button>
+      <button class="btn-red" onclick="goTo('step4')"><span>Refine with Mark →</span></button>
+    </div>
+  </div>
+
+  <!-- STEP 4: REFINE -->
+  <div class="step" id="step4">
+    <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">3</div><div class="si-label">Preview</div></div>
+      <div class="si-line"></div>
+      <div class="si-item active"><div class="si-num">4</div><div class="si-label">Refine</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Send</div></div>
+    </div>
+
+    <div class="refine-grid">
+      <div class="refine-chat">
+        <div class="refine-chat-title">Chat with <em>Mark</em></div>
+        <div class="chat-log" id="chat-log">
+          <div class="chat-msg mark">
+            <span class="chat-mark-tag">Mark</span>
+            Your call sheet is ready. Tell me what to change in plain English — call time, locations, notes, anything. I'll update the document on the right.
+          </div>
+        </div>
+        <div class="chat-suggestions">
+          <div class="chat-chip" onclick="useChatSuggestion('Change the unit call to 07:00')">Change call to 07:00</div>
+          <div class="chat-chip" onclick="useChatSuggestion('Add a strict no-social-media note')">Add no-social-media</div>
+          <div class="chat-chip" onclick="useChatSuggestion('Update the wrap time to 22:00')">Wrap → 22:00</div>
+          <div class="chat-chip" onclick="useChatSuggestion('Add the nearest hospital — Barnet Hospital, Wellhouse Lane, EN5 3DL')">Add hospital</div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="Tell Mark what to change…" oninput="refreshChatGate()" onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="chat-send-btn" id="chat-send-btn" onclick="sendChat()" disabled>Send</button>
+        </div>
+      </div>
+      <div class="refine-preview-pane">
+        <div id="callsheet-render-refine"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:18px;">
+      <button class="btn-ghost" onclick="goTo('step3')">← Back to preview</button>
+      <button class="btn-red" onclick="goTo('step5')"><span>Send call sheet →</span></button>
+    </div>
+  </div>
+
+  <!-- STEP 5: SEND -->
+  <div class="step" id="step5">
+    <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">3</div><div class="si-label">Preview</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">4</div><div class="si-label">Refine</div></div>
+      <div class="si-line"></div>
+      <div class="si-item active"><div class="si-num">5</div><div class="si-label">Send</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Send <em>channels</em></div>
+      <div class="channel-toggle" id="ch-email" onclick="toggleChannel('email')">
+        <div class="channel-info">
+          <div class="channel-name">Gmail</div>
+          <div class="channel-desc">Personalised email per crew, PDF attached. Sends from your Gmail (one-time OAuth in full build).</div>
+        </div>
+        <span class="channel-tag">Mocked in V1</span>
+        <div class="channel-check">✓</div>
+      </div>
+      <div class="channel-toggle" id="ch-whatsapp" onclick="toggleChannel('whatsapp')">
+        <div class="channel-info">
+          <div class="channel-name">WhatsApp Broadcast</div>
+          <div class="channel-desc">Direct WhatsApp message to every crew member's number with call summary + link.</div>
+        </div>
+        <span class="channel-tag">Mocked in V1</span>
+        <div class="channel-check">✓</div>
+      </div>
+    </div>
+
+    <div class="send-summary" id="send-summary">
+      <div class="summary-row"><span class="summary-label">Shoot date</span><span class="summary-val" id="sum-date">—</span></div>
+      <div class="summary-row"><span class="summary-label">Shooting day</span><span class="summary-val" id="sum-day">—</span></div>
+      <div class="summary-row"><span class="summary-label">Unit call</span><span class="summary-val" id="sum-call">—</span></div>
+      <div class="summary-row"><span class="summary-label">Estimated wrap</span><span class="summary-val" id="sum-wrap">—</span></div>
+      <div class="summary-row"><span class="summary-label">Crew contacted</span><span class="summary-val" id="sum-crew">—</span></div>
+      <div class="summary-row"><span class="summary-label">Channels</span><span class="summary-val" id="sum-channels">—</span></div>
+    </div>
+
+    <div id="send-error" style="display:none;" class="error-msg"></div>
+    <div id="send-success" style="display:none;" class="success-msg"></div>
+
+    <div style="display:flex;gap:12px;margin-top:6px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-red disabled" id="send-btn" onclick="gateAction('send', sendCallSheet)"><span>Send call sheet →</span></button>
+      <button class="btn-ghost" onclick="goTo('step4')">← Back to refine</button>
+    </div>
+
+    <div class="next-day-banner" id="next-day-banner">
+      <div class="next-day-title">Should I prepare Day <em><span id="next-day-num">2</span>'s</em> call sheet now?</div>
+      <div class="next-day-sub">I'll pre-fill everything from today and you just confirm what's changing — date, scenes, anything different.</div>
+      <div class="next-day-actions">
+        <button class="primary" onclick="prepNextDay()">Yes — get ahead</button>
+        <button onclick="laterNextDay()">Remind me tomorrow</button>
+        <button onclick="dismissNextDay()">Not yet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SOFT EMAIL GATE -->
+<div class="gate-overlay" id="gate-overlay" onclick="closeGate(event)">
+  <div class="gate-card" onclick="event.stopPropagation()">
+    <div class="gate-eyebrow">Quick step</div>
+    <div class="gate-title">Before you <em>continue.</em></div>
+    <div class="gate-sub" id="gate-sub">Mark is in beta — leave your email so we know who's using the call sheet builder. We'll only follow up if there's something material to share.</div>
+    <div class="gate-form">
+      <input id="gate-email" type="email" placeholder="you@studio.com" autocomplete="email"/>
+      <input id="gate-role" type="text" placeholder="Role — e.g. Producer / 1st AD (optional)" autocomplete="organization-title"/>
+    </div>
+    <div class="gate-error" id="gate-error">Enter a valid email to continue.</div>
+    <div class="gate-actions">
+      <button class="gate-skip" onclick="skipGate()">Skip for now</button>
+      <button class="btn-red" onclick="submitGate()"><span>Continue →</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── BACKEND BASE ──────────────────────────────────────────────────────────────
+const MARK_API = (() => {
+  const url = new URL(window.location.href);
+  const fromQuery = url.searchParams.get('api');
+  if (fromQuery) localStorage.setItem('mark_api', fromQuery);
+  return localStorage.getItem('mark_api')
+    || (location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://backend-production-6ea4.up.railway.app');
+})();
+const MARK_API_KEY = localStorage.getItem('mark_api_key_header') || '';
+
+async function markFetch(path, { json, form, timeoutMs = 60000 } = {}) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {};
+  if (MARK_API_KEY) headers['X-API-Key'] = MARK_API_KEY;
+  let body;
+  if (form) body = form;
+  else if (json !== undefined) { headers['Content-Type'] = 'application/json'; body = JSON.stringify(json); }
+  try {
+    const resp = await fetch(`${MARK_API}${path}`, { method: 'POST', headers, body, signal: ctrl.signal });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || err.error?.message || `Server error ${resp.status}`);
+    }
+    return await resp.json();
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Request timed out — please try again.');
+    throw e;
+  } finally { clearTimeout(timer); }
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const DEPARTMENTS = ['Direction','Production','Camera','Lighting & Grip','Sound','Art Department','Costume & Makeup','Locations','Post Production','Cast','Other'];
+
+const callsheet = {
+  brief: '',
+  brief_source: 'type',                       // type | upload | demo
+  parsed_summary: null,
+  project_title: '',                          // set from brief context, used in header
+  crew: [],                                   // [{ id, name, role, department, email, phone }]
+  shoot: {
+    date: '', day_number: '', unit_call: '', wrap_time: '',
+    scenes: '', locations: '', hospital: '', police: '',
+    weather: '', production_notes: '', invoice_address: '',
+  },
+  send: { channels: [], status: 'draft' },
+  revisions: [],                              // [{ instruction, notes, ts }]
+};
+
+// ── BRIEF MODES ───────────────────────────────────────────────────────────────
+function setBriefMode(mode) {
+  callsheet.brief_source = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  document.querySelectorAll('.mode-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('brief-' + mode).classList.add('active');
+}
+
+const briefDemos = {
+  music: "Music video for indie pop artist 'Lila'. 1-day shoot. Urban locations — graffiti alley, rooftop, neon-lit street. Night shoot, unit call 18:00, wrap 04:00. Lead artist + 4 backup dancers. High-energy, handheld + Steadicam. Director: Vivek Mehra. Production company: Tigerbalm Films.",
+  commercial: "Royal Enfield Bullet 650 commercial. Studio shoot, single day. Client: Royal Enfield India. Director: Tarun Achpal. Production company: Incredible Maharaja Films. Talent: 2 lead actors + 8 supporting. Luxury treatment, slow-mo product detail. Unit call 09:00, wrap 21:00.",
+  documentary: "Documentary feature on Mumbai street food. 3rd shoot day in Mohammed Ali Road. Small crew (8 people). Outdoor / handheld. Sunrise call 05:30, wrap 11:00 to avoid heat. Director: Anita Chopra. Producer: Riya Sen.",
+  film: "Feature film 'The Long Road' — Day 12 of 28. Outdoor practical location, rural Rajasthan. Large crew (45 people). 5am unit call, wrap 19:00. Cast: 3 leads + 12 supporting. Director: Karan D'Souza. Producer: Vikram Kapoor.",
+};
+function loadDemoBrief(key) {
+  document.getElementById('brief-text').value = briefDemos[key];
+  callsheet.brief = briefDemos[key];
+  document.querySelectorAll('.demo-btn').forEach(b => b.classList.toggle('sel', b.dataset.demo === key));
+  // Auto-switch to Type so user can edit, but mark as demo origin.
+  setBriefMode('type');
+  callsheet.brief_source = 'demo';
+  refreshStep1Gate();
+}
+
+// ── BRIEF UPLOAD (drag-drop + click) ──────────────────────────────────────────
+function briefDragOver(e){ e.preventDefault(); document.getElementById('brief-upload-zone').classList.add('drag-active'); }
+function briefDragLeave(e){ if (e.target.id === 'brief-upload-zone') document.getElementById('brief-upload-zone').classList.remove('drag-active'); }
+function briefDrop(e){
+  e.preventDefault();
+  document.getElementById('brief-upload-zone').classList.remove('drag-active');
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) handleBriefFile(f);
+}
+async function handleBriefFile(file){
+  if (!file) return;
+  const sub = document.getElementById('brief-upload-sub');
+  const title = document.getElementById('brief-upload-title');
+  title.textContent = 'Reading…';
+  sub.textContent = file.name;
+
+  // PDFs go through the parser; everything else read as text directly.
+  if (/\.pdf$/i.test(file.name)) {
+    try {
+      const fd = new FormData(); fd.append('file', file);
+      const data = await markFetch('/script/parse', { form: fd, timeoutMs: 60000 });
+      callsheet.brief = data.extracted_text || file.name;
+      callsheet.parsed_summary = data.summary || null;
+      title.textContent = `Parsed · ${file.name}`;
+      sub.textContent = data.summary
+        ? `${data.summary.total_scenes} scenes · ${data.summary.unique_locations.length} locations`
+        : 'Script ready';
+    } catch (e) {
+      title.textContent = 'Parse failed';
+      sub.textContent = e.message + ' — paste the brief instead.';
+      return;
+    }
+  } else {
+    callsheet.brief = await file.text();
+    title.textContent = `Loaded · ${file.name}`;
+    sub.textContent = `${callsheet.brief.length.toLocaleString()} characters`;
+  }
+  callsheet.brief_source = 'upload';
+  refreshStep1Gate();
+}
+
+// ── CREW TABLE ────────────────────────────────────────────────────────────────
+function nextCrewId(){ return 'c-' + Math.random().toString(36).slice(2, 9); }
+function addCrewRow(prefill = {}) {
+  const row = {
+    id: nextCrewId(),
+    name: prefill.name || '',
+    role: prefill.role || '',
+    department: prefill.department || '',
+    email: prefill.email || '',
+    phone: prefill.phone || '',
+  };
+  callsheet.crew.push(row);
+  renderCrewTable();
+}
+function removeCrewRow(id){
+  callsheet.crew = callsheet.crew.filter(c => c.id !== id);
+  renderCrewTable();
+  refreshStep1Gate();
+}
+function updateCrewField(id, field, value){
+  const row = callsheet.crew.find(c => c.id === id);
+  if (row){ row[field] = value; refreshStep1Gate(); }
+}
+function renderCrewTable(){
+  const tbl = document.getElementById('crew-table');
+  // Wipe everything except the header row.
+  [...tbl.querySelectorAll('.crew-row:not(.crew-hdr)')].forEach(r => r.remove());
+  callsheet.crew.forEach(c => {
+    const r = document.createElement('div');
+    r.className = 'crew-row';
+    r.innerHTML = `
+      <div class="crew-cell"><input type="text" value="${escAttr(c.name)}" placeholder="Name"
+        oninput="updateCrewField('${c.id}','name',this.value)"/></div>
+      <div class="crew-cell"><input type="text" value="${escAttr(c.role)}" placeholder="Role"
+        oninput="updateCrewField('${c.id}','role',this.value)"/></div>
+      <div class="crew-cell"><select onchange="updateCrewField('${c.id}','department',this.value)">
+        <option value="">—</option>
+        ${DEPARTMENTS.map(d => `<option ${c.department===d?'selected':''}>${d}</option>`).join('')}
+      </select></div>
+      <div class="crew-cell"><input type="email" value="${escAttr(c.email)}" placeholder="email@…"
+        oninput="updateCrewField('${c.id}','email',this.value)"/></div>
+      <div class="crew-cell"><input type="tel" value="${escAttr(c.phone)}" placeholder="+44 …"
+        oninput="updateCrewField('${c.id}','phone',this.value)"/></div>
+      <div class="crew-remove" onclick="removeCrewRow('${c.id}')" title="Remove">×</div>
+    `;
+    tbl.appendChild(r);
+  });
+}
+function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
+function escHtml(s){ return String(s||'').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+
+// CSV / Excel upload — Papa parses both .csv and .xlsx (the latter only partially;
+// for .xlsx producers should export to CSV first).
+function handleCrewCsv(file){
+  if (!file) return;
+  Papa.parse(file, {
+    header: true, skipEmptyLines: true,
+    complete: results => {
+      const before = callsheet.crew.length;
+      results.data.forEach(row => {
+        const get = k => {
+          // Be forgiving with column names — match any case + common variants.
+          const want = k.toLowerCase();
+          for (const [key, val] of Object.entries(row)) {
+            if (String(key).toLowerCase().trim() === want) return String(val||'').trim();
+          }
+          return '';
+        };
+        const name = get('name');
+        const role = get('role');
+        const email = get('email');
+        if (!name && !role && !email) return;  // ignore blank rows
+        addCrewRow({ name, role, department: get('department'), email, phone: get('phone') });
+      });
+      // Pop the toast in the brief panel button.
+      const added = callsheet.crew.length - before;
+      if (added) showStep1Toast(`Imported ${added} crew member${added===1?'':'s'} from ${file.name}`);
+      refreshStep1Gate();
+    },
+    error: err => showStep1Toast('CSV parse error: ' + err.message, true),
+  });
+}
+function showStep1Toast(msg, isErr=false){
+  const el = document.getElementById('step1-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.classList.toggle('error-msg', isErr);
+  el.classList.toggle('success-msg', !isErr);
+  setTimeout(() => { el.style.display = 'none'; }, 4500);
+}
+
+// Sync brief textarea changes into state.
+document.addEventListener('DOMContentLoaded', () => {
+  // Pre-populate 4 blank crew rows (per spec).
+  for (let i = 0; i < 4; i++) addCrewRow();
+  // Wire the brief textarea.
+  document.getElementById('brief-text').addEventListener('input', e => {
+    callsheet.brief = e.target.value;
+    if (callsheet.brief_source !== 'demo') callsheet.brief_source = 'type';
+    refreshStep1Gate();
+  });
+  // Time dropdowns
+  fillTimeOptions('shoot-call-time');
+  fillTimeOptions('shoot-wrap-time');
+  fillDayNumberOptions();
+  wireShootInputs();
+});
+
+function fillTimeOptions(id){
+  const sel = document.getElementById(id);
+  sel.innerHTML = '<option value="">Select time</option>';
+  for (let h = 0; h < 24; h++) {
+    for (const m of [0, 30]) {
+      const v = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+      sel.innerHTML += `<option value="${v}">${v}</option>`;
+    }
+  }
+}
+function fillDayNumberOptions(){
+  const sel = document.getElementById('shoot-day-num');
+  for (let i = 1; i <= 200; i++) sel.innerHTML += `<option value="${i}">Day ${i}</option>`;
+}
+
+function wireShootInputs(){
+  const map = {
+    'shoot-date':'date','shoot-day-num':'day_number','shoot-call-time':'unit_call','shoot-wrap-time':'wrap_time',
+    'shoot-scenes':'scenes','shoot-locations':'locations','shoot-hospital':'hospital','shoot-police':'police',
+    'shoot-weather':'weather','shoot-notes':'production_notes','shoot-invoice':'invoice_address',
+  };
+  Object.entries(map).forEach(([elId, field]) => {
+    const el = document.getElementById(elId);
+    el.addEventListener('input', () => { callsheet.shoot[field] = el.value; refreshStep2Gate(); });
+    el.addEventListener('change', () => { callsheet.shoot[field] = el.value; refreshStep2Gate(); });
+  });
+}
+
+// ── GATING ────────────────────────────────────────────────────────────────────
+function crewIsValid(c){ return c.name.trim() && c.role.trim() && c.email.trim(); }
+function refreshStep1Gate(){
+  const validCrew = callsheet.crew.filter(crewIsValid).length;
+  const briefOk = (callsheet.brief || '').trim().length >= 10;
+  const ready = briefOk && validCrew >= 1;
+  const btn = document.getElementById('step1-next');
+  btn.classList.toggle('disabled', !ready);
+  const p = document.getElementById('step1-progress');
+  if (ready) p.textContent = `${validCrew} crew member${validCrew===1?'':'s'} ready · brief loaded`;
+  else if (!briefOk) p.textContent = 'Add a brief (at least 10 characters)';
+  else p.textContent = 'Add at least one crew member with name, role and email';
+}
+function refreshStep2Gate(){
+  const s = callsheet.shoot;
+  const required = ['date','day_number','unit_call','wrap_time','locations'];
+  const missing = required.filter(f => !(s[f] || '').toString().trim());
+  const btn = document.getElementById('step2-next');
+  btn.classList.toggle('disabled', missing.length > 0);
+  const p = document.getElementById('step2-progress');
+  if (!missing.length) p.textContent = 'All set';
+  else p.textContent = missing.length + ' required field' + (missing.length===1?'':'s') + ' to fill';
+}
+
+function finishStep2(){
+  if (document.getElementById('step2-next').classList.contains('disabled')) return;
+  // Drop blank crew rows so the preview doesn't render empties.
+  callsheet.crew = callsheet.crew.filter(crewIsValid);
+  renderCallSheet();
+  goTo('step3');
+}
+
+// ── FLOW ──────────────────────────────────────────────────────────────────────
+const _backMap = { step1:null, step2:'step1', step3:'step2', step4:'step3', step5:'step4' };
+function goTo(id){
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  const lab = document.getElementById('back-btn-label');
+  lab.textContent = _backMap[id] ? 'Back' : 'Back to home';
+  if (id === 'step3' || id === 'step4') renderCallSheet();
+  if (id === 'step5') renderSendSummary();
+}
+function goBack(){
+  const cur = document.querySelector('.step.active');
+  const prev = cur ? _backMap[cur.id] : null;
+  if (prev) goTo(prev);
+  else window.location.href = 'index.html';
+}
+
+// ── CALL SHEET RENDERING (Step 3 + Step 4 preview) ────────────────────────────
+function renderCallSheet(){
+  const html = buildCallSheetHtml(callsheet);
+  const a = document.getElementById('callsheet-render');
+  const b = document.getElementById('callsheet-render-refine');
+  if (a) a.innerHTML = html;
+  if (b) b.innerHTML = html;
+}
+
+function buildCallSheetHtml(cs){
+  const title = cs.project_title || extractTitle(cs.brief) || 'Call Sheet';
+  const niceDate = formatDate(cs.shoot.date);
+  const dayN = cs.shoot.day_number || '—';
+  const unit = cs.shoot.unit_call || '—';
+  const wrap = cs.shoot.wrap_time || '—';
+  const today = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+
+  const groupedCrew = groupCrewByDept(cs.crew);
+  const crewHtml = groupedCrew.map(({ dept, members }) => `
+    <tr class="cs-dept-row"><td colspan="4">${escHtml(dept)}</td></tr>
+    ${members.map(m => `
+      <tr>
+        <td>${escHtml(m.name)}</td>
+        <td>${escHtml(m.role)}</td>
+        <td>${escHtml(m.email)}</td>
+        <td>${escHtml(m.phone || '—')}</td>
+      </tr>
+    `).join('')}
+  `).join('');
+
+  return `
+    <div class="callsheet-doc">
+      <div class="cs-header">
+        <div>
+          <div class="cs-h-label">Production</div>
+          <div class="cs-h-val">M.ARK</div>
+        </div>
+        <div>
+          <div class="cs-h-label">Project</div>
+          <div class="cs-h-val">${escHtml(title)}</div>
+        </div>
+        <div>
+          <div class="cs-h-label">Generated</div>
+          <div class="cs-h-val">${escHtml(today)}</div>
+        </div>
+      </div>
+      <div class="cs-banner">
+        <div class="cs-banner-item">
+          <div class="cs-banner-label">Day ${escHtml(dayN)} · ${escHtml(niceDate)}</div>
+          <div class="cs-banner-val">${escHtml(unit)}</div>
+        </div>
+        <div class="cs-banner-item">
+          <div class="cs-banner-label">Estimated Wrap</div>
+          <div class="cs-banner-val">${escHtml(wrap)}</div>
+        </div>
+        <div class="cs-banner-item">
+          <div class="cs-banner-label">Crew</div>
+          <div class="cs-banner-val">${cs.crew.length}</div>
+        </div>
+      </div>
+
+      ${cs.shoot.scenes ? `
+      <div class="cs-section">
+        <div class="cs-section-title">Scenes</div>
+        <div class="cs-text">${escHtml(cs.shoot.scenes)}</div>
+      </div>` : ''}
+
+      ${cs.shoot.locations ? `
+      <div class="cs-section">
+        <div class="cs-section-title">Location</div>
+        <div class="cs-text">${escHtml(cs.shoot.locations)}</div>
+      </div>` : ''}
+
+      ${cs.shoot.weather ? `
+      <div class="cs-section">
+        <div class="cs-section-title">Weather</div>
+        <div class="cs-text">${escHtml(cs.shoot.weather)}</div>
+      </div>` : ''}
+
+      ${cs.shoot.production_notes ? `
+      <div class="cs-section">
+        <div class="cs-section-title">Production Notes</div>
+        <div class="cs-text">${escHtml(cs.shoot.production_notes)}</div>
+      </div>` : ''}
+
+      <div class="cs-section">
+        <div class="cs-section-title">Crew &amp; Cast</div>
+        <table class="cs-crew-table">
+          <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Phone</th></tr></thead>
+          <tbody>${crewHtml}</tbody>
+        </table>
+      </div>
+
+      ${(cs.shoot.hospital || cs.shoot.police) ? `
+      <div class="cs-section">
+        <div class="cs-section-title">Emergency</div>
+        <div class="cs-grid-2">
+          ${cs.shoot.hospital ? `<div><div class="cs-section-title cs-emergency-item">Nearest A&amp;E</div><div class="cs-text">${escHtml(cs.shoot.hospital)}</div></div>` : ''}
+          ${cs.shoot.police ? `<div><div class="cs-section-title cs-emergency-item">Nearest Police</div><div class="cs-text">${escHtml(cs.shoot.police)}</div></div>` : ''}
+        </div>
+      </div>` : ''}
+
+      ${cs.shoot.invoice_address ? `
+      <div class="cs-section">
+        <div class="cs-section-title">Invoice</div>
+        <div class="cs-text">${escHtml(cs.shoot.invoice_address)}</div>
+      </div>` : ''}
+
+      <div class="cs-footer">
+        Confidential — for crew use only. Generated by M.ARK · askmark.co
+      </div>
+    </div>
+  `;
+}
+
+function groupCrewByDept(crew){
+  const order = [...DEPARTMENTS, ''];
+  const buckets = new Map();
+  for (const dept of order) buckets.set(dept, []);
+  for (const m of crew) {
+    const d = m.department || '';
+    if (!buckets.has(d)) buckets.set(d, []);
+    buckets.get(d).push(m);
+  }
+  return [...buckets.entries()]
+    .filter(([_, arr]) => arr.length)
+    .map(([dept, members]) => ({ dept: dept || 'Other', members }));
+}
+
+function formatDate(s){
+  if (!s) return '—';
+  try {
+    const d = new Date(s);
+    if (isNaN(d)) return s;
+    return d.toLocaleDateString('en-GB', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+  } catch { return s; }
+}
+function extractTitle(brief){
+  if (!brief) return null;
+  // Take the first sentence-ish chunk; usually the producer leads with the project.
+  const m = brief.match(/^[^.?!\n]+/);
+  return m ? m[0].trim().slice(0, 80) : null;
+}
+
+// ── REFINE CHAT (Step 4) ──────────────────────────────────────────────────────
+const chatHistory = [];                       // [{ role: 'user'|'mark', text }]
+
+function refreshChatGate(){
+  const v = document.getElementById('chat-input').value.trim();
+  document.getElementById('chat-send-btn').disabled = v.length < 4;
+}
+function useChatSuggestion(text){
+  const inp = document.getElementById('chat-input');
+  inp.value = text; refreshChatGate(); inp.focus();
+}
+
+async function sendChat(){
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (text.length < 4) return;
+  inp.value = '';
+  refreshChatGate();
+  appendChat('user', text);
+  const thinking = appendChat('mark', '…');
+  try {
+    const data = await markFetch('/callsheet/refine', {
+      json: { callsheet, instruction: text },
+      timeoutMs: 90000,
+    });
+    if (!data.callsheet || !data.callsheet.shoot) {
+      throw new Error('Unexpected response shape');
+    }
+    // Merge the agent's revisions into our state.
+    Object.assign(callsheet, data.callsheet);
+    callsheet.revisions.unshift({ instruction: text, notes: data.revision_notes || [], ts: new Date().toISOString() });
+    renderCallSheet();
+    const summary = (data.revision_notes && data.revision_notes.length)
+      ? data.revision_notes.join(' · ')
+      : 'Updated.';
+    thinking.querySelector('.chat-msg-body').textContent = summary;
+  } catch (e) {
+    thinking.querySelector('.chat-msg-body').textContent = 'Could not apply that change — ' + e.message;
+    thinking.classList.add('chat-msg-err');
+  }
+}
+
+function appendChat(role, text){
+  const log = document.getElementById('chat-log');
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-msg ' + role;
+  wrap.innerHTML = (role === 'mark' ? '<span class="chat-mark-tag">Mark</span>' : '') + `<div class="chat-msg-body">${escHtml(text)}</div>`;
+  log.appendChild(wrap);
+  log.scrollTop = log.scrollHeight;
+  chatHistory.push({ role, text });
+  return wrap;
+}
+
+// ── SEND (Step 5) ─────────────────────────────────────────────────────────────
+function toggleChannel(name){
+  const idx = callsheet.send.channels.indexOf(name);
+  if (idx >= 0) callsheet.send.channels.splice(idx, 1);
+  else callsheet.send.channels.push(name);
+  document.getElementById('ch-' + name).classList.toggle('sel', callsheet.send.channels.includes(name));
+  renderSendSummary();
+}
+
+function renderSendSummary(){
+  document.getElementById('sum-date').textContent = formatDate(callsheet.shoot.date);
+  document.getElementById('sum-day').textContent = callsheet.shoot.day_number ? 'Day ' + callsheet.shoot.day_number : '—';
+  document.getElementById('sum-call').textContent = callsheet.shoot.unit_call || '—';
+  document.getElementById('sum-wrap').textContent = callsheet.shoot.wrap_time || '—';
+  document.getElementById('sum-crew').textContent = callsheet.crew.length;
+  const ch = callsheet.send.channels;
+  document.getElementById('sum-channels').textContent = ch.length ? ch.map(c => c === 'email' ? 'Gmail' : 'WhatsApp').join(' · ') : '—';
+  document.getElementById('send-btn').classList.toggle('disabled', ch.length === 0);
+}
+
+async function sendCallSheet(){
+  if (document.getElementById('send-btn').classList.contains('disabled')) return;
+  const errEl = document.getElementById('send-error');
+  const okEl = document.getElementById('send-success');
+  errEl.style.display = okEl.style.display = 'none';
+  document.getElementById('send-btn').classList.add('disabled');
+  try {
+    const data = await markFetch('/callsheet/send', {
+      json: {
+        callsheet,
+        channels: callsheet.send.channels,
+      },
+      timeoutMs: 30000,
+    });
+    okEl.textContent = data.message || `Logged: would send to ${callsheet.crew.length} crew via ${callsheet.send.channels.join(', ')}. (Real Gmail / WhatsApp wiring is next.)`;
+    okEl.style.display = 'block';
+    callsheet.send.status = data.status || 'mocked';
+    showNextDayBanner();
+  } catch (e) {
+    errEl.textContent = 'Send failed: ' + e.message;
+    errEl.style.display = 'block';
+    document.getElementById('send-btn').classList.remove('disabled');
+  }
+}
+
+function showNextDayBanner(){
+  const next = (parseInt(callsheet.shoot.day_number, 10) || 0) + 1;
+  document.getElementById('next-day-num').textContent = next || '+1';
+  document.getElementById('next-day-banner').classList.add('show');
+}
+function prepNextDay(){
+  // Bump the day number, clear date / scenes, keep everything else. Producer
+  // confirms what's changing.
+  callsheet.shoot.day_number = String((parseInt(callsheet.shoot.day_number, 10) || 0) + 1);
+  callsheet.shoot.date = '';
+  callsheet.shoot.scenes = '';
+  callsheet.send.channels = [];
+  document.querySelectorAll('.channel-toggle.sel').forEach(c => c.classList.remove('sel'));
+  document.getElementById('next-day-banner').classList.remove('show');
+  document.getElementById('send-success').style.display = 'none';
+  // Push the producer back to step 2 with prefilled values.
+  document.getElementById('shoot-date').value = '';
+  document.getElementById('shoot-day-num').value = callsheet.shoot.day_number;
+  document.getElementById('shoot-scenes').value = '';
+  refreshStep2Gate();
+  goTo('step2');
+}
+function laterNextDay(){ document.getElementById('next-day-banner').classList.remove('show'); }
+function dismissNextDay(){ document.getElementById('next-day-banner').classList.remove('show'); }
+
+// ── SOFT EMAIL GATE ───────────────────────────────────────────────────────────
+const _GATE_LS_KEY = 'mark_lead_unlocked';
+let _gateAfterUnlock = null;
+function isGateUnlocked(){ return !!localStorage.getItem(_GATE_LS_KEY); }
+function gateAction(trigger, fn){
+  if (isGateUnlocked()) { fn(); return; }
+  _gateAfterUnlock = fn;
+  const sub = document.getElementById('gate-sub');
+  if (trigger === 'send') sub.textContent = "Before you send this to your whole crew — quick email so we know who's running call sheets through Mark.";
+  else if (trigger === 'export') sub.textContent = "Before you download the PDF — quick email so we know who's using the builder. We'll only follow up if there's something material to share.";
+  else sub.textContent = "Mark is in beta — leave your email so we know who's using the demo.";
+  document.getElementById('gate-error').classList.remove('show');
+  document.getElementById('gate-overlay').classList.add('active');
+  document.getElementById('gate-overlay').dataset.trigger = trigger || '';
+  setTimeout(() => document.getElementById('gate-email').focus(), 60);
+}
+function closeGate(e){
+  if (e && e.target.id === 'gate-overlay') {
+    document.getElementById('gate-overlay').classList.remove('active');
+    _gateAfterUnlock = null;
+  }
+}
+function skipGate(){
+  document.getElementById('gate-overlay').classList.remove('active');
+  if (_gateAfterUnlock){ const fn = _gateAfterUnlock; _gateAfterUnlock = null; fn(); }
+}
+async function submitGate(){
+  const email = document.getElementById('gate-email').value.trim();
+  const role = document.getElementById('gate-role').value.trim();
+  const err = document.getElementById('gate-error');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    err.classList.add('show'); document.getElementById('gate-email').focus(); return;
+  }
+  err.classList.remove('show');
+  const trigger = document.getElementById('gate-overlay').dataset.trigger || 'unknown';
+  try {
+    await markFetch('/lead/create', {
+      json: { email, role: role || null, page: 'callsheet.html', user_agent: navigator.userAgent, trigger },
+      timeoutMs: 8000,
+    });
+  } catch (e) { console.warn('Lead capture failed:', e.message); }
+  localStorage.setItem(_GATE_LS_KEY, JSON.stringify({ email, ts: Date.now() }));
+  document.getElementById('gate-overlay').classList.remove('active');
+  if (_gateAfterUnlock){ const fn = _gateAfterUnlock; _gateAfterUnlock = null; fn(); }
+}
+</script>
+</body>
+</html>
