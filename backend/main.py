@@ -218,6 +218,19 @@ class FeedbackCreate(BaseModel):
     user_agent: Optional[str] = None
     page: Optional[str] = None
 
+class LeadCreate(BaseModel):
+    """Soft email gate — captured the first time a producer exports or refines.
+
+    Not auth: the frontend remembers the unlock in localStorage and stops
+    showing the modal. The intent is to know who's actually using the demo
+    so we can follow up, not to enforce access."""
+    email: str
+    role: Optional[str] = None             # "Producer" | "Director" | "DOP" | "Other" — free text
+    company: Optional[str] = None
+    page: Optional[str] = None
+    user_agent: Optional[str] = None
+    trigger: Optional[str] = None          # which action prompted the gate ("export", "refine", etc.)
+
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 
 def _apply_partial_update(existing: dict, data: BaseModel, exclude_keys: set) -> dict:
@@ -434,6 +447,39 @@ def create_feedback(data: FeedbackCreate, request: Request, _=Depends(require_ap
     if data.context_id:
         db_sadd(f"feedback:by-context:{data.context_id}", fid)
     return {"success": True, "feedback_id": fid}
+
+@app.post("/lead/create")
+async def create_lead(data: LeadCreate, request: Request, _=Depends(require_api_key)):
+    """Record a producer email captured by the soft demo gate.
+
+    Idempotent on email — repeat submits update the existing record's
+    last_seen and accumulate the trigger list, rather than creating
+    duplicate rows. This keeps the leads:all set clean for follow-up."""
+    email = (data.email or "").strip().lower()
+    if not email or "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(400, "Valid email required")
+
+    key = f"lead:{email}"
+    existing = db_get(key) or {}
+    triggers = existing.get("triggers") or []
+    if data.trigger and data.trigger not in triggers:
+        triggers.append(data.trigger)
+
+    record = {
+        "email": email,
+        "role": data.role or existing.get("role"),
+        "company": data.company or existing.get("company"),
+        "page": data.page or existing.get("page"),
+        "user_agent": data.user_agent or existing.get("user_agent"),
+        "ip": request.client.host if request.client else existing.get("ip"),
+        "first_seen": existing.get("first_seen") or now(),
+        "last_seen": now(),
+        "triggers": triggers,
+        "submission_count": (existing.get("submission_count") or 0) + 1,
+    }
+    db_set(key, record)
+    db_sadd("leads:all", email)
+    return {"success": True, "lead": record}
 
 @app.post("/feedback/list")
 def list_feedback(_=Depends(require_api_key)):
