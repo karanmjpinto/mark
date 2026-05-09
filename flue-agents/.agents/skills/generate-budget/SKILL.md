@@ -65,6 +65,7 @@ Return JSON matching this exact structure (the frontend renders it directly):
           "desc": "Line item name",
           "sub": "basis / notes (e.g. '3 days × 1 unit')",
           "amount": <plain number, no symbols/commas>,
+          "fixed": <true | false — true if lumpsum/flat (no day-rate component); false (default) for rate × quantity items>,
           "gst_rate": <number, e.g. 0.18>,
           "conf": "green" | "amber" | "red",
           "note": "optional, only for amber/red"
