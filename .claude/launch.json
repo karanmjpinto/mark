@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "$PORT", "--directory", "frontend"],
+      "port": 5174,
+      "autoPort": true
+    }
+  ]
+}

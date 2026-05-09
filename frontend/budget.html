@@ -208,6 +208,10 @@ input[type=file]{display:none;}
   text-align:left;
 }
 .demo-btn:hover{border-color:var(--ink);transform:translateY(-1px);box-shadow:0 2px 12px var(--paper-shadow);}
+.demo-btn.sel{border-color:var(--ink);background:var(--paper-deep);box-shadow:0 2px 12px var(--paper-shadow);}
+.demo-btn.sel .demo-num{color:var(--accent-deep);}
+.upload-zone.drag-active{border-color:var(--ink);border-style:solid;background:var(--paper-deep);}
+.upload-zone.drag-active::before{opacity:1;}
 .demo-num{
   font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:24px;
   color:var(--accent);line-height:1;flex-shrink:0;letter-spacing:-0.01em;
@@ -340,23 +344,35 @@ input[type=file]{display:none;}
 .btn-lock{background:var(--ink);color:var(--paper);border-color:var(--ink);}
 .btn-lock:hover{background:var(--accent);border-color:var(--accent);color:var(--paper);}
 
-/* SUMMARY CARDS — with bar charts */
-.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+/* SUMMARY CARDS — three stacked rows: overview · totals · ATL/BTL/Post */
+.summary-stack{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.summary-row{display:grid;gap:10px;}
+.summary-row.overview{grid-template-columns:repeat(3,1fr);}
+.summary-row.totals{grid-template-columns:2fr 1fr;}
+.summary-row.lines{grid-template-columns:repeat(3,1fr);}
 .sum-card{
   background:var(--paper-deep);border:1px solid var(--rule);padding:18px 16px;
   position:relative;overflow:hidden;
 }
+.sum-card.emphasis{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.sum-card.emphasis .sum-label{color:var(--paper);opacity:0.7;}
+.sum-card.emphasis .sum-val{color:var(--paper);}
+.sum-card.emphasis .sum-sub{color:var(--paper);opacity:0.6;}
 .sum-card::before{
   content:'';position:absolute;left:0;bottom:0;width:0;height:2px;background:var(--accent);
   animation:drawBar 1.2s var(--ease-out) forwards;animation-delay:var(--bar-delay,0s);
 }
 @keyframes drawBar{to{width:100%;}}
-.sum-label{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:10px;}
+.sum-label{
+  font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink);
+  font-family:'DM Mono',monospace;font-weight:600;margin-bottom:10px;
+}
 .sum-val{
-  font-family:'Fraunces',serif;font-weight:500;font-size:26px;color:var(--ink);
+  font-family:'Fraunces',serif;font-weight:600;font-size:26px;color:var(--ink);
   letter-spacing:-0.015em;line-height:1.05;font-variation-settings:"opsz" 144;
 }
-.sum-sub{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-top:6px;}
+.sum-card.emphasis .sum-val{font-weight:500;}
+.sum-sub{font-size:9px;color:var(--ink-soft);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-top:6px;}
 
 .conf-banner{
   padding:14px 18px;margin-bottom:18px;display:flex;align-items:flex-start;gap:12px;
@@ -413,7 +429,7 @@ input[type=file]{display:none;}
 @keyframes slideDown{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
 
 .tbl-hdr{
-  display:grid;grid-template-columns:24px 1fr 100px 80px 100px 30px;
+  display:grid;grid-template-columns:24px 1fr 80px 80px 80px 70px 90px 30px;
   background:var(--paper-edge);border:1px solid var(--rule);border-top:none;
 }
 .th{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:8px;text-align:right;}
@@ -421,7 +437,7 @@ input[type=file]{display:none;}
 .th:first-child,.th:last-child{padding:8px 0;}
 
 .li-row{
-  display:grid;grid-template-columns:24px 1fr 100px 80px 100px 30px;
+  display:grid;grid-template-columns:24px 1fr 80px 80px 80px 70px 90px 30px;
   border-bottom:1px solid var(--rule);align-items:center;
   background:var(--paper);transition:background 0.15s;
 }
@@ -435,8 +451,40 @@ input[type=file]{display:none;}
 .li-desc{padding:11px 8px;font-size:13px;color:var(--ink);line-height:1.4;font-family:'Inter',sans-serif;}
 .li-desc-sub{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px;letter-spacing:0.04em;}
 .li-amt{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
+.li-fix{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
+.li-var{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
 .li-gst{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;padding:11px 8px;}
 .li-tot{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);text-align:right;padding:11px 8px;font-weight:500;}
+.li-grand{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);text-align:right;padding:11px 8px;font-weight:600;}
+
+/* GROUP TOTAL ROW (between ATL/BTL/POST/Others sections) */
+.group-total{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 18px;margin:6px 0 14px;
+  background:var(--ink);color:var(--paper);
+  border:1px solid var(--ink);
+}
+.group-total .gt-label{
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.14em;
+  text-transform:uppercase;font-weight:600;
+}
+.group-total .gt-val{
+  font-family:'Fraunces',serif;font-weight:500;font-size:18px;letter-spacing:-0.01em;
+  font-variant-numeric:tabular-nums;
+}
+.group-divider{height:1px;background:var(--rule-strong);margin:8px 0 14px;}
+.group-heading{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--muted);margin:18px 0 8px;
+  display:flex;align-items:center;gap:10px;
+}
+.group-heading::after{content:'';flex:1;height:1px;background:var(--rule);}
+
+/* QUESTION GATING */
+.q-progress{
+  font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.08em;
+}
+.q-progress.complete{color:var(--green);}
 .li-edit{display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:14px;padding:11px 0;transition:color 0.2s;}
 .li-edit:hover{color:var(--accent);}
 
@@ -496,13 +544,18 @@ input[type=file]{display:none;}
   .demo-btn{min-width:0;}
   .btn-red{width:100%;text-align:center;padding:16px;font-size:14px;}
   .q-opts,.q-other-input{padding-left:0;}
-  .summary-grid{grid-template-columns:1fr 1fr;gap:10px;}
-  .sum-val{font-size:22px;}
+  .summary-row.overview{grid-template-columns:repeat(3,1fr);gap:6px;}
+  .summary-row.totals{grid-template-columns:1fr;}
+  .summary-row.lines{grid-template-columns:1fr;}
+  .sum-card{padding:14px 12px;}
+  .sum-val{font-size:20px;}
   .budget-topbar{flex-direction:column;gap:14px;}
   .action-btns{width:100%;}
-  .tbl-hdr,.li-row{grid-template-columns:20px 1fr 80px 70px;overflow:hidden;}
+  .tbl-hdr,.li-row{grid-template-columns:20px 1fr 80px 80px;overflow:hidden;}
+  .tbl-hdr>div:nth-child(3),.li-row>div:nth-child(3),
   .tbl-hdr>div:nth-child(4),.li-row>div:nth-child(4),
-  .tbl-hdr>div:nth-child(6),.li-row>div:nth-child(6){display:none;}
+  .tbl-hdr>div:nth-child(6),.li-row>div:nth-child(6),
+  .tbl-hdr>div:nth-child(8),.li-row>div:nth-child(8){display:none;}
   .grand-row{flex-direction:column;gap:6px;text-align:center;align-items:flex-start;}
   .grand-val{font-size:28px;}
   .pipeline{padding:18px;}
@@ -541,7 +594,7 @@ input[type=file]{display:none;}
 </head>
 <body>
 <div id="app">
-  <button class="back-btn" onclick="window.location.href='index.html'"><span class="arr">←</span> Back to home</button>
+  <button class="back-btn" id="back-btn" onclick="goBack()"><span class="arr">←</span> <span id="back-btn-label">Back to home</span></button>
 
   <div style="text-align:center;padding:8px 0 40px;">
     <div class="brand-mark">M</div>
@@ -697,7 +750,12 @@ input[type=file]{display:none;}
     </div>
 
     <!-- Upload zone — first -->
-    <div class="upload-zone input-section" id="upload-zone" onclick="document.getElementById('script-upload').click()">
+    <div class="upload-zone input-section" id="upload-zone"
+         onclick="document.getElementById('script-upload').click()"
+         ondragover="handleDragOver(event)"
+         ondragenter="handleDragOver(event)"
+         ondragleave="handleDragLeave(event)"
+         ondrop="handleDrop(event)">
       <input type="file" id="script-upload" accept=".pdf" onchange="handleFile(this)"/>
       <div id="upload-icon" class="upload-icon-wrap">
         <svg width="40" height="48" viewBox="0 0 40 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink);">
@@ -709,7 +767,7 @@ input[type=file]{display:none;}
         </svg>
       </div>
       <div id="upload-title" style="font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:var(--ink);margin-bottom:6px;letter-spacing:-0.005em;">Upload your script</div>
-      <div id="upload-sub" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Click to browse · PDF only</div>
+      <div id="upload-sub" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Drag &amp; drop, or click to browse · PDF only</div>
     </div>
 
     <div class="or-divider">or try a demo brief</div>
@@ -717,19 +775,19 @@ input[type=file]{display:none;}
     <!-- Demo briefs — typographic numerals, no emoji -->
     <div class="input-section" id="demo-section" style="margin-bottom:18px;">
       <div class="demo-btns">
-        <button class="demo-btn" onclick="loadDemo('tvc')">
+        <button class="demo-btn" data-demo="tvc" onclick="loadDemo('tvc')">
           <span class="demo-num">01</span>
           <span><div>Nike TVC</div><div class="demo-meta">3 shoot days</div></span>
         </button>
-        <button class="demo-btn" onclick="loadDemo('music')">
+        <button class="demo-btn" data-demo="music" onclick="loadDemo('music')">
           <span class="demo-num">02</span>
           <span><div>Music Video</div><div class="demo-meta">2 shoot days</div></span>
         </button>
-        <button class="demo-btn" onclick="loadDemo('ott')">
+        <button class="demo-btn" data-demo="ott" onclick="loadDemo('ott')">
           <span class="demo-num">03</span>
           <span><div>OTT Drama</div><div class="demo-meta">30 shoot days · 1 ep</div></span>
         </button>
-        <button class="demo-btn" onclick="loadDemo('film')">
+        <button class="demo-btn" data-demo="film" onclick="loadDemo('film')">
           <span class="demo-num">04</span>
           <span><div>Feature Film</div><div class="demo-meta">60 shoot days</div></span>
         </button>
@@ -743,7 +801,7 @@ input[type=file]{display:none;}
     </div>
 
     <div style="margin-top:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-      <button class="btn-red disabled" id="build-btn" onclick="startFlow()"><span>Build My Budget →</span></button>
+      <button class="btn-red disabled" id="build-btn" onclick="startFlow()"><span>Continue →</span></button>
       <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;">Mark asks a few questions first</span>
     </div>
 
@@ -769,9 +827,10 @@ input[type=file]{display:none;}
     <div class="panel">
       <div id="questions-container"></div>
     </div>
-    <div style="display:flex;gap:10px;margin-top:4px;">
-      <button class="btn-red" onclick="submitAnswers()"><span>Build My Budget →</span></button>
+    <div style="display:flex;gap:10px;margin-top:4px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-red disabled" id="q-submit-btn" onclick="submitAnswers()"><span>Build My Budget →</span></button>
       <button class="btn-ghost" onclick="goTo('step1')">← Back</button>
+      <span class="q-progress" id="q-progress">Answer all questions to continue</span>
     </div>
   </div>
 
@@ -819,11 +878,24 @@ input[type=file]{display:none;}
       </div>
     </div>
 
-    <div class="summary-grid">
-      <div class="sum-card"><div class="sum-label">Grand Total</div><div class="sum-val" id="s-grand">—</div><div class="sum-sub">incl. tax & contingency</div></div>
-      <div class="sum-card"><div class="sum-label">Below the Line</div><div class="sum-val" id="s-btl">—</div><div class="sum-sub">production costs</div></div>
-      <div class="sum-card"><div class="sum-label">Post Production</div><div class="sum-val" id="s-post">—</div><div class="sum-sub">edit, grade, sound</div></div>
-      <div class="sum-card"><div class="sum-label">Per Day Average</div><div class="sum-val" id="s-day">—</div><div class="sum-sub">shoot days only</div></div>
+    <div class="summary-stack">
+      <!-- Row 1: Project shape -->
+      <div class="summary-row overview">
+        <div class="sum-card"><div class="sum-label">Total Shoot Days</div><div class="sum-val" id="s-days">—</div><div class="sum-sub">on-camera days</div></div>
+        <div class="sum-card"><div class="sum-label">Total Scenes</div><div class="sum-val" id="s-scenes">—</div><div class="sum-sub">parsed from script</div></div>
+        <div class="sum-card"><div class="sum-label">Total Locations</div><div class="sum-val" id="s-locs">—</div><div class="sum-sub">unique locations</div></div>
+      </div>
+      <!-- Row 2: Headline totals -->
+      <div class="summary-row totals">
+        <div class="sum-card emphasis"><div class="sum-label">Grand Total</div><div class="sum-val" id="s-grand">—</div><div class="sum-sub">incl. tax & contingency</div></div>
+        <div class="sum-card"><div class="sum-label">Per Day Average</div><div class="sum-val" id="s-day">—</div><div class="sum-sub">shoot days only</div></div>
+      </div>
+      <!-- Row 3: ATL / BTL / Post breakdown -->
+      <div class="summary-row lines">
+        <div class="sum-card"><div class="sum-label">Above the Line</div><div class="sum-val" id="s-atl">—</div><div class="sum-sub">director, talent, dev</div></div>
+        <div class="sum-card"><div class="sum-label">Below the Line</div><div class="sum-val" id="s-btl">—</div><div class="sum-sub">production costs</div></div>
+        <div class="sum-card"><div class="sum-label">Post Production</div><div class="sum-val" id="s-post">—</div><div class="sum-sub">edit, grade, sound</div></div>
+      </div>
     </div>
 
     <div class="conf-banner">
@@ -974,7 +1046,46 @@ const demos = {
 
 function loadDemo(type) {
   document.getElementById('script-text').value = demos[type];
-  setActiveInput('demo');
+  // Highlight the selected demo button (deselect siblings).
+  document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('sel'));
+  const btn = document.querySelector(`.demo-btn[data-demo="${type}"]`);
+  if (btn) btn.classList.add('sel');
+  // Treat as paste so the textarea remains editable for inline tweaks.
+  setActiveInput('paste');
+}
+
+// ── DRAG & DROP UPLOAD ────────────────────────────────────────────────────────
+function handleDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'copy';
+  document.getElementById('upload-zone').classList.add('drag-active');
+}
+function handleDragLeave(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  // Only clear if leaving the zone itself (not a child element).
+  if (e.target.id === 'upload-zone') {
+    document.getElementById('upload-zone').classList.remove('drag-active');
+  }
+}
+function handleDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('upload-zone').classList.remove('drag-active');
+  const files = e.dataTransfer && e.dataTransfer.files;
+  if (!files || !files.length) return;
+  const file = files[0];
+  if (!/\.pdf$/i.test(file.name)) {
+    showError('Drop a PDF script — other formats are not supported.');
+    return;
+  }
+  // Re-use the file-input handler by injecting the dropped file into it.
+  const input = document.getElementById('script-upload');
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  handleFile(input);
 }
 
 async function handleFile(input) {
@@ -1104,6 +1215,33 @@ function goTo(id) {
     document.getElementById('gen-subtitle').textContent =
       'Applying ' + m.label + ' market rates · Budget codes 10000–14000';
   }
+
+  // Update the global back button to reflect what "back" means at this step.
+  updateBackBtn(id);
+}
+
+// Maps each step → its predecessor (for the global back button).
+const _backMap = { step0: null, step1: 'step0', step2: 'step1', step3: 'step2', step4: 'step2' };
+
+function updateBackBtn(stepId) {
+  const label = document.getElementById('back-btn-label');
+  if (!label) return;
+  if (stepId === 'step0' || !_backMap[stepId]) {
+    label.textContent = 'Back to home';
+  } else {
+    label.textContent = 'Back';
+  }
+}
+
+function goBack() {
+  const current = document.querySelector('.step.active');
+  const stepId = current ? current.id : 'step0';
+  const prev = _backMap[stepId];
+  if (prev) {
+    goTo(prev);
+  } else {
+    window.location.href = 'index.html';
+  }
 }
 
 function startOver() {
@@ -1175,6 +1313,9 @@ Always ask about: 1) specific shoot locations or cities within the ${m.label} ma
 // ── QUESTION RENDERING ────────────────────────────────────────────────────────
 function renderQuestions(questions, container) {
   container.innerHTML = '';
+  // New question batch → previous answers are stale; reset the gate.
+  answers = {};
+  refreshSubmitGate();
   questions.forEach((q, i) => {
     const isMulti = /location|city|cities|market|country|countries|where|region|markets|shoot/i.test(q.question);
     const block = document.createElement('div');
@@ -1208,6 +1349,7 @@ function setOtherAnswer(qid, val) {
   } else {
     answers[qid] = val;
   }
+  refreshSubmitGate();
 }
 
 function updateMultiAnswer(qid, opts, otherDiv) {
@@ -1243,9 +1385,34 @@ function selectOpt(el, qid) {
       answers[qid] = el.dataset.val;
     }
   }
+  refreshSubmitGate();
+}
+
+// Disable the "Build my budget" button until every question has a non-empty
+// answer. Krish: producers shouldn't be able to skip questions and get a
+// budget built off blanks.
+function refreshSubmitGate() {
+  const btn = document.getElementById('q-submit-btn');
+  const progress = document.getElementById('q-progress');
+  if (!btn || !progress || !questions.length) return;
+  const answered = questions.filter(q => (answers[q.id] || '').toString().trim().length > 0).length;
+  const total = questions.length;
+  const ready = answered === total;
+  btn.classList.toggle('disabled', !ready);
+  if (ready) {
+    progress.textContent = 'All questions answered ✓';
+    progress.classList.add('complete');
+  } else {
+    progress.textContent = `${answered} of ${total} answered`;
+    progress.classList.remove('complete');
+  }
 }
 
 async function submitAnswers() {
+  // Hard-block submission if the gate is still active. The button class is
+  // the source of truth — refreshSubmitGate keeps it in sync with `answers`.
+  const btn = document.getElementById('q-submit-btn');
+  if (btn && btn.classList.contains('disabled')) return;
   goTo('step3');
   runAnimation();
   await generateBudget();
@@ -1432,6 +1599,25 @@ function countUp(el, target, durationMs, delayMs = 0) {
 }
 
 // ── RENDER BUDGET ─────────────────────────────────────────────────────────────
+// Decompose each line item into fixed + variable. Honor an explicit `fixed`
+// flag from the agent when present; otherwise fall back to a heuristic on
+// `sub` (rate × days / × units = variable, lumpsum / flat = fixed).
+function splitFixedVariable(li) {
+  const amt = Number(li.amount) || 0;
+  if (typeof li.fixed === 'boolean') {
+    return li.fixed ? { fixed: amt, variable: 0 } : { fixed: 0, variable: amt };
+  }
+  if (typeof li.fixed === 'number' && Number.isFinite(li.fixed)) {
+    const f = Math.max(0, Math.min(amt, Math.round(li.fixed)));
+    return { fixed: f, variable: Math.max(0, amt - f) };
+  }
+  const sub = (li.sub || '').toLowerCase();
+  const variableSig = /×|x\s*\d|per\s*day|\/day|\/wk|\bdays?\b|\bweek/.test(sub);
+  const fixedSig = /lumpsum|flat|one[- ]?time|fixed/.test(sub);
+  if (fixedSig && !variableSig) return { fixed: amt, variable: 0 };
+  return { fixed: 0, variable: amt };
+}
+
 function renderBudget(data) {
   const m = regionMeta[region];
   // Italicise the last word in the title for editorial flourish (e.g. "Nike TVC — <em>Mumbai.</em>")
@@ -1453,12 +1639,16 @@ function renderBudget(data) {
   data.sections.forEach(s => {
     s.items.forEach(li => {
       const amt = Number(li.amount) || 0;
+      const split = splitFixedVariable(li);
       const gst = Math.round(amt * (Number(li.gst_rate) || 0));
+      li._fixed = split.fixed;
+      li._variable = split.variable;
       li._gst = gst;
-      li._total = amt + gst;
+      li._total = amt;
+      li._grand = amt + gst;
       if(li.conf === 'red' && li.note) flagsList.push(li.code + ' ' + li.desc + ' — ' + li.note);
     });
-    const st = s.items.reduce((sum, li) => sum + li._total, 0);
+    const st = s.items.reduce((sum, li) => sum + li._grand, 0);
     s._total = st;
     if(s.type === 'above_the_line') totalATL += st;
     else if(s.type === 'below_the_line') totalBTL += st;
@@ -1467,17 +1657,30 @@ function renderBudget(data) {
 
   const insurance = Math.round(totalBTL * 0.01);
   const contingency = Math.round((totalATL + totalBTL) * 0.10);
-  const grandTotal = totalATL + totalBTL + totalPost + insurance + contingency;
+  const totalOthers = insurance + contingency;
+  const grandTotal = totalATL + totalBTL + totalPost + totalOthers;
   const shootDays = Number(data.shoot_days) || 1;
 
-  // Eased count-up reveal on the four summary cards. The accent bar across the
-  // bottom of each card is drawn by CSS (animation-delay set via --bar-delay).
-  const sumCards = document.querySelectorAll('.summary-grid .sum-card');
-  sumCards.forEach((card, i) => card.style.setProperty('--bar-delay', (i * 0.12) + 's'));
+  // Bar-draw stagger: 8 cards now (3 + 2 + 3), so step a touch faster.
+  const sumCards = document.querySelectorAll('.summary-stack .sum-card');
+  sumCards.forEach((card, i) => card.style.setProperty('--bar-delay', (i * 0.08) + 's'));
+
+  // Row 1 — project shape (raw integers, not currency)
+  document.getElementById('s-days').textContent = shootDays;
+  const totalScenes = (data.breakdown && data.breakdown.total_scenes) ?? (parsedBreakdown && parsedBreakdown.total_scenes) ?? '—';
+  const totalLocs = (data.locations && data.locations.length)
+    || (data.breakdown && data.breakdown.unique_locations && data.breakdown.unique_locations.length)
+    || (parsedBreakdown && parsedBreakdown.unique_locations && parsedBreakdown.unique_locations.length)
+    || '—';
+  document.getElementById('s-scenes').textContent = totalScenes;
+  document.getElementById('s-locs').textContent = totalLocs;
+
+  // Rows 2+3 — currency totals
   countUp(document.getElementById('s-grand'), grandTotal, 1400, 100);
-  countUp(document.getElementById('s-btl'), totalBTL, 1100, 220);
-  countUp(document.getElementById('s-post'), totalPost, 1100, 340);
-  countUp(document.getElementById('s-day'), Math.round(grandTotal / shootDays), 1100, 460);
+  countUp(document.getElementById('s-day'), Math.round(grandTotal / shootDays), 1100, 220);
+  countUp(document.getElementById('s-atl'), totalATL, 1100, 340);
+  countUp(document.getElementById('s-btl'), totalBTL, 1100, 420);
+  countUp(document.getElementById('s-post'), totalPost, 1100, 500);
 
   if(data.confidence_note) document.getElementById('conf-text').textContent = data.confidence_note;
 
@@ -1497,7 +1700,7 @@ function renderBudget(data) {
     ? '<span class="sec-type-badge btl">BTL</span>'
     : '<span class="sec-type-badge post">POST</span>';
 
-  data.sections.forEach(s => {
+  function renderSection(s) {
     const id = 'sec-' + s.code;
     const wrap = document.createElement('div');
     wrap.style.marginBottom = '2px';
@@ -1512,24 +1715,64 @@ function renderBudget(data) {
       <div class="sec-body" id="${id}">
         <div class="tbl-hdr">
           <div class="th"></div><div class="th">Description</div>
-          <div class="th">Amount</div><div class="th">Tax</div>
-          <div class="th">Total</div><div class="th"></div>
+          <div class="th">Fixed</div><div class="th">Variable</div>
+          <div class="th">Total</div><div class="th">GST/VAT</div>
+          <div class="th">Grand Total</div><div class="th"></div>
         </div>
         ${s.items.map(li => `
           <div class="li-row">
             <div class="li-conf"><div class="cdot ${li.conf==='green'?'cg':li.conf==='amber'?'ca':'cr'}" title="${li.note||''}"></div></div>
             <div class="li-desc"><div>${li.code} · ${li.desc}</div><div class="li-desc-sub">${li.sub||''}</div></div>
-            <div class="li-amt">${fmtAmt(li.amount)}</div>
-            <div class="li-gst">${li._gst>0?fmtAmt(li._gst):'—'}</div>
+            <div class="li-fix">${li._fixed>0?fmtAmt(li._fixed):'—'}</div>
+            <div class="li-var">${li._variable>0?fmtAmt(li._variable):'—'}</div>
             <div class="li-tot">${fmtAmt(li._total)}</div>
+            <div class="li-gst">${li._gst>0?fmtAmt(li._gst):'—'}</div>
+            <div class="li-grand">${fmtAmt(li._grand)}</div>
             <div class="li-edit" title="Edit">✎</div>
           </div>
         `).join('')}
       </div>
     `;
     container.appendChild(wrap);
-  });
+  }
 
+  function renderHeading(label) {
+    const h = document.createElement('div');
+    h.className = 'group-heading';
+    h.textContent = label;
+    container.appendChild(h);
+  }
+
+  function renderGroupTotal(label, amt) {
+    const r = document.createElement('div');
+    r.className = 'group-total';
+    r.innerHTML = `<span class="gt-label">${label}</span><span class="gt-val">${fmtAmt(amt)}</span>`;
+    container.appendChild(r);
+  }
+
+  // Group sections by type with explicit subtotals between groups (Krish #11).
+  const atl = data.sections.filter(s => s.type === 'above_the_line');
+  const btl = data.sections.filter(s => s.type === 'below_the_line');
+  const postSecs = data.sections.filter(s => s.type !== 'above_the_line' && s.type !== 'below_the_line');
+
+  if (atl.length) {
+    renderHeading('Above the Line');
+    atl.forEach(renderSection);
+    renderGroupTotal('Total Above the Line', totalATL);
+  }
+  if (btl.length) {
+    renderHeading('Below the Line');
+    btl.forEach(renderSection);
+    renderGroupTotal('Total Below the Line', totalBTL);
+  }
+  if (postSecs.length) {
+    renderHeading('Post Production');
+    postSecs.forEach(renderSection);
+    renderGroupTotal('Total Post Production', totalPost);
+  }
+
+  // Insurance + contingency live in the "Others" group at the bottom.
+  renderHeading('Others');
   [['13700','INSURANCE','1% of below-the-line', insurance],
    ['14000','CONTINGENCY','10% of total pre-contingency', contingency]].forEach(([code,name,sub,amt]) => {
     const wrap = document.createElement('div');
@@ -1537,6 +1780,7 @@ function renderBudget(data) {
     wrap.innerHTML = `<div class="section-hdr"><span class="sec-code">${code}</span><span class="sec-name">${name}</span><span style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;flex:1;">${sub}</span><span class="sec-total">${fmtAmt(amt)}</span><span class="sec-arr"></span></div>`;
     container.appendChild(wrap);
   });
+  renderGroupTotal('Total Others', totalOthers);
 
   const gt = document.createElement('div');
   gt.className = 'grand-row';
@@ -1568,12 +1812,29 @@ function exportExcel() {
   const btl  = budgetData.sections.filter(s => s.type === 'below_the_line');
   const post = budgetData.sections.filter(s => s.type !== 'above_the_line' && s.type !== 'below_the_line');
 
+  // Fixed/variable per item (same heuristic the on-screen renderer uses).
+  function fvFor(li) {
+    if (typeof li._fixed === 'number' && typeof li._variable === 'number') {
+      return { fixed: li._fixed, variable: li._variable };
+    }
+    return splitFixedVariable(li);
+  }
+
   function grpSums(secs) {
     return secs.reduce((acc, s) => {
-      const a = s.items.reduce((t, li) => t + (Number(li.amount)||0), 0);
-      const g = s.items.reduce((t, li) => t + (li._gst||0), 0);
-      return { amt: acc.amt + a, gst: acc.gst + g };
-    }, { amt:0, gst:0 });
+      const sums = s.items.reduce((t, li) => {
+        const fv = fvFor(li);
+        t.fixed += fv.fixed; t.variable += fv.variable;
+        t.amt += Number(li.amount)||0; t.gst += li._gst||0;
+        return t;
+      }, { fixed:0, variable:0, amt:0, gst:0 });
+      return {
+        fixed: acc.fixed + sums.fixed,
+        variable: acc.variable + sums.variable,
+        amt: acc.amt + sums.amt,
+        gst: acc.gst + sums.gst,
+      };
+    }, { fixed:0, variable:0, amt:0, gst:0 });
   }
 
   const atlS = grpSums(atl), btlS = grpSums(btl), postS = grpSums(post);
@@ -1592,12 +1853,16 @@ function exportExcel() {
   T.push(['CODE', 'EXPENSE HEAD', 'FIXED', 'VARIABLE', 'TOTAL', 'GST / VAT', 'GRAND TOTAL', '']);
 
   function tRow(s) {
-    const a = s.items.reduce((t,li) => t+(Number(li.amount)||0), 0);
-    const g = s.items.reduce((t,li) => t+(li._gst||0), 0);
-    T.push([s.code, s.name.toUpperCase(), '', a, a, g, a+g, '']);
+    const sums = s.items.reduce((t, li) => {
+      const fv = fvFor(li);
+      t.fixed += fv.fixed; t.variable += fv.variable;
+      t.amt += Number(li.amount)||0; t.gst += li._gst||0;
+      return t;
+    }, { fixed:0, variable:0, amt:0, gst:0 });
+    T.push([s.code, s.name.toUpperCase(), sums.fixed, sums.variable, sums.amt, sums.gst, sums.amt+sums.gst, '']);
   }
   function tTotal(label, sums) {
-    T.push(['', label, '', sums.amt, sums.amt, sums.gst, sums.amt+sums.gst, '']);
+    T.push(['', label, sums.fixed, sums.variable, sums.amt, sums.gst, sums.amt+sums.gst, '']);
   }
 
   atl.forEach(tRow);
@@ -1606,8 +1871,8 @@ function exportExcel() {
   tTotal('TOTAL BELOW THE LINE', btlS);
   post.forEach(tRow);
   tTotal('TOTAL POST PRODUCTION', postS);
-  T.push(['13700', 'INSURANCE', '', insAmt, insAmt, insGst, insAmt+insGst, '']);
-  T.push(['14000', 'CONTINGENCY (10%)', '', contAmt, contAmt, 0, contAmt, '']);
+  T.push(['13700', 'INSURANCE', insAmt, 0, insAmt, insGst, insAmt+insGst, '']);
+  T.push(['14000', 'CONTINGENCY (10%)', contAmt, 0, contAmt, 0, contAmt, '']);
   T.push([]);
   T.push(['', 'GRAND TOTAL (' + sym + ' ' + cod + ')', '', '', '', '', grandTotal, '']);
   T.push([]);
@@ -1620,50 +1885,57 @@ function exportExcel() {
   ws1['!cols'] = [{wch:8},{wch:38},{wch:14},{wch:16},{wch:16},{wch:16},{wch:18},{wch:4}];
 
   // ── SHEET 2: DETAILED BUDGET ────────────────────────────────────────────────
+  // Columns mirror the top sheet so producers can scan both sheets identically:
+  // CODE | DESCRIPTION | BASIS | LOCATION | CURRENCY | FIXED | VARIABLE | TOTAL | GST/VAT | GRAND TOTAL | REMARKS
   const D = [];
-  D.push(['', 'DETAILED BUDGET - ' + title.toUpperCase(), 'ACTIVITY', 'MONTHS', '', 'LOCATION', 'SHOOT DAYS', '', '', '', '', '', '', '', '']);
-  D.push(['', '', 'SHOOT', '', '', locs, shootDays, '', '', '', '', '', '', '', '']);
+  D.push(['', 'DETAILED BUDGET - ' + title.toUpperCase(), 'ACTIVITY', 'MONTHS', '', 'LOCATION', 'SHOOT DAYS', '', '', '', '']);
+  D.push(['', '', 'SHOOT', '', '', locs, shootDays, '', '', '', '']);
   D.push([]);
-  D.push(['BUDGET CODE','BUDGET HEADS','MAJOR HEAD','LOCATION','BASIS','DAYS / MONTHS','UOM','X','CURRENCY','RATE','AMOUNT','TOTAL AMOUNT','TAX','SUB-TOTAL','REMARKS / CONFIDENCE']);
+  D.push(['BUDGET CODE','BUDGET HEADS','BASIS','LOCATION','CURRENCY','FIXED','VARIABLE','TOTAL','GST / VAT','GRAND TOTAL','REMARKS / CONFIDENCE']);
 
   function addSec(s) {
-    D.push([s.code, s.name.toUpperCase(), s.name.toUpperCase(), '', '', '', '', '', '', '', '', '', '', '', '']);
+    D.push([s.code, s.name.toUpperCase(), '', '', '', '', '', '', '', '', '']);
     s.items.forEach(li => {
       const a = Number(li.amount)||0;
       const g = li._gst||0;
+      const fv = fvFor(li);
       const conf = li.conf !== 'green' ? '[' + (li.conf||'').toUpperCase() + '] ' : '';
       D.push([
-        li.code, li.desc, s.name.toUpperCase(),
+        li.code, li.desc, li.sub || '',
         locs.split(' · ')[0] || m.label,
-        'LUMPSUM', 1, 'LUMPSUM', 1, cod,
-        a, a, a, g, a+g,
-        conf + (li.note || li.sub || '')
+        cod,
+        fv.fixed, fv.variable, a, g, a+g,
+        conf + (li.note || '')
       ]);
     });
-    const sa = s.items.reduce((t,li) => t+(Number(li.amount)||0), 0);
-    const sg = s.items.reduce((t,li) => t+(li._gst||0), 0);
-    D.push(['', 'ACCOUNT TOTAL FOR ' + s.code, s.name.toUpperCase(), '', '', '', '', '', '', '', '', sa, sg, sa+sg, '']);
+    const sums = s.items.reduce((t,li) => {
+      const fv = fvFor(li);
+      t.fixed += fv.fixed; t.variable += fv.variable;
+      t.amt += Number(li.amount)||0; t.gst += li._gst||0;
+      return t;
+    }, { fixed:0, variable:0, amt:0, gst:0 });
+    D.push(['', 'ACCOUNT TOTAL FOR ' + s.code, '', '', '', sums.fixed, sums.variable, sums.amt, sums.gst, sums.amt+sums.gst, '']);
     D.push([]);
   }
 
   atl.forEach(addSec);
-  D.push(['', 'TOTAL ABOVE THE LINE', '', '', '', '', '', '', '', '', '', atlS.amt, atlS.gst, atlS.amt+atlS.gst, '']);
+  D.push(['', 'TOTAL ABOVE THE LINE', '', '', '', atlS.fixed, atlS.variable, atlS.amt, atlS.gst, atlS.amt+atlS.gst, '']);
   D.push([]);
   btl.forEach(addSec);
-  D.push(['', 'TOTAL BELOW THE LINE', '', '', '', '', '', '', '', '', '', btlS.amt, btlS.gst, btlS.amt+btlS.gst, '']);
+  D.push(['', 'TOTAL BELOW THE LINE', '', '', '', btlS.fixed, btlS.variable, btlS.amt, btlS.gst, btlS.amt+btlS.gst, '']);
   D.push([]);
   post.forEach(addSec);
-  D.push(['', 'TOTAL POST PRODUCTION', '', '', '', '', '', '', '', '', '', postS.amt, postS.gst, postS.amt+postS.gst, '']);
+  D.push(['', 'TOTAL POST PRODUCTION', '', '', '', postS.fixed, postS.variable, postS.amt, postS.gst, postS.amt+postS.gst, '']);
   D.push([]);
-  D.push(['13700','INSURANCE (1%)','INSURANCE','','','','','','',cod,insAmt,insAmt,insGst,insAmt+insGst,'']);
-  D.push(['14000','CONTINGENCY (10%)','CONTINGENCY','','','','','','',cod,contAmt,contAmt,0,contAmt,'']);
+  D.push(['13700','INSURANCE (1%)','','','',cod,insAmt,0,insAmt,insGst,insAmt+insGst,'']);
+  D.push(['14000','CONTINGENCY (10%)','','','',cod,contAmt,0,contAmt,0,contAmt,'']);
   D.push([]);
-  D.push(['','GRAND TOTAL (' + sym + ' ' + cod + ')','','','','','','','','','','','',grandTotal,'']);
+  D.push(['','GRAND TOTAL (' + sym + ' ' + cod + ')','','','','','','','','',grandTotal,'']);
 
   const ws2 = XLSX.utils.aoa_to_sheet(D);
   ws2['!cols'] = [
-    {wch:10},{wch:34},{wch:28},{wch:16},{wch:10},{wch:12},{wch:8},{wch:4},
-    {wch:8},{wch:14},{wch:14},{wch:14},{wch:12},{wch:16},{wch:30}
+    {wch:12},{wch:34},{wch:24},{wch:16},{wch:8},
+    {wch:14},{wch:14},{wch:14},{wch:12},{wch:16},{wch:30}
   ];
 
   const wb = XLSX.utils.book_new();
