@@ -377,6 +377,47 @@ input[type=file]{display:none;}
 .refine-rev-notes{margin:0;padding-left:18px;font-size:12px;color:var(--ink-soft);}
 .refine-rev-notes li{margin-bottom:3px;}
 
+/* SOFT EMAIL GATE — modal */
+.gate-overlay{
+  position:fixed;inset:0;background:rgba(20,17,13,0.55);z-index:300;
+  display:none;align-items:center;justify-content:center;padding:24px;
+  animation:gateFade 0.25s var(--ease-out);
+}
+.gate-overlay.active{display:flex;}
+@keyframes gateFade{from{opacity:0;}to{opacity:1;}}
+.gate-card{
+  background:var(--paper);border:1px solid var(--rule-strong);
+  max-width:440px;width:100%;padding:30px 32px;position:relative;
+  box-shadow:0 20px 60px rgba(20,17,13,0.20);
+}
+.gate-eyebrow{
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);
+  font-family:'DM Mono',monospace;margin-bottom:8px;
+}
+.gate-title{
+  font-family:'Fraunces',serif;font-weight:500;font-size:24px;color:var(--ink);
+  letter-spacing:-0.01em;line-height:1.2;margin-bottom:8px;
+}
+.gate-title em{font-style:italic;color:var(--accent);font-weight:400;}
+.gate-sub{
+  font-size:13px;color:var(--ink-soft);line-height:1.55;font-family:'Inter',sans-serif;
+  margin-bottom:18px;
+}
+.gate-form{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.gate-form input{font-size:13px;padding:11px 14px;}
+.gate-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
+.gate-skip{
+  background:transparent;border:none;color:var(--muted);
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;
+  text-transform:uppercase;cursor:pointer;padding:6px 10px;
+}
+.gate-skip:hover{color:var(--ink-soft);}
+.gate-error{
+  font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;
+  letter-spacing:0.04em;margin-top:6px;display:none;
+}
+.gate-error.show{display:block;}
+
 /* SUMMARY CARDS — three stacked rows: overview · totals · ATL/BTL/Post */
 .summary-stack{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
 .summary-row{display:grid;gap:10px;}
@@ -912,9 +953,9 @@ input[type=file]{display:none;}
         <div class="budget-meta-text" id="b-meta">AI Generated Draft</div>
       </div>
       <div class="action-btns">
-        <button class="btn-sm btn-export" onclick="exportExcel()">Export Excel</button>
-        <button class="btn-sm btn-export" onclick="window.print()">Export PDF</button>
-        <button class="btn-sm btn-refine" onclick="goToRefine()">Refine Budget</button>
+        <button class="btn-sm btn-export" onclick="gateAction('export', exportExcel)">Export Excel</button>
+        <button class="btn-sm btn-export" onclick="gateAction('export', () => window.print())">Export PDF</button>
+        <button class="btn-sm btn-refine" onclick="gateAction('refine', goToRefine)">Refine Budget</button>
         <button class="btn-sm btn-lock" onclick="lockBudget()">Lock Budget</button>
         <button class="btn-sm btn-ghost" onclick="startOver()" style="font-size:10px;">New Budget</button>
       </div>
@@ -1050,6 +1091,24 @@ input[type=file]{display:none;}
     <div class="refine-history" id="refine-history" style="display:none;">
       <div class="refine-history-title">Revision history</div>
       <div id="refine-history-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SOFT EMAIL GATE — shown the first time a producer exports / refines -->
+<div class="gate-overlay" id="gate-overlay" onclick="closeGate(event)">
+  <div class="gate-card" onclick="event.stopPropagation()">
+    <div class="gate-eyebrow">Quick step</div>
+    <div class="gate-title">Before you <em>continue.</em></div>
+    <div class="gate-sub" id="gate-sub">Mark is still in beta — leave your email so we know who's using the demo. We'll only follow up if there's something material to share.</div>
+    <div class="gate-form">
+      <input id="gate-email" type="email" placeholder="you@studio.com" autocomplete="email"/>
+      <input id="gate-role" type="text" placeholder="Role — e.g. Producer / Director / DOP (optional)" autocomplete="organization-title"/>
+    </div>
+    <div class="gate-error" id="gate-error">Enter a valid email to continue.</div>
+    <div class="gate-actions">
+      <button class="gate-skip" onclick="skipGate()">Skip for now</button>
+      <button class="btn-red" onclick="submitGate()"><span>Continue →</span></button>
     </div>
   </div>
 </div>
@@ -1740,6 +1799,100 @@ function runAnimation() {
       stopAnimation();
     }
   }, 8000);
+}
+
+// ── SOFT EMAIL GATE ───────────────────────────────────────────────────────────
+// Producers see this modal the first time they try to export or refine. After
+// they submit (or explicitly skip) we remember it locally and never show it
+// again on this device. This is intentionally NOT auth — the goal is to know
+// who's using the demo, not to lock anyone out.
+const _GATE_LS_KEY = 'mark_lead_unlocked';
+let _gateAfterUnlock = null;   // function to run once the gate is satisfied
+
+function isGateUnlocked() {
+  return !!localStorage.getItem(_GATE_LS_KEY);
+}
+
+function openGate(trigger, after) {
+  if (isGateUnlocked()) { if (after) after(); return; }
+  _gateAfterUnlock = after || null;
+  const sub = document.getElementById('gate-sub');
+  if (trigger === 'export') {
+    sub.textContent = "Before you export — Mark's still in beta and we'd love to know who's using it. We'll only follow up if there's something material to share.";
+  } else if (trigger === 'refine') {
+    sub.textContent = "Before you refine — Mark's still in beta. Quick email so we know who's iterating, then you can keep going.";
+  } else {
+    sub.textContent = "Mark is still in beta — leave your email so we know who's using the demo. We'll only follow up if there's something material to share.";
+  }
+  document.getElementById('gate-error').classList.remove('show');
+  document.getElementById('gate-overlay').classList.add('active');
+  document.getElementById('gate-overlay').dataset.trigger = trigger || '';
+  setTimeout(() => document.getElementById('gate-email').focus(), 60);
+}
+
+function closeGate(e) {
+  // Click on the overlay background closes; click on the card is stopped.
+  if (e && e.target.id === 'gate-overlay') {
+    document.getElementById('gate-overlay').classList.remove('active');
+    _gateAfterUnlock = null;
+  }
+}
+
+function skipGate() {
+  // Skip means "ask me again next time" — we don't write to localStorage,
+  // but we do let the action through so the flow isn't blocked.
+  document.getElementById('gate-overlay').classList.remove('active');
+  if (_gateAfterUnlock) {
+    const fn = _gateAfterUnlock;
+    _gateAfterUnlock = null;
+    fn();
+  }
+}
+
+async function submitGate() {
+  const emailEl = document.getElementById('gate-email');
+  const roleEl = document.getElementById('gate-role');
+  const err = document.getElementById('gate-error');
+  const email = emailEl.value.trim();
+  // Cheap RFC-ish validation; the server validates again.
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    err.classList.add('show');
+    emailEl.focus();
+    return;
+  }
+  err.classList.remove('show');
+
+  const overlay = document.getElementById('gate-overlay');
+  const trigger = overlay.dataset.trigger || 'unknown';
+
+  // Best-effort capture — failure shouldn't block the action.
+  try {
+    await markFetch('/lead/create', {
+      json: {
+        email,
+        role: roleEl.value.trim() || null,
+        page: 'budget.html',
+        user_agent: navigator.userAgent,
+        trigger,
+      },
+      timeoutMs: 8000,
+    });
+  } catch (e) {
+    console.warn('Lead capture failed (non-blocking):', e.message);
+  }
+  localStorage.setItem(_GATE_LS_KEY, JSON.stringify({ email, ts: Date.now() }));
+  overlay.classList.remove('active');
+  if (_gateAfterUnlock) {
+    const fn = _gateAfterUnlock;
+    _gateAfterUnlock = null;
+    fn();
+  }
+}
+
+// Wrapper that opens the gate (if needed) then runs the underlying action.
+function gateAction(trigger, fn) {
+  if (isGateUnlocked()) { fn(); return; }
+  openGate(trigger, fn);
 }
 
 // ── REFINE BUDGET ─────────────────────────────────────────────────────────────
