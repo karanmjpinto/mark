@@ -195,6 +195,15 @@ class BudgetGenerate(BaseModel):
     breakdown: Optional[dict] = None  # output of /script/parse summary, when available
     version: Optional[str] = "1.0"
 
+class BudgetRefine(BaseModel):
+    # Standalone flow: pass the budget JSON directly. Project flow: pass project_id.
+    project_id: Optional[str] = None
+    budget: Optional[dict] = None              # current budget JSON (the .budget_data shape)
+    instruction: str                            # producer's free-text refinement ask
+    region: Optional[str] = None
+    currency: Optional[dict] = None
+    version: Optional[str] = "1.0"
+
 class CrewEnrich(BaseModel):
     crew_id: str
 
@@ -639,6 +648,74 @@ async def generate_budget(data: BudgetGenerate, _=Depends(require_api_key)):
         "created_at": now(),
         "locked": False,
         "source": "flue:generate-budget",
+    }
+    db_set(f"budget:{data.project_id}:latest", budget)
+    db_set(f"budget:{bid}", budget)
+    db_sadd(f"project:{data.project_id}:budgets", bid)
+    return {"success": True, "budget_id": bid, "budget": budget}
+
+@app.post("/budget/refine")
+async def refine_budget(data: BudgetRefine, _=Depends(require_api_key)):
+    """Apply a producer's free-text instruction to an existing budget.
+
+    Two modes:
+    - **Project mode** — pass `project_id`; we load the latest stored budget,
+      run the refine agent, and persist a new revision.
+    - **Standalone mode** — pass the `budget` JSON directly (no persistence).
+      Used by the demo flow where there's no project record.
+    """
+    if not (data.instruction or "").strip():
+        raise HTTPException(400, "instruction is required")
+
+    current_budget = None
+    project = None
+    if data.project_id:
+        project = db_get(f"project:{data.project_id}")
+        if not project:
+            raise HTTPException(404, "Project not found")
+        latest = db_get(f"budget:{data.project_id}:latest")
+        if not latest or not latest.get("budget_data"):
+            raise HTTPException(404, "No budget exists for this project yet — generate one first")
+        current_budget = latest["budget_data"]
+    else:
+        if not data.budget:
+            raise HTTPException(400, "Either project_id or budget is required")
+        current_budget = data.budget
+
+    _CURRENCY_SYMBOLS = {"INR": "₹", "USD": "$", "GBP": "£"}
+    currency = data.currency
+    if not currency and project:
+        code = project.get("currency", "INR")
+        currency = {"code": code, "symbol": _CURRENCY_SYMBOLS.get(code, code)}
+    currency = currency or {"code": "INR", "symbol": "₹"}
+
+    payload = {
+        "budget": current_budget,
+        "instruction": data.instruction.strip(),
+        "currency": currency,
+    }
+    if data.region:
+        payload["region"] = data.region
+
+    run_id = data.project_id or str(uuid.uuid4())
+    agent_result = await _flue_call("refine-budget", run_id, payload)
+    if isinstance(agent_result, dict) and set(agent_result.keys()) == {"result"}:
+        agent_result = agent_result["result"]
+
+    if not data.project_id:
+        return {"success": True, "budget": {"budget_data": agent_result, "source": "flue:refine-budget"}}
+
+    bid = str(uuid.uuid4())
+    budget = {
+        "id": bid,
+        "project_id": data.project_id,
+        "version": data.version,
+        "budget_data": agent_result,
+        "instruction": data.instruction.strip(),
+        "previous_budget_id": (db_get(f"budget:{data.project_id}:latest") or {}).get("id"),
+        "created_at": now(),
+        "locked": False,
+        "source": "flue:refine-budget",
     }
     db_set(f"budget:{data.project_id}:latest", budget)
     db_set(f"budget:{bid}", budget)

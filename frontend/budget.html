@@ -343,6 +343,39 @@ input[type=file]{display:none;}
 .btn-sm:hover{border-color:var(--ink);color:var(--ink);background:var(--paper);}
 .btn-lock{background:var(--ink);color:var(--paper);border-color:var(--ink);}
 .btn-lock:hover{background:var(--accent);border-color:var(--accent);color:var(--paper);}
+.btn-refine{background:var(--accent);color:var(--paper);border-color:var(--accent);}
+.btn-refine:hover{background:var(--accent-deep);border-color:var(--accent-deep);color:var(--paper);}
+
+/* STEP 5 — refine */
+.refine-snapshot{
+  display:flex;gap:18px;align-items:center;padding:16px 20px;margin-bottom:18px;
+  background:var(--paper-deep);border:1px solid var(--rule);
+}
+.refine-snapshot .rs-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;}
+.refine-snapshot .rs-grand{font-family:'Fraunces',serif;font-weight:500;font-size:22px;color:var(--ink);letter-spacing:-0.01em;font-variation-settings:"opsz" 144;}
+.refine-snapshot .rs-meta{font-size:11px;color:var(--ink-soft);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-top:3px;}
+.refine-suggestions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 18px;}
+.refine-chip{
+  font-size:12px;padding:8px 14px;background:var(--paper);border:1px solid var(--rule-strong);
+  cursor:pointer;color:var(--ink-soft);font-family:'Inter',sans-serif;
+  transition:all 0.2s;
+}
+.refine-chip:hover{border-color:var(--ink);color:var(--ink);}
+.refine-history{
+  background:var(--paper-deep);border:1px solid var(--rule);padding:18px 22px;margin-top:22px;
+}
+.refine-history-title{
+  font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);
+  font-family:'DM Mono',monospace;margin-bottom:14px;
+}
+.refine-rev{
+  padding:14px 0;border-bottom:1px solid var(--rule);
+  font-size:13px;color:var(--ink-soft);line-height:1.55;font-family:'Inter',sans-serif;
+}
+.refine-rev:last-child{border-bottom:none;}
+.refine-rev-instruction{font-style:italic;color:var(--ink);margin-bottom:6px;}
+.refine-rev-notes{margin:0;padding-left:18px;font-size:12px;color:var(--ink-soft);}
+.refine-rev-notes li{margin-bottom:3px;}
 
 /* SUMMARY CARDS — three stacked rows: overview · totals · ATL/BTL/Post */
 .summary-stack{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
@@ -612,6 +645,8 @@ input[type=file]{display:none;}
       <div class="si-item inactive"><div class="si-num">3</div><div class="si-label">Questions</div></div>
       <div class="si-line"></div>
       <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Budget</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Refine</div></div>
     </div>
 
     <div style="margin-bottom:20px;">
@@ -738,6 +773,8 @@ input[type=file]{display:none;}
       <div class="si-item inactive"><div class="si-num">3</div><div class="si-label">Answer questions</div></div>
       <div class="si-line"></div>
       <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Get your budget</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Refine</div></div>
     </div>
 
     <div class="market-pill">
@@ -819,6 +856,8 @@ input[type=file]{display:none;}
       <div class="si-item active"><div class="si-num">3</div><div class="si-label">Answer questions</div></div>
       <div class="si-line"></div>
       <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Get budget</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Refine</div></div>
     </div>
     <div class="mark-intro">
       <div class="mark-av">M</div>
@@ -844,6 +883,8 @@ input[type=file]{display:none;}
       <div class="si-item done"><div class="si-num">3</div><div class="si-label">Questions answered</div></div>
       <div class="si-line"></div>
       <div class="si-item active"><div class="si-num">4</div><div class="si-label">Building budget</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Refine</div></div>
     </div>
     <div class="generating">
       <div class="gen-av">M</div>
@@ -873,6 +914,7 @@ input[type=file]{display:none;}
       <div class="action-btns">
         <button class="btn-sm btn-export" onclick="exportExcel()">Export Excel</button>
         <button class="btn-sm btn-export" onclick="window.print()">Export PDF</button>
+        <button class="btn-sm btn-refine" onclick="goToRefine()">Refine Budget</button>
         <button class="btn-sm btn-lock" onclick="lockBudget()">Lock Budget</button>
         <button class="btn-sm btn-ghost" onclick="startOver()" style="font-size:10px;">New Budget</button>
       </div>
@@ -951,6 +993,63 @@ input[type=file]{display:none;}
         </div>
       </div>
       <div id="fb-thanks" style="display:none;font-size:13px;color:var(--green);font-family:'DM Mono',monospace;letter-spacing:0.04em;">Thanks — recorded.</div>
+    </div>
+  </div>
+
+  <!-- STEP 5: REFINE BUDGET -->
+  <div class="step" id="step5">
+    <div class="step-indicator" style="margin-bottom:32px;">
+      <div class="si-item done"><div class="si-num">1</div><div class="si-label">Market</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">2</div><div class="si-label">Script added</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">3</div><div class="si-label">Questions answered</div></div>
+      <div class="si-line"></div>
+      <div class="si-item done"><div class="si-num">4</div><div class="si-label">Budget built</div></div>
+      <div class="si-line"></div>
+      <div class="si-item active"><div class="si-num">5</div><div class="si-label">Refine</div></div>
+    </div>
+
+    <div class="budget-topbar" style="margin-bottom:18px;">
+      <div>
+        <div class="budget-proj">Refine your <em>budget.</em></div>
+        <div class="budget-meta-text">Tell Mark what to change — he'll update only the line items you mention.</div>
+      </div>
+    </div>
+
+    <div class="refine-snapshot">
+      <div style="flex:1;">
+        <div class="rs-label">Current grand total</div>
+        <div class="rs-grand" id="refine-grand">—</div>
+        <div class="rs-meta" id="refine-meta">—</div>
+      </div>
+      <button class="btn-ghost" onclick="goTo('step4')">← View budget</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">What should change?</div>
+      <textarea id="refine-instruction"
+        placeholder="e.g. 'Cut catering by 20%, drop the second DOP assistant, add ₹2L for a stunt coordinator.'  Be specific — Mark will only touch what you mention."
+        style="min-height:120px;"></textarea>
+      <div class="refine-suggestions" id="refine-suggestions">
+        <div class="refine-chip" onclick="appendSuggestion('Cut the director fee by 15%.')">Cut director fee by 15%</div>
+        <div class="refine-chip" onclick="appendSuggestion('Add a stunt coordinator at market day rate for 2 days.')">Add stunt coordinator</div>
+        <div class="refine-chip" onclick="appendSuggestion('Switch the camera package to a budget tier — handheld DSLR equivalent.')">Lower-tier camera</div>
+        <div class="refine-chip" onclick="appendSuggestion('Trim location hire by ₹3L.')">Trim location hire</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:4px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-red disabled" id="refine-submit-btn" onclick="submitRefinement()"><span>Apply changes →</span></button>
+      <button class="btn-ghost" onclick="goTo('step4')">← Back to budget</button>
+      <span class="q-progress" id="refine-status">Describe a change to enable</span>
+    </div>
+
+    <div id="refine-error" style="display:none;margin-top:16px;" class="error-msg"></div>
+
+    <div class="refine-history" id="refine-history" style="display:none;">
+      <div class="refine-history-title">Revision history</div>
+      <div id="refine-history-list"></div>
     </div>
   </div>
 </div>
@@ -1221,7 +1320,7 @@ function goTo(id) {
 }
 
 // Maps each step → its predecessor (for the global back button).
-const _backMap = { step0: null, step1: 'step0', step2: 'step1', step3: 'step2', step4: 'step2' };
+const _backMap = { step0: null, step1: 'step0', step2: 'step1', step3: 'step2', step4: 'step2', step5: 'step4' };
 
 function updateBackBtn(stepId) {
   const label = document.getElementById('back-btn-label');
@@ -1250,6 +1349,8 @@ function startOver() {
   parsedBreakdown = null;
   budgetData = null;
   scriptText = '';
+  refineHistory = [];
+  renderRefineHistory();
   feedbackRating = null;
   feedbackSent = false;
   ['fb-detail', 'fb-thanks'].forEach(id => {
@@ -1452,6 +1553,121 @@ function runAnimation() {
       stopAnimation();
     }
   }, 8000);
+}
+
+// ── REFINE BUDGET ─────────────────────────────────────────────────────────────
+// State for the revision history panel. Each entry: { instruction, notes, grandBefore, grandAfter, ts }.
+let refineHistory = [];
+
+function goToRefine() {
+  if (!budgetData) return;
+  // Hydrate the snapshot card from the current budget.
+  const grandEl = document.getElementById('s-grand');
+  document.getElementById('refine-grand').textContent = grandEl ? grandEl.textContent : '—';
+  document.getElementById('refine-meta').textContent =
+    (budgetData.production_type || '') + ' · ' +
+    (budgetData.shoot_days || '?') + ' shoot days · ' +
+    (budgetData.scale_tier || '') + ' tier';
+  // Wire the textarea to the gate so the button enables when the producer types.
+  const ta = document.getElementById('refine-instruction');
+  ta.oninput = refreshRefineGate;
+  ta.value = '';
+  refreshRefineGate();
+  goTo('step5');
+}
+
+function appendSuggestion(text) {
+  const ta = document.getElementById('refine-instruction');
+  ta.value = ta.value.trim() ? (ta.value.trim() + '\n' + text) : text;
+  refreshRefineGate();
+  ta.focus();
+}
+
+function refreshRefineGate() {
+  const ta = document.getElementById('refine-instruction');
+  const btn = document.getElementById('refine-submit-btn');
+  const status = document.getElementById('refine-status');
+  if (!ta || !btn) return;
+  const ok = ta.value.trim().length >= 8;
+  btn.classList.toggle('disabled', !ok);
+  if (ok) {
+    status.textContent = 'Ready to send';
+    status.classList.add('complete');
+  } else {
+    status.textContent = 'Describe a change to enable';
+    status.classList.remove('complete');
+  }
+}
+
+async function submitRefinement() {
+  const btn = document.getElementById('refine-submit-btn');
+  if (!btn || btn.classList.contains('disabled')) return;
+  const ta = document.getElementById('refine-instruction');
+  const instruction = ta.value.trim();
+  if (!instruction) return;
+
+  const errEl = document.getElementById('refine-error');
+  errEl.style.display = 'none';
+  btn.classList.add('disabled');
+  document.getElementById('refine-status').textContent = 'Mark is revising your budget…';
+
+  // Capture the pre-refinement grand total for history.
+  const grandBefore = document.getElementById('s-grand').textContent;
+
+  try {
+    const data = await markFetch('/budget/refine', {
+      json: {
+        budget: budgetData,
+        instruction,
+        region,
+        currency: { code: currency.code, symbol: currency.symbol },
+      },
+      timeoutMs: 180000,
+    });
+    if (!data.budget || !data.budget.budget_data) {
+      throw new Error('Unexpected response from refine endpoint');
+    }
+    const newBudget = data.budget.budget_data;
+    budgetData = newBudget;
+    renderBudget(budgetData);
+    // Hydrate snapshot with the new total before flipping back.
+    const grandAfter = document.getElementById('s-grand').textContent;
+    refineHistory.unshift({
+      instruction,
+      notes: newBudget.revision_notes || [],
+      grandBefore,
+      grandAfter,
+      ts: new Date(),
+    });
+    renderRefineHistory();
+    // Bring the producer back to the budget so they can see what changed.
+    goTo('step4');
+  } catch (e) {
+    errEl.textContent = 'Refinement failed: ' + e.message;
+    errEl.style.display = 'block';
+    btn.classList.remove('disabled');
+    document.getElementById('refine-status').textContent = 'Try again or rephrase';
+  }
+}
+
+function renderRefineHistory() {
+  const wrap = document.getElementById('refine-history');
+  const list = document.getElementById('refine-history-list');
+  if (!refineHistory.length) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  list.innerHTML = refineHistory.map(rev => `
+    <div class="refine-rev">
+      <div class="refine-rev-instruction">"${rev.instruction.replace(/</g,'&lt;')}"</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:6px;">
+        ${rev.ts.toLocaleString('en-GB', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' })} ·
+        ${rev.grandBefore} → ${rev.grandAfter}
+      </div>
+      ${rev.notes.length ? `<ul class="refine-rev-notes">${rev.notes.map(n => `<li>${n.replace(/</g,'&lt;')}</li>`).join('')}</ul>` : ''}
+    </div>
+  `).join('');
 }
 
 // ── FEEDBACK ──────────────────────────────────────────────────────────────────
@@ -1728,7 +1944,7 @@ function renderBudget(data) {
             <div class="li-tot">${fmtAmt(li._total)}</div>
             <div class="li-gst">${li._gst>0?fmtAmt(li._gst):'—'}</div>
             <div class="li-grand">${fmtAmt(li._grand)}</div>
-            <div class="li-edit" title="Edit">✎</div>
+            <div></div>
           </div>
         `).join('')}
       </div>
