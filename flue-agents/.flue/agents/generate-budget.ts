@@ -81,6 +81,15 @@ GROUND TRUTH
 - If qa and breakdown conflict, prefer qa for scheduling and breakdown for content; explain the assumption in \`flags\`.
 - If \`crew\` is non-empty, prefer their declared \`day_rate\` for matching departments; if a declared rate is >30% off market, add a brief \`note\`.
 
+NEVER INVENT QUANTITIES (anti-hallucination rule)
+- Crew sizes, day rates, talent fees, unit counts MUST come from \`qa\`, \`breakdown\`, or \`crew\`. If the producer didn't say it, you don't know it.
+- Do NOT write specific numbers in \`sub\` or \`note\` that the inputs don't support. "Catering for 35 crew" is forbidden if no input mentioned 35; write "Catering for full crew + cast" instead, OR mark the line \`conf: "red"\` with \`note: "Confirm crew size before locking"\`.
+- "Standard TVC crew rate" / "mid-tier 2026 market" / "industry default" are acceptable phrasings. Inventing precise headcounts or rates from thin air is not.
+
+PRODUCTION : POST-PRODUCTION RATIO
+- For India / TVC / music video / feature work without heavy VFX, post production should land at 15–25% of production (sections 12900 + 13100 vs everything below-the-line + above-the-line excluding contingency).
+- If you don't include 12900 (Editorial) or 13100 (Post Sound) you are under-building post. Always include both for any production with edit + sound deliverables.
+
 OUTPUT SHAPE — return exactly this structure
 {
   "title": "<project title>",
