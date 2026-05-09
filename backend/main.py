@@ -41,13 +41,21 @@ app.add_middleware(
 )
 
 # ── REDIS ─────────────────────────────────────────────────────────────────────
+# Prefer REDIS_URL when set (Railway / Heroku-style), fall back to discrete
+# host/port/password env vars. Without any of these we use an in-memory dict
+# (dev only — caching is disabled in that mode).
 try:
-    r = redis_lib.Redis(
-        host=os.getenv("REDIS_HOST", "localhost"),
-        port=int(os.getenv("REDIS_PORT", 6379)),
-        db=0,
-        decode_responses=True
-    )
+    _redis_url = os.getenv("REDIS_URL")
+    if _redis_url:
+        r = redis_lib.Redis.from_url(_redis_url, decode_responses=True)
+    else:
+        r = redis_lib.Redis(
+            host=os.getenv("REDIS_HOST", "localhost"),
+            port=int(os.getenv("REDIS_PORT", 6379)),
+            password=os.getenv("REDIS_PASSWORD") or None,
+            db=0,
+            decode_responses=True,
+        )
     r.ping()
     print("✅ Redis connected")
 except Exception as e:
