@@ -402,6 +402,13 @@ def delete_crew(data: CrewIdRequest, _=Depends(require_api_key)):
 
 # ── BUDGET STORAGE ────────────────────────────────────────────────────────────
 
+@app.post("/admin/cache/clear")
+async def admin_cache_clear(_=Depends(require_api_key)):
+    """Drop the budget cache. Call after rate-card or prompt changes that
+    invalidate previously-cached results. Requires API_KEY when set."""
+    deleted = _budget_cache_clear()
+    return {"success": True, "deleted_keys": deleted}
+
 @app.post("/budget/save")
 def save_budget(data: BudgetSave, _=Depends(require_api_key)):
     p = db_get(f"project:{data.project_id}")
@@ -663,6 +670,17 @@ def _budget_cache_set(payload: dict, result: dict) -> None:
         return
     key = _budget_cache_key(payload)
     r.setex(key, _BUDGET_CACHE_TTL_SECONDS, json.dumps(result))
+
+def _budget_cache_clear() -> int:
+    """Drop all cached budgets. Used after rate card / prompt changes that
+    would otherwise leave stale results pinned to inputs that should now
+    produce different output. Returns the number of keys deleted."""
+    if not r:
+        return 0
+    keys = list(r.scan_iter("budget-cache:*"))
+    if not keys:
+        return 0
+    return r.delete(*keys)
 
 # Production : Post-production sanity check. Indian TVCs typically run
 # post at 15–25% of production unless heavy VFX is flagged. Anything below

@@ -120,10 +120,11 @@ SECTION CODES (use these exact codes; include where applicable):
 12900 Editorial · 13100 Post Sound · 13700 Insurance · 14000 Contingency
 Conditionally (only if qa/script imply): 11200 Stunts · 11900 Choreography · 12800 Travel · 13300 VFX
 
-TAX
-- india: GST 18% crew/equipment, 5% catering, 12% transport, 0% contingency.
-- uk: VAT 20% where applicable; many film crew services VAT-exempt → \`gst_rate: 0\`.
+TAX — \`gst_rate\` is a DECIMAL multiplier (0.18 for 18%), NEVER a raw percent (18). The frontend multiplies amount × gst_rate directly — emitting 18 instead of 0.18 multiplies the tax line by 100×.
+- india: GST → \`gst_rate: 0.18\` for crew/equipment, \`0.05\` for catering, \`0.12\` for transport, \`0\` for contingency.
+- uk: VAT → \`gst_rate: 0.2\` where applicable; many film crew services VAT-exempt → \`0\`.
 - usa / hollywood / other: \`gst_rate: 0\` for all items.
+Examples (correct): \`"gst_rate": 0.18\`, \`"gst_rate": 0.05\`, \`"gst_rate": 0\`. (wrong): \`"gst_rate": 18\`, \`"gst_rate": "18%"\`.
 
 CONFIDENCE
 - green = confident, amber = estimate (one-line note), red = needs producer input (one-line note).

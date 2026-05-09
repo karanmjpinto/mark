@@ -2196,9 +2196,15 @@ function renderBudget(data) {
     s.items.forEach(li => {
       const amt = Number(li.amount) || 0;
       const split = splitFixedVariable(li);
-      const gst = Math.round(amt * (Number(li.gst_rate) || 0));
+      // The agent occasionally returns gst_rate as a raw percent (e.g. 18) instead
+      // of the decimal we documented (0.18). Normalize anything > 1 by dividing
+      // by 100 so a single bad emit doesn't 100x the tax line.
+      let rawRate = Number(li.gst_rate) || 0;
+      if (rawRate > 1) rawRate = rawRate / 100;
+      const gst = Math.round(amt * rawRate);
       li._fixed = split.fixed;
       li._variable = split.variable;
+      li._gst_rate = rawRate;
       li._gst = gst;
       li._total = amt;
       li._grand = amt + gst;
