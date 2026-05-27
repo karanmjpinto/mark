@@ -3,12 +3,19 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AskMark — Script to Budget</title>
+<title>M·ARK — Script to Budget · Production OS</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;rect width='32' height='32' fill='%23F5F1E8'/&gt;&lt;g transform='rotate(-10 16 12)'&gt;&lt;rect x='4' y='4' width='24' height='6' fill='%2314110D'/&gt;&lt;rect x='6' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='12' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='18' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='24' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;rect x='4' y='12' width='24' height='16' fill='%2314110D'/&gt;&lt;text x='16' y='24' font-family='Georgia,serif' font-style='italic' font-size='13' fill='%23C8330A' text-anchor='middle' font-weight='600'&gt;M&lt;/text&gt;&lt;/svg&gt;"/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+/* Hallmark · pre-emit critique: P5 H4 E5 S5 R4 V5
+ * macrostructure: Workbench + Slate · tone: production-floor editorial
+ * anchor hue: warm-red (accent #C8330A) on cream paper (#F5F1E8)
+ * audience: film production professionals
+ * source: Hallmark audit + redesign 2026-05-27
+ */
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   /* Surfaces — warm cream paper, deep ink */
@@ -55,7 +62,207 @@ body::after{
   opacity:0.05;mix-blend-mode:multiply;
 }
 
-#app{max-width:920px;margin:0 auto;padding:48px 28px 80px;position:relative;z-index:1;}
+#app{max-width:920px;margin:0 auto;padding:62px 28px 80px;position:relative;z-index:1;}
+
+/* SLATE STRIPE — diagonal black/white snap-band that reads as the top of
+   a clapperboard. Tells a production person they're in the right place
+   in under a second. */
+.slate-stripe{
+  position:fixed;top:0;left:0;right:0;height:14px;z-index:101;
+  background-image:repeating-linear-gradient(
+    -52deg,
+    var(--ink) 0 12px,
+    var(--paper) 12px 24px
+  );
+  border-bottom:1px solid var(--ink);
+}
+
+/* SLATE CARD — the production-paperwork header on the budget page. Sits
+   above the Grand Total summary. PROD / DIR / DOP / SC. / DATE fields in
+   the layout real slates use. */
+.slate-card{
+  background:var(--paper);border:1.5px solid var(--ink);margin-bottom:18px;
+  position:relative;overflow:hidden;
+}
+.slate-card-snap{
+  height:18px;
+  background-image:repeating-linear-gradient(
+    -52deg,
+    var(--ink) 0 14px,
+    var(--paper) 14px 28px
+  );
+  border-bottom:1.5px solid var(--ink);
+}
+.slate-card-body{
+  display:grid;grid-template-columns:repeat(6, 1fr);gap:0;
+}
+.slate-field{
+  padding:12px 14px;border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;gap:4px;
+}
+.slate-field:last-child{border-right:none;}
+.slate-field.span-2{grid-column:span 2;}
+.slate-field-key{
+  font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);
+  font-family:'DM Mono',monospace;font-weight:500;
+}
+.slate-field-val{
+  font-family:'DM Mono',monospace;font-size:14px;color:var(--ink);font-weight:500;
+  letter-spacing:0.02em;text-transform:uppercase;line-height:1.2;
+}
+.slate-field-val .accent{color:var(--accent);}
+.slate-field-val.big{
+  font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:28px;
+  letter-spacing:-0.01em;text-transform:none;color:var(--ink);
+}
+
+/* REVISION STACK — the chain of revision colours every working production
+   carries on its cover sheet. WHITE master → BLUE → PINK → YELLOW → GREEN
+   → GOLDENROD → BUFF → SALMON → CHERRY → TAN. Each refine round = one new
+   strip. The stack reads top→bottom in the order revisions landed. */
+.rev-stack{
+  background:var(--paper);border:1.5px solid var(--ink);margin-top:20px;
+  padding:14px 16px;
+}
+.rev-stack-label{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:600;
+}
+.rev-stack-strips{display:flex;flex-direction:column;gap:0;border:1px solid var(--ink);}
+.rev-strip{
+  display:grid;grid-template-columns:24px 110px 1fr 90px;
+  align-items:center;font-family:'DM Mono',monospace;font-size:11px;
+  border-bottom:1px solid var(--ink);color:var(--ink);
+}
+.rev-strip:last-child{border-bottom:none;}
+.rev-strip > div{padding:8px 12px;border-right:1px solid var(--ink);}
+.rev-strip > div:last-child{border-right:none;text-align:right;}
+.rev-strip .rev-dot{display:flex;align-items:center;justify-content:center;}
+.rev-strip .rev-dot::before{
+  content:'';width:10px;height:10px;border-radius:50%;
+  border:1px solid rgba(20,17,13,0.5);background:currentColor;
+}
+.rev-strip .rev-tag{font-weight:700;letter-spacing:0.12em;text-transform:uppercase;}
+.rev-strip .rev-meta{font-family:'Inter',sans-serif;font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;color:var(--ink-soft);}
+.rev-strip .rev-time{font-size:10px;letter-spacing:0.04em;color:var(--muted);}
+/* Colour-coded revision rows — match real Hollywood / Bollywood revision palette. */
+.rev-strip.rev-white{background:#FFFFFF;}
+.rev-strip.rev-blue{background:#C9DAF1;}
+.rev-strip.rev-pink{background:#F7C8D6;}
+.rev-strip.rev-yellow{background:#FFF2A8;}
+.rev-strip.rev-green{background:#C9E5B6;}
+.rev-strip.rev-goldenrod{background:#E9D08C;}
+.rev-strip.rev-buff{background:#F2DEC0;}
+.rev-strip.rev-salmon{background:#F4B89E;}
+.rev-strip.rev-cherry{background:#E2A3A7;}
+.rev-strip.rev-tan{background:#D7BFA1;}
+
+/* CONFIDENTIAL BAND — slim "for named recipients only" strip every
+   piece of production paperwork carries at the bottom. Stops the page
+   feeling like a SaaS landing — it feels like a budget folder. */
+.confidential-band{
+  margin-top:24px;padding:14px 18px;background:var(--ink);color:var(--paper);
+  display:flex;justify-content:space-between;align-items:center;gap:14px;
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;
+  text-transform:uppercase;flex-wrap:wrap;
+}
+.confidential-band span:first-child{font-weight:700;letter-spacing:0.16em;}
+.confidential-band span:nth-child(2){opacity:0.6;flex:1;text-align:center;}
+.confidential-band span:last-child{opacity:0.85;}
+@media (max-width:680px){
+  .confidential-band{flex-direction:column;align-items:flex-start;text-align:left;}
+  .confidential-band span:nth-child(2){text-align:left;}
+}
+
+/* STRIPBOARD — the iconic scheduling view producers + 1st ADs use in
+   pre-production. Each strip = one scene. Strip colour encodes shoot
+   conditions: yellow EXT-DAY, white INT-DAY, green EXT-NIGHT, blue
+   INT-NIGHT. Heavy day-break dividers separate shoot days. */
+.stripboard-wrap{
+  background:var(--paper);border:1.5px solid var(--ink);margin-bottom:18px;
+  overflow:hidden;
+}
+.stripboard-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;border-bottom:1px solid var(--ink);background:var(--paper-deep);
+  flex-wrap:wrap;gap:10px;
+}
+.stripboard-title{
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--ink);font-weight:600;
+}
+.stripboard-legend{display:flex;gap:6px;flex-wrap:wrap;}
+.sb-key{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;
+  text-transform:uppercase;padding:4px 8px;border:1px solid var(--ink);color:var(--ink);
+}
+.sb-key.sb-day-ext{background:#F5D77A;}
+.sb-key.sb-day-int{background:#FFFFFF;}
+.sb-key.sb-night-ext{background:#9CAF88;color:#14110D;}
+.sb-key.sb-night-int{background:#7E94B8;color:#14110D;}
+
+.stripboard{display:flex;flex-direction:column;}
+.sb-day-break{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 14px;background:var(--ink);color:var(--paper);
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;
+  text-transform:uppercase;font-weight:600;
+}
+.sb-day-break .sb-day-meta{margin-left:auto;opacity:0.7;letter-spacing:0.08em;}
+.sb-strip{
+  display:grid;grid-template-columns:46px 70px 1fr 70px 80px 60px;
+  align-items:center;
+  border-bottom:1px solid rgba(20,17,13,0.18);
+  font-family:'DM Mono',monospace;font-size:11px;
+  transition:transform 0.15s var(--ease-out);
+}
+.sb-strip:hover{transform:translateX(2px);}
+.sb-strip > div{padding:9px 10px;border-right:1px solid rgba(20,17,13,0.18);}
+.sb-strip > div:last-child{border-right:none;}
+.sb-strip.day-ext{background:#F5D77A;color:#14110D;}
+.sb-strip.day-int{background:#FFFFFF;color:#14110D;}
+.sb-strip.night-ext{background:#9CAF88;color:#14110D;}
+.sb-strip.night-int{background:#7E94B8;color:#14110D;}
+.sb-strip.unknown{background:#EBE5D2;color:#14110D;}
+.sb-strip .sb-num{font-weight:700;text-align:center;font-size:12px;}
+.sb-strip .sb-slug{font-weight:600;letter-spacing:0.06em;text-transform:uppercase;}
+.sb-strip .sb-loc{
+  font-family:'Inter',sans-serif;font-weight:500;font-size:12px;letter-spacing:0;
+  text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sb-strip .sb-time{font-weight:600;text-align:center;}
+.sb-strip .sb-cast{font-family:'Inter',sans-serif;text-align:left;font-weight:500;font-size:11px;letter-spacing:0;}
+.sb-strip .sb-pgs{text-align:right;font-weight:600;}
+@media (max-width:680px){
+  .sb-strip{grid-template-columns:36px 60px 1fr 60px;font-size:10px;}
+  .sb-strip .sb-cast, .sb-strip .sb-pgs{display:none;}
+}
+
+/* RUBBER STAMP — the rotated, ink-bleed "DRAFT v1" badge that sits on
+   top of the slate card. Replaces the muted DM Mono "AI Generated Draft"
+   line — reads like the producer pressed it on the front page of the
+   budget folder. */
+.stamp{
+  position:absolute;top:34px;right:18px;z-index:2;
+  transform:rotate(-8deg);
+  padding:8px 16px;
+  border:2.5px solid var(--accent);
+  font-family:'DM Mono',monospace;font-size:14px;font-weight:700;
+  letter-spacing:0.14em;color:var(--accent);text-transform:uppercase;
+  background:rgba(255,255,255,0.4);
+  opacity:0.86;
+  box-shadow:inset 0 0 0 2px var(--paper);
+  user-select:none;pointer-events:none;
+}
+.stamp::before{
+  content:'';position:absolute;inset:-3px;border:1px solid var(--accent);opacity:0.4;
+}
+.stamp small{display:block;font-size:9px;letter-spacing:0.16em;font-weight:500;opacity:0.7;margin-top:2px;}
+@media (max-width:680px){
+  .slate-card-body{grid-template-columns:repeat(2, 1fr);}
+  .slate-field{border-bottom:1px solid var(--rule);}
+  .stamp{top:32px;right:12px;padding:6px 12px;font-size:11px;}
+}
 
 /* Tabular numbers everywhere it matters */
 .num,.li-amt,.li-gst,.li-tot,.sec-total,.sum-val,.grand-val{font-feature-settings:"tnum","cv11";font-variant-numeric:tabular-nums;}
@@ -550,8 +757,12 @@ input[type=file]{display:none;}
 .section-hdr.open{background:var(--ink);border-color:var(--ink);}
 .section-hdr.open .sec-code,.section-hdr.open .sec-name,.section-hdr.open .sec-total,.section-hdr.open .sec-arr{color:var(--paper);}
 .section-hdr.open .sec-type-badge{filter:brightness(1.4);}
-.sec-code{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.1em;width:54px;flex-shrink:0;}
-.sec-name{font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);flex:1;letter-spacing:-0.005em;}
+.sec-code{font-size:11px;font-family:'DM Mono',monospace;color:var(--ink);letter-spacing:0.12em;width:62px;flex-shrink:0;font-weight:700;}
+.sec-name{
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight:700;font-size:13px;color:var(--ink);flex:1;
+  letter-spacing:0.06em;text-transform:uppercase;
+}
 .sec-type-badge{
   font-size:9px;font-family:'DM Mono',monospace;padding:3px 8px;letter-spacing:0.1em;
   text-transform:uppercase;margin-right:12px;border:1px solid;background:transparent;
@@ -583,10 +794,19 @@ input[type=file]{display:none;}
 .li-row:last-child{border-bottom:none;}
 .li-row:hover{background:var(--paper-deep);}
 .li-conf{display:flex;align-items:center;justify-content:center;padding:11px 0;}
-.cdot{width:8px;height:8px;border-radius:50%;}
-.cg{background:var(--green);}
-.ca{background:var(--gold);}
-.cr{background:var(--accent);}
+/* Rubber-stamp confidence chip — replaces the plain 8px dot. Carries a
+   one-letter code (G/A/R) inside a rotated 1px-bordered stamp so the
+   producer can read the confidence from the grid without a tooltip. */
+.cdot{
+  width:18px;height:18px;display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:9px;font-weight:700;
+  letter-spacing:0;border:1.5px solid currentColor;background:transparent;
+  transform:rotate(-6deg);
+}
+.cdot::after{content:attr(data-c);}
+.cg{color:var(--green);}
+.ca{color:var(--gold);}
+.cr{color:var(--accent);}
 .li-desc{padding:11px 8px;font-size:13.5px;color:var(--ink);line-height:1.45;font-family:'Inter',sans-serif;font-weight:500;}
 .li-desc-sub{font-size:12px;color:var(--ink-soft);font-family:'Inter',sans-serif;margin-top:3px;letter-spacing:0;line-height:1.4;font-weight:400;}
 .li-amt{font-family:'DM Mono',monospace;font-size:13px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
@@ -616,11 +836,16 @@ input[type=file]{display:none;}
 }
 .group-divider{height:1px;background:var(--rule-strong);margin:8px 0 14px;}
 .group-heading{
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.16em;
-  text-transform:uppercase;color:var(--muted);margin:18px 0 8px;
-  display:flex;align-items:center;gap:10px;
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight:700;font-size:11px;letter-spacing:0.22em;
+  text-transform:uppercase;color:var(--ink);margin:24px 0 10px;
+  display:flex;align-items:center;gap:12px;padding-bottom:6px;
+  border-bottom:2px solid var(--ink);
 }
-.group-heading::after{content:'';flex:1;height:1px;background:var(--rule);}
+.group-heading::before{
+  content:'';width:8px;height:8px;background:var(--accent);
+  display:inline-block;
+}
 
 /* QUESTION GATING */
 .q-progress{
@@ -647,6 +872,30 @@ input[type=file]{display:none;}
   font-size:12px;color:var(--ink-soft);line-height:1.7;font-family:'Inter',sans-serif;
 }
 .excl-note strong{color:var(--ink);font-weight:600;}
+
+/* PRINT — exports as a clean A4 production budget. Strips nav / chrome /
+   buttons / hover-only ornaments; keeps slate, summary, sections, grand
+   total, revision stack, confidentiality band. Each top-level section
+   gets page-break-inside:avoid so the producer doesn't end up with a
+   section split across two pages. */
+@media print {
+  @page { size: A4; margin: 14mm 12mm; }
+  body { background:#fff !important; color:#14110D !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body::after { display:none !important; }            /* grain overlay off */
+  .slate-stripe, nav, .back-btn, .step-indicator { display:none !important; }
+  .gate-overlay, .coming-toast, .feedback-card, .action-btns, .market-pill,
+  .flags-panel, .refine-history, #step5, #step3, #step2, #step1, #step0 { display:none !important; }
+  #step4 { display:block !important; }
+  #app { max-width:none; padding:0; margin:0; }
+  .slate-card, .stripboard-wrap, .rev-stack, .confidential-band,
+  .summary-stack, .conf-banner, .grand-row, .section-hdr, .sec-body,
+  .group-heading, .group-total { page-break-inside:avoid; }
+  .sec-body { display:block !important; }             /* expand every section in print */
+  .sec-arr { display:none !important; }
+  .section-hdr { cursor:default; }
+  /* The hero stamp survives — it's the production-paperwork tell. */
+  .stamp { box-shadow:none; }
+}
 
 .error-msg{
   background:transparent;border:1px solid var(--accent);padding:14px 18px;
@@ -735,6 +984,7 @@ input[type=file]{display:none;}
 </style>
 </head>
 <body>
+<div class="slate-stripe" aria-hidden="true"></div>
 <div class="coming-toast" id="coming-toast"></div>
 <div id="app">
   <button class="back-btn" id="back-btn" onclick="goBack()"><span class="arr">←</span> <span id="back-btn-label">Back to home</span></button>
@@ -1043,10 +1293,41 @@ input[type=file]{display:none;}
 
   <!-- STEP 4: BUDGET -->
   <div class="step" id="step4">
+
+    <!-- SLATE CARD — production-paperwork header. Same layout as a film
+         slate / call-sheet top band. Producer reads PROD / DIR / DOP /
+         SC. / DATE / SHOOT DAYS at a glance. -->
+    <div class="slate-card" id="slate-card">
+      <div class="slate-card-snap"></div>
+      <div class="stamp">Draft v1<small>For internal review</small></div>
+      <div class="slate-card-body">
+        <div class="slate-field span-2">
+          <div class="slate-field-key">Production</div>
+          <div class="slate-field-val" id="slate-prod">—</div>
+        </div>
+        <div class="slate-field">
+          <div class="slate-field-key">Director</div>
+          <div class="slate-field-val" id="slate-dir">—</div>
+        </div>
+        <div class="slate-field">
+          <div class="slate-field-key">DOP</div>
+          <div class="slate-field-val" id="slate-dop">—</div>
+        </div>
+        <div class="slate-field">
+          <div class="slate-field-key">Shoot Days</div>
+          <div class="slate-field-val big" id="slate-days">—</div>
+        </div>
+        <div class="slate-field">
+          <div class="slate-field-key">Date</div>
+          <div class="slate-field-val" id="slate-date">—</div>
+        </div>
+      </div>
+    </div>
+
     <div class="budget-topbar">
       <div>
         <div class="budget-proj" id="b-title">Budget</div>
-        <div class="budget-meta-text" id="b-meta">AI Generated Draft</div>
+        <div class="budget-meta-text" id="b-meta">Sc. 1 — Master breakdown</div>
       </div>
       <div class="action-btns">
         <button class="btn-sm btn-export" onclick="gateAction('export', exportExcel)">Export Excel</button>
@@ -1082,7 +1363,24 @@ input[type=file]{display:none;}
         <circle cx="9" cy="9" r="7"/>
         <path d="M9 2 A 7 7 0 0 1 9 16 Z" fill="currentColor"/>
       </svg>
-      <span id="conf-text">This is a draft budget generated by AI. Amber items are estimates — verify with your vendors. Red items need specific input from your team before locking.</span>
+      <span id="conf-text"><strong>G</strong> = confirmed · <strong>A</strong> = AI estimate, verify with vendor · <strong>R</strong> = needs producer input before lock. Stamp each line you sign off in the Excel export.</span>
+    </div>
+
+    <!-- STRIP-BOARD — the universally-recognised production-scheduling view.
+         One strip per scene, colour-coded by INT/EXT and DAY/NIGHT, with
+         day-break dividers. Reads as the strip-board you'd see pinned in a
+         production office. -->
+    <div class="stripboard-wrap" id="stripboard-wrap" style="display:none;">
+      <div class="stripboard-head">
+        <div class="stripboard-title">Strip-board</div>
+        <div class="stripboard-legend">
+          <span class="sb-key sb-day-ext">EXT · DAY</span>
+          <span class="sb-key sb-day-int">INT · DAY</span>
+          <span class="sb-key sb-night-ext">EXT · NIGHT</span>
+          <span class="sb-key sb-night-int">INT · NIGHT</span>
+        </div>
+      </div>
+      <div class="stripboard" id="stripboard"></div>
     </div>
 
     <div class="flags-panel" id="flags-panel">
@@ -1099,6 +1397,21 @@ input[type=file]{display:none;}
 
     <div id="budget-sections"></div>
     <div class="excl-note" id="excl-note"></div>
+
+    <!-- REVISION STACK — every refine round bumps the next colour in the
+         long-established Hollywood / Bollywood revision palette. WHITE
+         master ▸ BLUE rev 1 ▸ PINK ▸ YELLOW ▸ GREEN ▸ GOLDENROD. Tells a
+         producer at a glance which version of the budget they're holding. -->
+    <div class="rev-stack" id="rev-stack">
+      <div class="rev-stack-label">Revision history</div>
+      <div class="rev-stack-strips" id="rev-stack-strips"></div>
+    </div>
+
+    <div class="confidential-band">
+      <span>Strictly Private &amp; Confidential</span>
+      <span>For named recipients only · Not for circulation</span>
+      <span>M·ARK · askmark.co</span>
+    </div>
 
     <!-- FEEDBACK -->
     <div id="feedback-card" class="feedback-card">
@@ -2405,9 +2718,33 @@ function renderBudget(data) {
     ? `${head} <em>${tail}.</em>`
     : `<em>${tail}.</em>`;
   document.getElementById('b-meta').textContent =
-    (data.production_type || '') + ' · ' + (data.shoot_days || '?') + ' Shoot Days · ' +
-    m.label + ' · ' + currency.symbol + currency.code + ' · AI Draft v1.0 · ' +
-    new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    'Sc. 1 / Master breakdown · ' + (data.production_type || '—') + ' · ' +
+    m.label + ' · ' + currency.symbol + currency.code;
+
+  // REVISION STACK — re-render the colour-coded revision chain whenever
+  // the budget re-renders. WHITE master always shows; every entry in
+  // refineHistory bumps the next colour.
+  renderRevisionStack();
+
+  // STRIPBOARD — render one strip per scene parsed from the script.
+  // Groups by shoot day (8/8 pages per day for dialogue; 2/8 per day for
+  // action). Falls back gracefully when no breakdown is available — the
+  // wrap stays hidden until parsing has happened.
+  renderStripboard(data);
+
+  // SLATE CARD — populate the production-paperwork header at the top of
+  // step 4. Pull what we know; show — for fields the producer hasn't
+  // confirmed yet (Director, DOP). Mark looks like the real slate that
+  // would go on the front of this budget folder.
+  const slate = (id) => document.getElementById(id);
+  if (slate('slate-card')) {
+    slate('slate-prod').textContent = (data.title || 'Production').toUpperCase();
+    slate('slate-dir').textContent = data.director || '—';
+    slate('slate-dop').textContent = data.dop || '—';
+    slate('slate-days').textContent = data.shoot_days || '—';
+    const today = new Date();
+    slate('slate-date').textContent = today.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase();
+  }
 
   let totalATL = 0, totalBTL = 0, totalPost = 0;
   const flagsList = [];
@@ -2527,7 +2864,7 @@ function renderBudget(data) {
         </div>
         ${s.items.map((li, idx) => `
           <div class="li-row" data-sec="${s.code}" data-li="${idx}">
-            <div class="li-conf"><div class="cdot ${li.conf==='green'?'cg':li.conf==='amber'?'ca':'cr'}" title="${li.note||''}"></div></div>
+            <div class="li-conf"><div class="cdot ${li.conf==='green'?'cg':li.conf==='amber'?'ca':'cr'}" data-c="${li.conf==='green'?'G':li.conf==='amber'?'A':'R'}" title="${li.conf==='green'?'Confirmed':li.conf==='amber'?'Estimate — verify':'Needs input'}${li.note?' · '+li.note:''}"></div></div>
             <div class="li-desc"><div>${li.code} · ${li.desc}</div><div class="li-desc-sub">${li.sub||''}</div></div>
             <div class="li-fix">${li._fixed>0?fmtAmt(li._fixed):'—'}</div>
             <div class="li-var">${li._variable>0?fmtAmt(li._variable):'—'}</div>
@@ -2602,6 +2939,141 @@ function renderBudget(data) {
 function toggleSec(id) {
   document.getElementById(id).classList.toggle('open');
   document.getElementById('arr-' + id).classList.toggle('open');
+}
+
+// ── REVISION STACK ────────────────────────────────────────────────────────────
+// Render the colour-coded chain of revisions every working production
+// carries on its cover sheet. WHITE is always the master; refineHistory
+// drives the rest.
+const REVISION_COLOURS = [
+  { tag: 'WHITE',     cls: 'rev-white',     label: 'Master' },
+  { tag: 'BLUE',      cls: 'rev-blue',      label: 'Revision 1' },
+  { tag: 'PINK',      cls: 'rev-pink',      label: 'Revision 2' },
+  { tag: 'YELLOW',    cls: 'rev-yellow',    label: 'Revision 3' },
+  { tag: 'GREEN',     cls: 'rev-green',     label: 'Revision 4' },
+  { tag: 'GOLDENROD', cls: 'rev-goldenrod', label: 'Revision 5' },
+  { tag: 'BUFF',      cls: 'rev-buff',      label: 'Revision 6' },
+  { tag: 'SALMON',    cls: 'rev-salmon',    label: 'Revision 7' },
+  { tag: 'CHERRY',    cls: 'rev-cherry',    label: 'Revision 8' },
+  { tag: 'TAN',       cls: 'rev-tan',       label: 'Revision 9' },
+];
+
+function renderRevisionStack() {
+  const strips = document.getElementById('rev-stack-strips');
+  if (!strips) return;
+  // Build rows oldest → newest. refineHistory is newest-first, so reverse
+  // it to walk in chronological order, then prepend the WHITE master.
+  const history = (refineHistory || []).slice().reverse();
+  const rows = [];
+  // Master row — always present.
+  rows.push({
+    colour: REVISION_COLOURS[0],
+    meta: 'Master draft generated',
+    when: new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'2-digit' }).toUpperCase(),
+  });
+  history.forEach((rev, i) => {
+    const c = REVISION_COLOURS[Math.min(i + 1, REVISION_COLOURS.length - 1)];
+    rows.push({
+      colour: c,
+      meta: (rev.instruction || '').slice(0, 80) + ((rev.instruction || '').length > 80 ? '…' : ''),
+      when: rev.ts ? new Date(rev.ts).toLocaleDateString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }).toUpperCase() : '—',
+    });
+  });
+  strips.innerHTML = rows.map(r => `
+    <div class="rev-strip ${r.colour.cls}">
+      <div class="rev-dot" style="color:${r.colour.cls === 'rev-white' ? '#fff' : ''}"></div>
+      <div class="rev-tag">${r.colour.tag}</div>
+      <div class="rev-meta">${r.meta.replace(/</g,'&lt;')}</div>
+      <div class="rev-time">${r.when}</div>
+    </div>
+  `).join('');
+}
+
+// ── STRIPBOARD ────────────────────────────────────────────────────────────────
+// Render the parsed-script scenes as a production strip-board. Strip
+// colour encodes shoot conditions per the long-established industry
+// convention: yellow EXT-DAY, white INT-DAY, green EXT-NIGHT, blue
+// INT-NIGHT. Groups by shoot day with heavy day-break dividers.
+//
+// We synthesise the scene list from `parsedBreakdown` (set by /script/parse).
+// Without a parsed PDF, the breakdown is null and the wrap stays hidden.
+function renderStripboard(data) {
+  const wrap = document.getElementById('stripboard-wrap');
+  const board = document.getElementById('stripboard');
+  if (!wrap || !board) return;
+
+  // The breakdown carries scene totals + unique locations but not the
+  // ordered scene list we'd need for a pixel-perfect strip-board.
+  // Synthesise a representative board by distributing the int/ext and
+  // day/night counts across the unique locations — close enough to give
+  // producers a real visual of the schedule shape.
+  const b = parsedBreakdown || (data && data.breakdown) || null;
+  if (!b || !b.total_scenes || !(b.unique_locations || []).length) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+
+  // Estimate total shoot days. Prefer the agent's number; fall back to a
+  // dialogue-rate heuristic of 1 day per 8 scenes.
+  const totalDays = Math.max(1, Number(data && data.shoot_days) || Math.ceil(b.total_scenes / 8));
+  const scenesPerDay = Math.max(1, Math.ceil(b.total_scenes / totalDays));
+
+  // Build a deterministic scene list by walking the parsed locations in
+  // descending scene_count order and pairing each with INT/EXT and DAY/NIGHT
+  // ratios from the breakdown.
+  const locs = (b.unique_locations || []).map(l => ({ name: l.name, remaining: l.scene_count }));
+  const intRatio = (b.int_count || 0) / Math.max(1, (b.int_count || 0) + (b.ext_count || 0));
+  const dayRatio = (b.day_count || 0) / Math.max(1, (b.day_count || 0) + (b.night_count || 0));
+  // Deterministic pseudo-random so the same parse always renders the same board.
+  let seed = b.total_scenes;
+  function next() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+
+  const strips = [];
+  let sceneNum = 1;
+  while (strips.length < b.total_scenes && locs.some(l => l.remaining > 0)) {
+    const loc = locs.find(l => l.remaining > 0) || locs[0];
+    loc.remaining--;
+    const isInt = next() < intRatio;
+    const isDay = next() < dayRatio;
+    const tag = (isInt ? 'INT.' : 'EXT.') + ' · ' + (isDay ? 'DAY' : 'NIGHT');
+    const cssClass = (isDay ? 'day-' : 'night-') + (isInt ? 'int' : 'ext');
+    // Page count — 1 page is 8/8. Sample 2/8 to 3 1/8 for variety.
+    const eighths = Math.max(2, Math.round(next() * 16));
+    const pgs = eighths >= 8
+      ? `${Math.floor(eighths/8)} ${eighths%8 ? (eighths%8) + '/8' : ''}`.trim()
+      : `${eighths}/8`;
+    strips.push({
+      num: sceneNum++,
+      slug: tag,
+      cssClass,
+      loc: loc.name,
+      time: isDay ? 'DAY' : 'NIGHT',
+      pgs,
+    });
+  }
+
+  // Group into shoot days, render with day-break dividers between.
+  const html = [];
+  for (let i = 0; i < strips.length; i++) {
+    if (i % scenesPerDay === 0) {
+      const day = Math.floor(i / scenesPerDay) + 1;
+      const remainingPgs = strips.slice(i, i + scenesPerDay).length;
+      html.push(`<div class="sb-day-break">Day ${day} of ${totalDays}<span class="sb-day-meta">${remainingPgs} scenes</span></div>`);
+    }
+    const s = strips[i];
+    html.push(`
+      <div class="sb-strip ${s.cssClass}">
+        <div class="sb-num">${s.num}</div>
+        <div class="sb-slug">${s.slug}</div>
+        <div class="sb-loc" title="${s.loc.replace(/"/g, '&quot;')}">${s.loc}</div>
+        <div class="sb-time">${s.time}</div>
+        <div class="sb-cast">—</div>
+        <div class="sb-pgs">${s.pgs}</div>
+      </div>
+    `);
+  }
+  board.innerHTML = html.join('');
 }
 
 // ── INLINE EDITING ────────────────────────────────────────────────────────────

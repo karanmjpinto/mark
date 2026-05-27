@@ -3,11 +3,21 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AskMark — AI-Native Production OS</title>
+<title>M·ARK — Production OS for film. Script in. Budget out.</title>
+<meta name="description" content="An AI line producer for film. Reads scripts, builds budgets, drops call sheets on WhatsApp. Indian Cinema beta."/>
+<!-- CLAPPERBOARD FAVICON — slate-snap silhouette as an SVG data URL so
+     the tab reads instantly as production paperwork. No extra request. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;rect width='32' height='32' fill='%23F5F1E8'/&gt;&lt;g transform='rotate(-10 16 12)'&gt;&lt;rect x='4' y='4' width='24' height='6' fill='%2314110D'/&gt;&lt;rect x='6' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='12' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='18' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='24' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;rect x='4' y='12' width='24' height='16' fill='%2314110D'/&gt;&lt;text x='16' y='24' font-family='Georgia,serif' font-style='italic' font-size='13' fill='%23C8330A' text-anchor='middle' font-weight='600'&gt;M&lt;/text&gt;&lt;/svg&gt;"/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
+/* Hallmark · pre-emit critique: P5 H4 E5 S5 R4 V5
+ * macrostructure: Long-Document + Slate · tone: production-floor editorial
+ * anchor hue: warm-red (accent #C8330A) on cream paper (#F5F1E8)
+ * audience: film production professionals (1st AD, LP, UPM, DOP, on-set crew)
+ * source: Hallmark audit + redesign 2026-05-27 (first run)
+ */
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   /* Surfaces — warm cream paper, deep ink */
@@ -41,22 +51,23 @@ body{
   font-family:'Inter',-apple-system,sans-serif;
   font-size:16px;
   font-feature-settings:"ss01","cv11";
-  overflow-x:hidden;cursor:none;
+  overflow-x:hidden;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
 
-/* CUSTOM CURSOR — ink stroke on cream */
-#cursor{
-  position:fixed;width:6px;height:6px;background:var(--ink);border-radius:50%;
-  pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
-  transition:width 0.2s var(--ease-out),height 0.2s var(--ease-out);
-  mix-blend-mode:multiply;
+/* SLATE STRIPE — diagonal black/white snap-band, reads as the top of a
+   clapperboard. Pinned above the nav at full width. Production-set
+   iconography that anyone who's seen a slate clocks in under a second. */
+.slate-stripe{
+  position:fixed;top:0;left:0;right:0;height:14px;z-index:101;
+  background-image:repeating-linear-gradient(
+    -52deg,
+    var(--ink) 0 12px,
+    var(--paper) 12px 24px
+  );
+  border-bottom:1px solid var(--ink);
 }
-#cursor-ring{
-  position:fixed;width:30px;height:30px;border:1px solid var(--ink);border-radius:50%;
-  pointer-events:none;z-index:9998;transform:translate(-50%,-50%);
-  transition:all 0.18s var(--ease-soft);opacity:0.35;
-}
+nav{top:14px !important;}
 
 /* PAPER GRAIN */
 body::after{
@@ -152,23 +163,40 @@ nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);b
 
 /* HERO ILLUSTRATION — three-page editorial diagram, animated draw-in */
 .hero-art{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;}
-.hero-art svg{width:100%;max-width:520px;height:auto;}
-.hero-art .draw{
-  fill:none;stroke:var(--ink);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;
-  stroke-dasharray:2000;stroke-dashoffset:2000;
-  animation:drawIn 2.4s var(--ease-out) 0.4s forwards;
+.hero-art svg{width:100%;max-width:520px;height:auto;filter:drop-shadow(0 18px 32px rgba(20,17,13,0.10));}
+
+/* SLATE body type — mimics the lettered fields hand-marked on a real slate.
+   Mono everywhere because numbers and codes are always mono on production
+   paperwork. */
+.hero-art .slate-key{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;
+  text-transform:uppercase;fill:var(--muted);
 }
-.hero-art .draw-soft{stroke:var(--muted);stroke-width:1;}
-.hero-art .draw-accent{stroke:var(--accent);stroke-width:1.6;}
-.hero-art .ink-fill{fill:var(--ink);opacity:0;animation:fadeIn 0.6s ease 2.6s forwards;}
-.hero-art .accent-fill{fill:var(--accent);opacity:0;animation:fadeIn 0.6s ease 2.8s forwards;}
-.hero-art .label{
-  font-family:'DM Mono',monospace;font-size:8px;fill:var(--muted);
-  letter-spacing:0.16em;text-transform:uppercase;opacity:0;
-  animation:fadeIn 0.6s ease 3s forwards;
+.hero-art .slate-val{
+  font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.04em;
+  text-transform:uppercase;fill:var(--ink);font-weight:500;
 }
-@keyframes drawIn{to{stroke-dashoffset:0;}}
-@keyframes fadeIn{to{opacity:1;}}
+.hero-art .slate-num{
+  font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:30px;
+  fill:var(--ink);letter-spacing:-0.01em;
+}
+.hero-art .ink-fill-static{fill:var(--ink);}
+.hero-art .accent-fill-static{fill:var(--accent);}
+
+/* SNAP — slate arm starts open (rotated ~22deg), then closes once on load.
+   It's a single beat of motion, not a loop — the slate is now "ready, mark". */
+.hero-art .snap-arm{
+  transform:rotate(-22deg);
+  animation:slateSnap 0.6s cubic-bezier(.6,1.4,.4,1) 0.4s forwards;
+}
+@keyframes slateSnap{
+  0%   { transform:rotate(-22deg); }
+  78%  { transform:rotate(2deg); }
+  100% { transform:rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce){
+  .hero-art .snap-arm{ animation:none; transform:rotate(0deg); }
+}
 
 /* MARQUEE — paper edge */
 .marquee-wrap{
@@ -382,8 +410,7 @@ footer{
 </head>
 <body>
 
-<div id="cursor"></div>
-<div id="cursor-ring"></div>
+<div class="slate-stripe" aria-hidden="true"></div>
 
 <nav id="nav">
   <a href="./" class="nav-logo">M<span>.</span>ARK</a>
@@ -398,95 +425,83 @@ footer{
 <!-- HERO -->
 <section class="hero">
   <div class="hero-content">
-    <div class="hero-eyebrow">AI-Native Production OS · Entertainment</div>
+    <div class="hero-eyebrow">M·ARK / Production OS / Indian Cinema · Beta</div>
     <h1 class="hero-title">Ask <em>Mark.</em></h1>
-    <p class="hero-subtitle">From call sheets to contracts, crew communication to budget tracking — you focus on what's on set. Leave the backend to Mark.</p>
+    <p class="hero-subtitle">Your 1st AD's 1st AD. Reads scripts, builds budgets, drops call sheets on WhatsApp before the kraft table opens. You shoot. Mark handles the paperwork.</p>
     <div class="typewriter" id="typewriter">to <span id="tw-text"></span><span id="tw-cursor">|</span></div>
     <div class="hero-ctas">
-      <a href="budget.html" class="btn-primary"><span>Generate a Budget Free →</span></a>
+      <a href="budget.html" class="btn-primary"><span>Build a budget free →</span></a>
       <a href="#how" class="btn-secondary">See how it works <span class="arr">→</span></a>
     </div>
     <div class="hero-meta">
       <div class="hero-meta-dot"></div>
-      <span>No account needed · Takes 60 seconds</span>
+      <span>No login · 60 seconds · Script in, budget out</span>
     </div>
   </div>
 
-  <!-- EDITORIAL ILLUSTRATION — three pages: script → questions → budget, drawn-in -->
+  <!-- SLATE / CLAPPERBOARD — the universally-recognised piece of film
+       paperwork. Top "snap" arm starts angled open, then closes once on
+       load. Body carries real slate fields (PROD / DIR / DOP / SC. / TAKE
+       / ROLL / DATE / SOUND) so anyone who's stood behind a camera
+       clocks it in a beat. -->
   <div class="hero-art">
     <svg viewBox="0 0 520 380" xmlns="http://www.w3.org/2000/svg">
-      <!-- Page 1: Script -->
-      <g transform="translate(20, 60)">
-        <path class="draw" d="M0 0 L100 0 L130 30 L130 220 L0 220 Z"/>
-        <path class="draw" d="M100 0 L100 30 L130 30"/>
-        <text class="label" x="0" y="240">01 — SCRIPT</text>
-        <!-- Lines mimicking script formatting -->
-        <line class="draw draw-soft" x1="14" y1="42" x2="80" y2="42"/>
-        <line class="draw draw-soft" x1="14" y1="56" x2="110" y2="56"/>
-        <line class="draw draw-soft" x1="14" y1="70" x2="90" y2="70"/>
-        <line class="draw draw-soft" x1="40" y1="92" x2="80" y2="92"/>
-        <line class="draw draw-soft" x1="14" y1="110" x2="115" y2="110"/>
-        <line class="draw draw-soft" x1="14" y1="124" x2="100" y2="124"/>
-        <line class="draw draw-soft" x1="40" y1="146" x2="85" y2="146"/>
-        <line class="draw draw-soft" x1="14" y1="164" x2="115" y2="164"/>
-        <line class="draw draw-soft" x1="14" y1="178" x2="90" y2="178"/>
-        <line class="draw draw-soft" x1="14" y1="192" x2="105" y2="192"/>
-      </g>
+      <!-- Slate body -->
+      <g transform="translate(40, 90)">
+        <!-- Hinge dot (origin for the snap arm) -->
+        <circle class="ink-fill-static" cx="4" cy="14" r="4"/>
 
-      <!-- Connector arrow 1 -->
-      <g transform="translate(170, 165)">
-        <line class="draw draw-accent" x1="0" y1="0" x2="34" y2="0"/>
-        <path class="draw draw-accent" d="M28 -5 L34 0 L28 5"/>
-      </g>
+        <!-- SNAP ARM — diagonal stripes, rotates from open to closed -->
+        <g class="snap-arm" style="transform-origin:4px 14px;">
+          <rect x="0" y="0" width="430" height="28" fill="var(--ink)"/>
+          <g>
+            <rect x="14"  y="0" width="28" height="28" fill="var(--paper)"/>
+            <rect x="70"  y="0" width="28" height="28" fill="var(--paper)"/>
+            <rect x="126" y="0" width="28" height="28" fill="var(--paper)"/>
+            <rect x="182" y="0" width="28" height="28" fill="var(--paper)"/>
+            <rect x="238" y="0" width="28" height="28" fill="var(--paper)"/>
+            <rect x="294" y="0" width="28" height="28" fill="var(--paper)"/>
+            <rect x="350" y="0" width="28" height="28" fill="var(--paper)"/>
+            <rect x="406" y="0" width="28" height="28" fill="var(--paper)"/>
+          </g>
+          <!-- diagonal seam between snap and body -->
+          <line x1="0" y1="28" x2="430" y2="28" stroke="var(--ink)" stroke-width="1.4"/>
+        </g>
 
-      <!-- Page 2: Questions -->
-      <g transform="translate(220, 60)">
-        <path class="draw" d="M0 0 L130 0 L130 220 L0 220 Z"/>
-        <text class="label" x="0" y="240">02 — QUESTIONS</text>
-        <!-- Question circles + lines -->
-        <circle class="draw draw-accent" cx="14" cy="34" r="5"/>
-        <line class="draw draw-soft" x1="26" y1="34" x2="100" y2="34"/>
-        <line class="draw draw-soft" x1="26" y1="44" x2="80" y2="44"/>
+        <!-- Body card -->
+        <g transform="translate(0, 40)">
+          <rect x="0" y="0" width="430" height="200" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.6"/>
 
-        <circle class="draw draw-accent" cx="14" cy="74" r="5"/>
-        <line class="draw draw-soft" x1="26" y1="74" x2="110" y2="74"/>
-        <line class="draw draw-soft" x1="26" y1="84" x2="90" y2="84"/>
+          <!-- Row 1: PRODUCTION title -->
+          <text class="slate-key" x="14" y="22">PRODUCTION</text>
+          <text class="slate-val" x="14" y="44">M.ARK · DEMO</text>
+          <line x1="14" y1="56" x2="200" y2="56" stroke="var(--ink)" stroke-width="0.8" opacity="0.35"/>
 
-        <circle class="draw draw-accent" cx="14" cy="114" r="5"/>
-        <line class="draw draw-soft" x1="26" y1="114" x2="105" y2="114"/>
-        <line class="draw draw-soft" x1="26" y1="124" x2="75" y2="124"/>
+          <!-- Row 2: DIRECTOR / DOP -->
+          <text class="slate-key" x="14" y="78">DIRECTOR</text>
+          <text class="slate-val" x="14" y="100">—</text>
 
-        <circle class="draw draw-accent" cx="14" cy="154" r="5"/>
-        <line class="draw draw-soft" x1="26" y1="154" x2="100" y2="154"/>
-        <line class="draw draw-soft" x1="26" y1="164" x2="85" y2="164"/>
+          <text class="slate-key" x="220" y="78">DOP</text>
+          <text class="slate-val" x="220" y="100">—</text>
 
-        <circle class="draw" cx="14" cy="194" r="5"/>
-        <line class="draw draw-soft" x1="26" y1="194" x2="95" y2="194"/>
-      </g>
+          <line x1="14" y1="112" x2="416" y2="112" stroke="var(--ink)" stroke-width="0.8" opacity="0.35"/>
 
-      <!-- Connector arrow 2 -->
-      <g transform="translate(370, 165)">
-        <line class="draw draw-accent" x1="0" y1="0" x2="34" y2="0"/>
-        <path class="draw draw-accent" d="M28 -5 L34 0 L28 5"/>
-      </g>
+          <!-- Row 3: SC / TAKE / ROLL -->
+          <text class="slate-key" x="14" y="134">SC.</text>
+          <text class="slate-val slate-num accent-fill-static" x="14" y="160">7</text>
 
-      <!-- Page 3: Budget -->
-      <g transform="translate(420, 60)">
-        <path class="draw" d="M0 0 L80 0 L80 220 L0 220 Z"/>
-        <text class="label" x="0" y="240">03 — BUDGET</text>
-        <!-- Header -->
-        <line class="draw" x1="8" y1="32" x2="72" y2="32"/>
-        <!-- Bar chart bars (varying heights) -->
-        <rect class="ink-fill" x="10" y="180" width="8" height="22"/>
-        <rect class="ink-fill" x="22" y="160" width="8" height="42"/>
-        <rect class="accent-fill" x="34" y="120" width="8" height="82"/>
-        <rect class="ink-fill" x="46" y="150" width="8" height="52"/>
-        <rect class="ink-fill" x="58" y="170" width="8" height="32"/>
-        <rect class="accent-fill" x="70" y="140" width="6" height="62"/>
-        <!-- Total line -->
-        <line class="draw draw-soft" x1="8" y1="48" x2="60" y2="48"/>
-        <line class="draw draw-soft" x1="8" y1="60" x2="50" y2="60"/>
-        <line class="draw draw-accent" x1="8" y1="76" x2="72" y2="76"/>
+          <text class="slate-key" x="140" y="134">TAKE</text>
+          <text class="slate-val slate-num" x="140" y="160">3</text>
+
+          <text class="slate-key" x="260" y="134">ROLL</text>
+          <text class="slate-val slate-num" x="260" y="160">A · 002</text>
+
+          <text class="slate-key" x="14" y="184">DATE</text>
+          <text class="slate-val" x="14" y="200">DAY 14 OF 28</text>
+
+          <text class="slate-key" x="260" y="184">SOUND</text>
+          <text class="slate-val" x="260" y="200">SYNC</text>
+        </g>
       </g>
     </svg>
   </div>
@@ -495,74 +510,74 @@ footer{
 <!-- MARQUEE -->
 <div class="marquee-wrap">
   <div class="marquee-track" id="marquee">
-    <div class="marquee-item">Ask Mark</div>
-    <div class="marquee-item">Call Sheets</div>
-    <div class="marquee-item">Budget Tracking</div>
-    <div class="marquee-item">Crew Contracts</div>
-    <div class="marquee-item">Location Permits</div>
-    <div class="marquee-item">Transportation</div>
-    <div class="marquee-item">Catering Logistics</div>
-    <div class="marquee-item">Cast NDAs</div>
-    <div class="marquee-item">Vendor Comms</div>
-    <div class="marquee-item">WhatsApp Sends</div>
-    <div class="marquee-item">Daily To-Do</div>
-    <div class="marquee-item">Script to Budget</div>
-    <div class="marquee-item">Ask Mark</div>
-    <div class="marquee-item">Call Sheets</div>
-    <div class="marquee-item">Budget Tracking</div>
-    <div class="marquee-item">Crew Contracts</div>
-    <div class="marquee-item">Location Permits</div>
-    <div class="marquee-item">Transportation</div>
-    <div class="marquee-item">Catering Logistics</div>
-    <div class="marquee-item">Cast NDAs</div>
-    <div class="marquee-item">Vendor Comms</div>
-    <div class="marquee-item">WhatsApp Sends</div>
-    <div class="marquee-item">Daily To-Do</div>
-    <div class="marquee-item">Script to Budget</div>
+    <div class="marquee-item">Call sheet · 5.45A unit call</div>
+    <div class="marquee-item">Sc. 7-11 · INT. warehouse · NIGHT</div>
+    <div class="marquee-item">Day 14 of 28</div>
+    <div class="marquee-item">DOP package · ARRI Alexa 35</div>
+    <div class="marquee-item">Genny · 125 KVA</div>
+    <div class="marquee-item">Vanity van · lead talent</div>
+    <div class="marquee-item">Kraft + lunch · 65 pax</div>
+    <div class="marquee-item">Wrap report · 7:42P</div>
+    <div class="marquee-item">NDA · 4 outstanding</div>
+    <div class="marquee-item">Stunt safety brief 06:00</div>
+    <div class="marquee-item">Contingency · 10% applied</div>
+    <div class="marquee-item">Budget locked · v3 BLUE</div>
+    <div class="marquee-item">Call sheet · 5.45A unit call</div>
+    <div class="marquee-item">Sc. 7-11 · INT. warehouse · NIGHT</div>
+    <div class="marquee-item">Day 14 of 28</div>
+    <div class="marquee-item">DOP package · ARRI Alexa 35</div>
+    <div class="marquee-item">Genny · 125 KVA</div>
+    <div class="marquee-item">Vanity van · lead talent</div>
+    <div class="marquee-item">Kraft + lunch · 65 pax</div>
+    <div class="marquee-item">Wrap report · 7:42P</div>
+    <div class="marquee-item">NDA · 4 outstanding</div>
+    <div class="marquee-item">Stunt safety brief 06:00</div>
+    <div class="marquee-item">Contingency · 10% applied</div>
+    <div class="marquee-item">Budget locked · v3 BLUE</div>
   </div>
 </div>
 
 <!-- WISHES -->
 <section class="wishes">
-  <div class="section-label">02 · Your wish is Mark's command</div>
-  <div class="section-title">What will you<br/>ask <em>Mark</em> today?</div>
+  <div class="section-label">Sc. 02 / What you actually ask</div>
+  <div class="section-title">The stuff you'd<br/>shout at a 1st <em>AD.</em></div>
   <div class="wishes-grid">
-    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"Send today's call sheet to all 40 crew on WhatsApp."</div></div>
-    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"What's left in the camera department budget?"</div></div>
-    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"Read this script and give me a full production budget."</div></div>
-    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"Send NDAs to the entire cast before Friday."</div></div>
-    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"What are my priorities for today's shoot?"</div></div>
-    <div class="wish"><div class="wish-label">Ask Mark</div><div class="wish-text">"Get location permits sorted for all shoot days."</div></div>
+    <div class="wish"><div class="wish-label">06:14 AM</div><div class="wish-text">"Sc. 41 moved indoors — push the genny call to 8 and tell catering."</div></div>
+    <div class="wish"><div class="wish-label">12:50 PM</div><div class="wish-text">"What's left in 11300 camera? We've burned two days."</div></div>
+    <div class="wish"><div class="wish-label">02:30 PM</div><div class="wish-text">"Read this draft and tell me what Day 7 is going to cost."</div></div>
+    <div class="wish"><div class="wish-label">04:15 PM</div><div class="wish-text">"Who hasn't signed the NDA? WhatsApp the four who haven't."</div></div>
+    <div class="wish"><div class="wish-label">07:42 PM</div><div class="wish-text">"Wrap report for Day 14. Cc the producer and the LP."</div></div>
+    <div class="wish"><div class="wish-label">10:05 PM</div><div class="wish-text">"Tomorrow's call sheet — drop it on the group at 11."</div></div>
   </div>
 </section>
 
 <!-- HOW IT WORKS -->
 <section id="how">
-  <div class="section-label">03 · How it works</div>
-  <div class="section-title">Three steps.<br/>Entire production <em>covered.</em></div>
+  <div class="section-label">Sc. 03 / How it works</div>
+  <div class="section-title">Pre-production to wrap.<br/>One <em>slate.</em></div>
   <div class="how-steps">
     <div class="how-step reveal">
       <div class="step-num">01</div>
-      <div class="step-title">Input your project details</div>
-      <div class="step-desc">One-time setup. Mark stores everything structured — script, crew, locations, budget, dates. You never repeat yourself.</div>
+      <div class="step-title">Slate the production</div>
+      <div class="step-desc">Drop in the script, the dates, the lead cast — or just paste a paragraph. Mark sluglines the scenes, counts the days, builds the breakdown.</div>
     </div>
     <div class="how-step reveal">
       <div class="step-num">02</div>
-      <div class="step-title">Integrate &amp; sync</div>
-      <div class="step-desc">Connect Gmail, WhatsApp, Google Calendar and Drive. Mark becomes the hub for all your production communication and files.</div>
+      <div class="step-title">Wire the floor</div>
+      <div class="step-desc">Plug in Gmail, WhatsApp, Drive. Crew, vendors, location managers, NDAs — Mark holds the rolodex and the paper trail.</div>
     </div>
     <div class="how-step reveal">
       <div class="step-num">03</div>
-      <div class="step-title">Just ask Mark</div>
-      <div class="step-desc">In plain English or Hindi. Mark builds call sheets, generates budgets, sends messages, tracks contracts — whatever the production needs.</div>
+      <div class="step-title">Ask, and it ships</div>
+      <div class="step-desc">"Cut tomorrow's call sheet." "Trim catering by ₹2L." "Send the new SOC to all 40 crew." English or Hindi. On set or back at base.</div>
     </div>
   </div>
 </section>
 
 <!-- INTEGRATIONS -->
 <section style="background:var(--paper-deep);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);">
-  <div class="section-label">04 · Integrations</div>
-  <div class="section-title">Everything<br/>connected through <em>Mark.</em></div>
+  <div class="section-label">Sc. 04 / Integrations</div>
+  <div class="section-title">The whole floor<br/>routes through <em>Mark.</em></div>
   <div class="integrations-hub">
     <div class="integration-cards">
       <div class="int-card">
@@ -618,8 +633,8 @@ footer{
 
 <!-- FEATURES -->
 <section id="features">
-  <div class="section-label">05 · What Mark handles</div>
-  <div class="section-title">Everything a production<br/>needs. <em>One place.</em></div>
+  <div class="section-label">Sc. 05 / Departments Mark covers</div>
+  <div class="section-title">Production, broken out<br/>by <em>department.</em></div>
   <div class="features-grid">
     <a href="budget.html" class="feature-card reveal">
       <span class="feature-badge">● Live</span>
@@ -717,10 +732,10 @@ footer{
 <!-- CTA -->
 <section class="final-cta">
   <div class="cta-watermark">Mark</div>
-  <div class="section-label" style="justify-content:center;">06 · Get started</div>
-  <div class="cta-title">Set up your production<br/><em>now.</em></div>
-  <div class="cta-sub">Indian Cinema · Hollywood · UK &amp; Europe</div>
-  <a href="budget.html" class="btn-primary"><span>Try Mark Free →</span></a>
+  <div class="section-label" style="justify-content:center;">Sc. 06 / Roll camera</div>
+  <div class="cta-title">Slate the next one.<br/><em>Now.</em></div>
+  <div class="cta-sub">Indian Cinema live · Hollywood / UK · Europe coming</div>
+  <a href="budget.html" class="btn-primary"><span>Build a budget free →</span></a>
 </section>
 
 <!-- CONTACT -->
@@ -737,34 +752,20 @@ footer{
 </footer>
 
 <script>
-// CURSOR — ink stroke on cream, follows tightly with a soft ring lag
-const cursor = document.getElementById('cursor');
-const ring = document.getElementById('cursor-ring');
-document.addEventListener('mousemove', e => {
-  cursor.style.left = e.clientX + 'px';
-  cursor.style.top = e.clientY + 'px';
-  setTimeout(() => { ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px'; }, 90);
-});
-// Cursor responds to interactive elements
-document.querySelectorAll('a, button, .feature-card, .how-step, .int-card, .wish').forEach(el => {
-  el.addEventListener('mouseenter', () => { ring.style.width = '46px'; ring.style.height = '46px'; ring.style.opacity = '0.6'; });
-  el.addEventListener('mouseleave', () => { ring.style.width = '30px'; ring.style.height = '30px'; ring.style.opacity = '0.35'; });
-});
-
 // NAV SCROLL
 window.addEventListener('scroll', () => {
   document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
 });
 
-// TYPEWRITER
+// TYPEWRITER — production-floor verbs only; cut SaaS abstractions.
 const phrases = [
-  'create call sheets and send to all crew.',
-  'generate a budget from your script.',
-  'schedule shoot days.',
-  'track budgets live.',
-  'streamline crew communication.',
-  'create daily to-do lists.',
-  'do anything.'
+  'cut a call sheet for tomorrow.',
+  'budget the whole script overnight.',
+  'WhatsApp the crew the new unit call.',
+  'flag the scenes that bust the day.',
+  'log who hasn\u2019t signed their NDA.',
+  'tell me where the genny is.',
+  'sort the wrap report.',
 ];
 let pi = 0, ci = 0, deleting = false;
 const twText = document.getElementById('tw-text');

@@ -3,12 +3,19 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AskMark — Call Sheet Builder</title>
+<title>M·ARK — Call Sheet · Production OS</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;rect width='32' height='32' fill='%23F5F1E8'/&gt;&lt;g transform='rotate(-10 16 12)'&gt;&lt;rect x='4' y='4' width='24' height='6' fill='%2314110D'/&gt;&lt;rect x='6' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='12' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='18' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='24' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;rect x='4' y='12' width='24' height='16' fill='%2314110D'/&gt;&lt;text x='16' y='24' font-family='Georgia,serif' font-style='italic' font-size='13' fill='%23C8330A' text-anchor='middle' font-weight='600'&gt;M&lt;/text&gt;&lt;/svg&gt;"/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
+/* Hallmark · pre-emit critique: P5 H4 E5 S5 R4 V5
+ * macrostructure: Long-Document + Slate · tone: production-floor editorial
+ * anchor hue: warm-red (accent #C8330A) on cream paper (#F5F1E8)
+ * audience: film production professionals
+ * source: Hallmark audit + redesign 2026-05-27
+ */
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --paper:#F5F1E8;
@@ -40,7 +47,19 @@ body::after{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   opacity:0.05;mix-blend-mode:multiply;
 }
-#app{max-width:1100px;margin:0 auto;padding:48px 28px 80px;position:relative;z-index:1;}
+#app{max-width:1100px;margin:0 auto;padding:62px 28px 80px;position:relative;z-index:1;}
+
+/* SLATE STRIPE — diagonal black/white snap-band across the top of every
+   AskMark page. Reads as the top of a clapperboard. */
+.slate-stripe{
+  position:fixed;top:0;left:0;right:0;height:14px;z-index:101;
+  background-image:repeating-linear-gradient(
+    -52deg,
+    var(--ink) 0 12px,
+    var(--paper) 12px 24px
+  );
+  border-bottom:1px solid var(--ink);
+}
 .num{font-feature-settings:"tnum","cv11";font-variant-numeric:tabular-nums;}
 
 /* HEADER */
@@ -223,9 +242,21 @@ input[type=file]{display:none;}
 
 /* CALL SHEET PREVIEW */
 .callsheet-doc{
-  background:#fff;color:#14110D;border:1px solid var(--rule);padding:0;
+  background:#fff;color:#14110D;border:1.5px solid #14110D;padding:0;
   font-family:'Inter',sans-serif;font-size:11px;line-height:1.5;
   max-width:840px;margin:0 auto 18px;box-shadow:0 4px 24px var(--paper-shadow);
+  position:relative;
+}
+/* Slate snap-band at the top of the call sheet preview itself — so the
+   printed / exported sheet reads as a real piece of production paperwork.*/
+.callsheet-doc::before{
+  content:'';display:block;height:16px;
+  background-image:repeating-linear-gradient(
+    -52deg,
+    #14110D 0 13px,
+    #fff 13px 26px
+  );
+  border-bottom:1.5px solid #14110D;
 }
 .cs-header{
   display:grid;grid-template-columns:1.2fr 2fr 1.4fr;
@@ -253,11 +284,60 @@ input[type=file]{display:none;}
   font-family:'Fraunces',serif;font-size:24px;font-weight:500;letter-spacing:-0.01em;
   color:#C8330A;font-variant-numeric:tabular-nums;
 }
+/* SUN BAND — sunrise / sunset / conditions / temp row beneath the banner.
+   The DOP reads this for the magic-hour window; the 1st AD reads it for
+   the day-for-night window. Tight grid, mono throughout. */
+.cs-sun-band{
+  display:grid;grid-template-columns:repeat(4, 1fr);
+  background:#fff;color:#14110D;border-bottom:1px solid var(--rule);
+}
+.cs-sun-cell{
+  padding:10px 16px;border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;gap:3px;
+}
+.cs-sun-cell:last-child{border-right:none;}
+.cs-sun-key{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;
+  text-transform:uppercase;color:#8A8275;font-weight:500;
+}
+.cs-sun-val{
+  font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:#14110D;
+  letter-spacing:0.04em;text-transform:uppercase;
+}
+@media (max-width:680px){
+  .cs-sun-band{grid-template-columns:1fr 1fr;}
+  .cs-sun-cell{border-bottom:1px solid var(--rule);}
+}
+
 .cs-section{padding:14px 22px;border-bottom:1px solid var(--rule);}
 .cs-section:last-child{border-bottom:none;}
 .cs-section-title{
-  font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#C8330A;
-  font-family:'DM Mono',monospace;margin-bottom:10px;font-weight:600;
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#14110D;
+  margin-bottom:10px;font-weight:700;padding-bottom:6px;
+  border-bottom:2px solid #14110D;display:inline-block;
+}
+.cs-dept-row td{
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight:700;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  background:#14110D;color:#fff;padding:6px 10px;
+}
+.cs-crew-table{width:100%;border-collapse:collapse;margin-top:6px;}
+.cs-crew-table thead th{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;
+  text-transform:uppercase;text-align:left;padding:6px 10px;
+  border-bottom:2px solid #14110D;color:#14110D;font-weight:700;
+}
+.cs-crew-table tbody td{
+  font-family:'Inter',sans-serif;font-size:12px;padding:7px 10px;
+  border-bottom:1px solid rgba(20,17,13,0.10);vertical-align:middle;
+}
+.cs-crew-table tbody tr:hover{background:#FAF7EE;}
+.cs-crew-table .cs-crew-code{
+  font-family:'DM Mono',monospace;font-size:9px;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;padding:2px 6px;
+  border:1px solid #14110D;color:#14110D;background:#fff;
+  display:inline-block;
 }
 .cs-text{font-size:12px;line-height:1.65;white-space:pre-wrap;}
 .cs-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
@@ -414,6 +494,17 @@ input[type=file]{display:none;}
   .step:not(#step3):not(#print-target){display:none !important;}
   .step-indicator,.back-btn,.action-btns,#hero-block{display:none !important;}
   .callsheet-doc{box-shadow:none;border:none;max-width:none;}
+  /* PRINT — when the producer hits Cmd-P (or Export PDF), the page
+     becomes a clean A4 call sheet that looks like the paper version. */
+  @page { size: A4; margin: 12mm 10mm; }
+  body { background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body::after { display:none !important; }
+  .slate-stripe, nav, .back-btn, .step-indicator,
+  .gate-overlay, .coming-toast, .feedback-card,
+  #step1, #step2, #step3, #step5, .next-day-banner { display:none !important; }
+  #step4 { display:block !important; }
+  .callsheet-doc { border:1.5px solid #14110D !important; box-shadow:none !important; max-width:none; margin:0; }
+  .callsheet-doc::before { background-image: repeating-linear-gradient(-52deg, #14110D 0 13px, #fff 13px 26px) !important; }
   #app{padding:0;max-width:none;}
 }
 
@@ -436,6 +527,7 @@ input[type=file]{display:none;}
 </head>
 <body>
 
+<div class="slate-stripe" aria-hidden="true"></div>
 <div id="app">
   <button class="back-btn" id="back-btn" onclick="goBack()"><span class="arr">←</span> <span id="back-btn-label">Back to home</span></button>
 
@@ -873,6 +965,11 @@ const callsheet = {
     date: '', day_number: '', unit_call: '', wrap_time: '',
     scenes: '', locations: '', hospital: '', police: '',
     weather: '', production_notes: '', invoice_address: '',
+    // Sun + weather block — real call sheets carry these on the second
+    // banner row. Producer can fill them by hand or paste an instruction
+    // ("sunrise 06:14, sunset 18:42, cloudy 28°C") which the refine
+    // skill maps onto these fields.
+    sunrise: '', sunset: '', temperature: '', conditions: '',
   },
   send: { channels: [], status: 'draft' },
   revisions: [],                              // [{ instruction, notes, ts }]
@@ -1154,10 +1251,11 @@ function buildCallSheetHtml(cs){
 
   const groupedCrew = groupCrewByDept(cs.crew);
   const crewHtml = groupedCrew.map(({ dept, members }) => `
-    <tr class="cs-dept-row"><td colspan="4">${escHtml(dept)}</td></tr>
+    <tr class="cs-dept-row"><td colspan="5">${escHtml(dept).toUpperCase()}</td></tr>
     ${members.map(m => `
       <tr>
-        <td>${escHtml(m.name)}</td>
+        <td><span class="cs-crew-code">${escHtml(roleCode(m.role, m.department))}</span></td>
+        <td><strong>${escHtml(m.name)}</strong></td>
         <td>${escHtml(m.role)}</td>
         <td>${escHtml(m.email)}</td>
         <td>${escHtml(m.phone || '—')}</td>
@@ -1195,16 +1293,37 @@ function buildCallSheetHtml(cs){
           <div class="cs-banner-val">${cs.crew.length}</div>
         </div>
       </div>
+      <!-- SUN / WEATHER BAND — real call sheets carry sunrise + sunset on
+           the second row so the DOP knows the magic-hour window and the
+           1st AD knows the day-for-night window. Plus current forecast. -->
+      <div class="cs-sun-band">
+        <div class="cs-sun-cell">
+          <span class="cs-sun-key">↑ Sunrise</span>
+          <span class="cs-sun-val">${escHtml(cs.shoot.sunrise || '—')}</span>
+        </div>
+        <div class="cs-sun-cell">
+          <span class="cs-sun-key">↓ Sunset</span>
+          <span class="cs-sun-val">${escHtml(cs.shoot.sunset || '—')}</span>
+        </div>
+        <div class="cs-sun-cell">
+          <span class="cs-sun-key">Conditions</span>
+          <span class="cs-sun-val">${escHtml(cs.shoot.conditions || '—')}</span>
+        </div>
+        <div class="cs-sun-cell">
+          <span class="cs-sun-key">Temp</span>
+          <span class="cs-sun-val">${escHtml(cs.shoot.temperature || '—')}</span>
+        </div>
+      </div>
 
       ${cs.shoot.scenes ? `
       <div class="cs-section">
-        <div class="cs-section-title">Scenes</div>
+        <div class="cs-section-title">Sc.</div>
         <div class="cs-text">${escHtml(cs.shoot.scenes)}</div>
       </div>` : ''}
 
       ${cs.shoot.locations ? `
       <div class="cs-section">
-        <div class="cs-section-title">Location</div>
+        <div class="cs-section-title">INT / EXT — Location</div>
         <div class="cs-text">${escHtml(cs.shoot.locations)}</div>
       </div>` : ''}
 
@@ -1223,7 +1342,7 @@ function buildCallSheetHtml(cs){
       <div class="cs-section">
         <div class="cs-section-title">Crew &amp; Cast</div>
         <table class="cs-crew-table">
-          <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Phone</th></tr></thead>
+          <thead><tr><th>Code</th><th>Name</th><th>Role</th><th>Email</th><th>Phone</th></tr></thead>
           <tbody>${crewHtml}</tbody>
         </table>
       </div>
@@ -1248,6 +1367,62 @@ function buildCallSheetHtml(cs){
       </div>
     </div>
   `;
+}
+
+// Map a role + department → the standard production mnemonic that shows
+// on real call sheets. Producers / 1st ADs read DOP / 1AD / UPM faster
+// than "Director of Photography" / "First Assistant Director" / "Unit
+// Production Manager". Falls back to dept initials when the role is
+// unfamiliar, then to "—".
+const ROLE_CODES = [
+  [/director of photography|cinematograph/i, 'DOP'],
+  [/^director\b/i, 'DIR'],
+  [/1st assistant director|first ad|^1?st\s*ad\b/i, '1AD'],
+  [/2nd assistant director|second ad|^2nd\s*ad\b/i, '2AD'],
+  [/3rd assistant director|third ad/i, '3AD'],
+  [/assistant director\b|^ad\b/i, 'AD'],
+  [/unit production manager|^upm\b/i, 'UPM'],
+  [/line producer|^lp\b/i, 'LP'],
+  [/executive producer|^ep\b/i, 'EXEC'],
+  [/^producer\b/i, 'PROD'],
+  [/production designer|^pd\b/i, 'PD'],
+  [/art director/i, 'ART'],
+  [/costume designer|wardrobe/i, 'COST'],
+  [/makeup|mua|hair stylist/i, 'MUA'],
+  [/^hair\b/i, 'HAIR'],
+  [/1st ac|focus puller/i, '1AC'],
+  [/2nd ac|clapper|loader/i, '2AC'],
+  [/data manager|dit\b/i, 'DIT'],
+  [/sound mixer|recordist/i, 'SOUND'],
+  [/boom operator/i, 'BOOM'],
+  [/gaffer/i, 'GAFF'],
+  [/best boy/i, 'BB'],
+  [/spark|electric/i, 'SPARK'],
+  [/grip\b/i, 'GRIP'],
+  [/script supervisor|continuity/i, 'CONT'],
+  [/stunt coordinator|stunt director/i, 'STUNT'],
+  [/choreograph/i, 'CHOREO'],
+  [/casting director/i, 'CAST'],
+  [/^cast\b|actor|actress|lead/i, 'CAST'],
+  [/locations? manager/i, 'LOC'],
+  [/transport/i, 'TX'],
+  [/catering|chef/i, 'CAT'],
+  [/medic|doctor|first aid/i, 'MED'],
+  [/security/i, 'SEC'],
+  [/runner|^pa\b|production assistant/i, 'PA'],
+  [/editor/i, 'ED'],
+  [/sound design/i, 'SD'],
+  [/vfx|visual effects/i, 'VFX'],
+  [/music|composer/i, 'MUS'],
+];
+function roleCode(role, dept){
+  const r = (role || '').trim();
+  for (const [re, code] of ROLE_CODES) if (re.test(r)) return code;
+  if (dept) {
+    const initials = dept.replace(/[^A-Za-z\s&]/g,'').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('');
+    if (initials) return initials.toUpperCase();
+  }
+  return '—';
 }
 
 function groupCrewByDept(crew){
@@ -1346,6 +1521,26 @@ function tryLocalCallsheetEdit(instruction) {
   if (sceneMatch && !callMatch) {
     callsheet.shoot.scenes = sceneMatch[1].trim();
     notes.push('Scenes → ' + sceneMatch[1].trim());
+    applied = true;
+  }
+
+  // Sunrise / sunset / conditions / temp — real call-sheet sun band.
+  const sunriseMatch = s.match(/sunrise[^\d]*([\d:.]+\s*(?:am|pm)?)/);
+  if (sunriseMatch) {
+    const t = normalizeTime(sunriseMatch[1]);
+    if (t) { callsheet.shoot.sunrise = t; notes.push('Sunrise → ' + t); applied = true; }
+  }
+  const sunsetMatch = s.match(/sunset[^\d]*([\d:.]+\s*(?:am|pm)?)/);
+  if (sunsetMatch) {
+    const t = normalizeTime(sunsetMatch[1]);
+    if (t) { callsheet.shoot.sunset = t; notes.push('Sunset → ' + t); applied = true; }
+  }
+  const tempMatch = instruction.match(/(\d{1,3})\s*°?\s*c\b/i);
+  if (tempMatch) { callsheet.shoot.temperature = tempMatch[1] + '°C'; notes.push('Temp → ' + callsheet.shoot.temperature); applied = true; }
+  const condMatch = instruction.match(/(?:conditions?|weather|forecast)\s*[:\-—]?\s*(sunny|clear|cloudy|partly cloudy|overcast|rain|rainy|drizzle|storm|thunderstorm|monsoon|humid|hot|cold|fog|foggy|snow)/i);
+  if (condMatch) {
+    callsheet.shoot.conditions = condMatch[1].charAt(0).toUpperCase() + condMatch[1].slice(1).toLowerCase();
+    notes.push('Conditions → ' + callsheet.shoot.conditions);
     applied = true;
   }
 
