@@ -145,6 +145,22 @@ body::after{
   letter-spacing:0.08em;background:transparent;
 }
 .region-card.sel .region-badge{border-color:var(--accent);color:var(--accent);}
+.region-card.region-soon{cursor:not-allowed;opacity:0.55;}
+.region-card.region-soon::after{
+  content:'Coming soon';position:absolute;top:14px;right:14px;
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--accent);background:var(--paper);
+  border:1px solid var(--accent);padding:4px 10px;
+}
+.region-card.region-soon:hover{transform:none;box-shadow:none;border-color:var(--rule);}
+.coming-toast{
+  position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--paper);padding:12px 22px;
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;
+  text-transform:uppercase;z-index:400;opacity:0;
+  transition:opacity 0.3s var(--ease-out),transform 0.3s var(--ease-out);
+}
+.coming-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* PANELS */
 .panel{background:var(--paper-deep);border:1px solid var(--rule);padding:24px;margin-bottom:18px;}
@@ -256,6 +272,31 @@ input[type=file]{display:none;}
   font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:var(--paper);flex-shrink:0;
 }
 .intro-text{font-size:14px;color:var(--ink-soft);line-height:1.65;font-family:'Fraunces',serif;font-weight:400;font-variation-settings:"opsz" 14;}
+
+/* PARSE SUMMARY — transparent snapshot of what the parser found in the script. */
+.parse-summary{
+  background:var(--paper);border:1px solid var(--rule);padding:20px 22px;
+  margin-bottom:18px;
+}
+.ps-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.ps-eyebrow{font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);font-family:'DM Mono',monospace;}
+.ps-edit{
+  background:transparent;border:1px solid var(--rule-strong);color:var(--ink-soft);
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:5px 12px;cursor:pointer;
+}
+.ps-edit:hover{border-color:var(--ink);color:var(--ink);}
+.ps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.ps-stat{padding:14px 12px;background:var(--paper-deep);border:1px solid var(--rule);}
+.ps-num{font-family:'Fraunces',serif;font-weight:500;font-size:24px;color:var(--ink);letter-spacing:-0.015em;font-variation-settings:"opsz" 144;}
+.ps-label{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-top:4px;}
+.ps-rows{display:flex;flex-direction:column;gap:6px;}
+.ps-row{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;color:var(--ink-soft);font-family:'Inter',sans-serif;
+  padding:6px 0;border-bottom:1px dashed var(--rule);
+}
+.ps-row:last-child{border-bottom:none;}
+.ps-row b{color:var(--ink);font-weight:500;}
 
 .q-block{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--rule);}
 .q-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
@@ -467,14 +508,38 @@ input[type=file]{display:none;}
   font-family:'DM Mono',monospace;margin-bottom:12px;display:flex;align-items:center;gap:8px;
 }
 .flag-item{
-  font-size:13px;color:var(--ink-soft);padding:8px 0;display:flex;gap:12px;
-  border-bottom:1px solid var(--rule);line-height:1.5;align-items:flex-start;font-family:'Inter',sans-serif;
+  font-size:13px;color:var(--ink-soft);padding:10px 0;display:block;
+  border-bottom:1px solid var(--rule);line-height:1.5;font-family:'Inter',sans-serif;
+  cursor:pointer;transition:background 0.18s,padding 0.18s;
 }
 .flag-item:last-child{border-bottom:none;padding-bottom:0;}
 .flag-item:first-child{padding-top:0;}
-.flag-marker{
+.flag-item.open{background:var(--paper);padding:14px 14px;}
+.flag-item-head{display:flex;gap:12px;align-items:flex-start;}
+.flag-item-head .flag-marker{
   width:18px;height:18px;flex-shrink:0;color:var(--accent);margin-top:1px;
 }
+.flag-item-head-text{flex:1;}
+.flag-item-arr{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;transition:transform 0.2s;}
+.flag-item.open .flag-item-arr{transform:rotate(180deg);color:var(--accent);}
+.flag-item-body{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--rule);}
+.flag-item.open .flag-item-body{display:block;}
+.flag-item-body input{
+  width:100%;background:var(--paper-deep);border:1px solid var(--rule-strong);
+  color:var(--ink);font-family:'Inter',sans-serif;font-size:13px;padding:11px 14px;outline:none;
+}
+.flag-item-body input:focus{border-color:var(--ink);}
+.flag-item-actions{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;}
+.flag-item-actions .flag-save{
+  background:var(--ink);color:var(--paper);border:1px solid var(--ink);
+  font-family:'Inter',sans-serif;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+  padding:9px 16px;cursor:pointer;
+}
+.flag-item-actions .flag-save:hover{background:var(--accent);border-color:var(--accent);}
+.flag-item-actions .flag-save.busy{opacity:0.6;pointer-events:none;}
+.flag-item.resolved{opacity:0.55;}
+.flag-item.resolved .flag-marker{color:var(--green);}
+.flag-item.resolved::after{content:'✓ resolved';font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--green);margin-left:8px;}
 
 /* SECTION TABLES */
 .section-hdr{
@@ -506,7 +571,7 @@ input[type=file]{display:none;}
   display:grid;grid-template-columns:24px 1fr 80px 80px 80px 70px 90px 30px;
   background:var(--paper-edge);border:1px solid var(--rule);border-top:none;
 }
-.th{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:8px;text-align:right;}
+.th{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);font-family:'DM Mono',monospace;padding:10px 8px;text-align:right;font-weight:500;}
 .th:nth-child(2){text-align:left;}
 .th:first-child,.th:last-child{padding:8px 0;}
 
@@ -522,14 +587,17 @@ input[type=file]{display:none;}
 .cg{background:var(--green);}
 .ca{background:var(--gold);}
 .cr{background:var(--accent);}
-.li-desc{padding:11px 8px;font-size:13px;color:var(--ink);line-height:1.4;font-family:'Inter',sans-serif;}
-.li-desc-sub{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px;letter-spacing:0.04em;}
-.li-amt{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
-.li-fix{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
-.li-var{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
-.li-gst{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;padding:11px 8px;}
-.li-tot{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);text-align:right;padding:11px 8px;font-weight:500;}
-.li-grand{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);text-align:right;padding:11px 8px;font-weight:600;}
+.li-desc{padding:11px 8px;font-size:13.5px;color:var(--ink);line-height:1.45;font-family:'Inter',sans-serif;font-weight:500;}
+.li-desc-sub{font-size:12px;color:var(--ink-soft);font-family:'Inter',sans-serif;margin-top:3px;letter-spacing:0;line-height:1.4;font-weight:400;}
+.li-amt{font-family:'DM Mono',monospace;font-size:13px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
+.li-fix{font-family:'DM Mono',monospace;font-size:13px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
+.li-var{font-family:'DM Mono',monospace;font-size:13px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
+.li-gst{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-soft);text-align:right;padding:11px 8px;}
+.li-tot{font-family:'DM Mono',monospace;font-size:13px;color:var(--ink);text-align:right;padding:11px 8px;font-weight:500;}
+.li-grand{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);text-align:right;padding:11px 8px;font-weight:600;cursor:text;border-left:1px solid transparent;}
+.li-grand:hover{background:var(--paper);border-left-color:var(--accent);}
+.li-grand[contenteditable="true"]{background:var(--paper);outline:1px solid var(--accent);outline-offset:-1px;}
+.li-edited{color:var(--accent);}
 
 /* GROUP TOTAL ROW (between ATL/BTL/POST/Others sections) */
 .group-total{
@@ -667,6 +735,7 @@ input[type=file]{display:none;}
 </style>
 </head>
 <body>
+<div class="coming-toast" id="coming-toast"></div>
 <div id="app">
   <button class="back-btn" id="back-btn" onclick="goBack()"><span class="arr">←</span> <span id="back-btn-label">Back to home</span></button>
 
@@ -714,7 +783,7 @@ input[type=file]{display:none;}
         <div class="region-sub">Bollywood · South India</div>
         <div class="region-badge">₹ INR</div>
       </div>
-      <div class="region-card" id="rc-hollywood" onclick="selectRegion('hollywood','$','USD','US Dollar')">
+      <div class="region-card region-soon" id="rc-hollywood" onclick="comingSoon('Hollywood')">
         <!-- Manhattan grid + Hollywood hills -->
         <svg class="region-mark" viewBox="0 0 72 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M2 46 L70 46"/>
@@ -741,7 +810,7 @@ input[type=file]{display:none;}
         <div class="region-sub">North America</div>
         <div class="region-badge">$ USD</div>
       </div>
-      <div class="region-card" id="rc-uk" onclick="selectRegion('uk','£','GBP','British Pound')">
+      <div class="region-card region-soon" id="rc-uk" onclick="comingSoon('UK &amp; Europe')">
         <!-- London — Big Ben + Tower Bridge silhouette -->
         <svg class="region-mark" viewBox="0 0 72 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M2 46 L70 46"/>
@@ -761,9 +830,9 @@ input[type=file]{display:none;}
         </svg>
         <div class="region-name">UK &amp; Europe</div>
         <div class="region-sub">London · Berlin · Paris</div>
-        <div class="region-badge">£ GBP</div>
+        <div class="region-badge">£ GBP · € EUR</div>
       </div>
-      <div class="region-card" id="rc-other" onclick="selectRegion('other','','','')">
+      <div class="region-card region-soon" id="rc-other" onclick="comingSoon('Other markets')">
         <!-- Globe with longitude/latitude -->
         <svg class="region-mark" viewBox="0 0 72 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="36" cy="24" r="20"/>
@@ -799,7 +868,8 @@ input[type=file]{display:none;}
       </div>
     </div>
 
-    <div style="margin-top:20px;display:flex;justify-content:flex-end;">
+    <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.08em;">Hollywood, UK &amp; Europe, and Other coming soon. Indian Cinema is the only live market today.</div>
       <button class="btn-red" id="market-next-btn" onclick="proceedFromMarket()" style="opacity:0.4;pointer-events:none;"><span>Continue →</span></button>
     </div>
   </div>
@@ -904,8 +974,34 @@ input[type=file]{display:none;}
       <div class="mark-av">M</div>
       <div class="intro-text" id="intro-text">Loading...</div>
     </div>
+
+    <!-- PARSE SUMMARY — what Mark thinks the script contains. Producer can
+         correct misidentifications before answering the question battery. -->
+    <div class="parse-summary" id="parse-summary" style="display:none;">
+      <div class="ps-head">
+        <span class="ps-eyebrow">What Mark read from your script</span>
+        <button class="ps-edit" type="button" onclick="alert('To correct the parse, paste a tighter brief on the previous step.')">Looks wrong?</button>
+      </div>
+      <div class="ps-grid">
+        <div class="ps-stat"><div class="ps-num" id="ps-scenes">—</div><div class="ps-label">Scenes</div></div>
+        <div class="ps-stat"><div class="ps-num" id="ps-locs">—</div><div class="ps-label">Locations</div></div>
+        <div class="ps-stat"><div class="ps-num" id="ps-chars">—</div><div class="ps-label">Characters</div></div>
+        <div class="ps-stat"><div class="ps-num" id="ps-nights">—</div><div class="ps-label">Night scenes</div></div>
+      </div>
+      <div class="ps-rows" id="ps-rows"></div>
+    </div>
+
     <div class="panel">
       <div id="questions-container"></div>
+    </div>
+
+    <!-- 7. OTHER INFORMATION — explicit free-text capture so producers can
+         add anything Mark didn't ask about (unique requirements, vendor
+         names, agreed fees). This text is sent to the agent verbatim. -->
+    <div class="panel" style="margin-top:14px;">
+      <div class="panel-title">7 · Other information (optional but recommended)</div>
+      <p style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;line-height:1.55;">Anything Mark should know that the 6 questions missed — special instances, attached vendors, agreed director / cast fees, specific equipment, dates that can't move. Mark reads this and feeds it into every relevant line item.</p>
+      <textarea id="other-info" placeholder="e.g. Lead actor confirmed at ₹4Cr flat. DOP already attached — Manoj Sahu, ₹2L/day. Outstation block in Rajasthan is 5 days; rest is Mumbai. No songs but one 2-day stunt sequence. Production house: Wakaoo Films." style="min-height:110px;"></textarea>
     </div>
     <div style="display:flex;gap:10px;margin-top:4px;align-items:center;flex-wrap:wrap;">
       <button class="btn-red disabled" id="q-submit-btn" onclick="submitAnswers()"><span>Build My Budget →</span></button>
@@ -1115,6 +1211,9 @@ input[type=file]{display:none;}
 
 <script>
 // ── REGION / CURRENCY STATE ───────────────────────────────────────────────────
+// Indian Cinema is the only live market — Hollywood / UK / Other are stubbed
+// behind a "Coming soon" toast. We pre-select India on load so the producer
+// doesn't have to click twice to get started.
 let region = 'india';
 let currency = { symbol: '₹', code: 'INR', name: 'Indian Rupee' };
 // Refined region marks — matching the step-0 SVGs at smaller scale.
@@ -1141,6 +1240,15 @@ const regionMeta = {
   },
 };
 
+function comingSoon(label) {
+  const t = document.getElementById('coming-toast');
+  if (!t) return;
+  t.textContent = label + ' — coming soon · Indian Cinema is live';
+  t.classList.add('show');
+  clearTimeout(window._comingTimer);
+  window._comingTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
 function selectRegion(r, sym, code, name) {
   region = r;
   currency = { symbol: sym, code, name };
@@ -1148,15 +1256,9 @@ function selectRegion(r, sym, code, name) {
   document.getElementById('rc-' + r).classList.add('sel');
 
   const customBox = document.getElementById('custom-inputs');
-  if (r === 'other') {
-    customBox.style.display = 'block';
-    updateCustomRegion();
-  } else {
-    customBox.style.display = 'none';
-    const btn = document.getElementById('market-next-btn');
-    btn.style.opacity = '1';
-    btn.style.pointerEvents = 'auto';
-  }
+  if (customBox) customBox.style.display = 'none';
+  const btn = document.getElementById('market-next-btn');
+  if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
 }
 
 function updateCustomRegion() {
@@ -1302,7 +1404,46 @@ const MARK_API_KEY = localStorage.getItem('mark_api_key_header') || '';
 // Standard fetch wrapper for the FastAPI backend. Owns headers, JSON-vs-FormData
 // body handling, abort timeouts, and FastAPI's `detail` error envelope so callers
 // don't reinvent it.
-async function markFetch(path, { json, form, timeoutMs = 60000, signal } = {}) {
+//
+// "Failed to fetch" was the most frequent error in the user video. On Railway's
+// free tier the backend sleeps after idle and the first request gets a connect
+// reset or 502. We now:
+//   1. Ping /health once per page-load to wake it up before any real call.
+//   2. Auto-retry the failing call once after a short backoff if it failed
+//      with a network-layer error (TypeError "Failed to fetch", abort, 502/503/504).
+//   3. Surface a clear human error when both attempts fail so the user knows
+//      to retry — not a raw TypeError that says nothing.
+let _backendWarmed = false;
+let _warmingPromise = null;
+
+async function warmBackend() {
+  if (_backendWarmed) return;
+  if (_warmingPromise) return _warmingPromise;
+  _warmingPromise = (async () => {
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 30000);
+      const r = await fetch(`${MARK_API}/health`, { method: 'GET', signal: ctl.signal });
+      clearTimeout(t);
+      if (r.ok) _backendWarmed = true;
+    } catch (e) {
+      // Ignore — the actual call below will retry on failure.
+    } finally {
+      _warmingPromise = null;
+    }
+  })();
+  return _warmingPromise;
+}
+
+function _isTransientError(e, status) {
+  if (e && e.name === 'TypeError') return true;     // "Failed to fetch" / network
+  if (e && e.name === 'AbortError') return true;
+  if (typeof status === 'number' && [502, 503, 504, 408].includes(status)) return true;
+  return false;
+}
+
+async function _doFetch(path, opts) {
+  const { json, form, timeoutMs = 60000, signal } = opts;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   if (signal) signal.addEventListener('abort', () => controller.abort());
@@ -1316,19 +1457,40 @@ async function markFetch(path, { json, form, timeoutMs = 60000, signal } = {}) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(json);
   }
-
   try {
     const resp = await fetch(`${MARK_API}${path}`, { method: 'POST', headers, body, signal: controller.signal });
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.detail || err.error?.message || `Server error ${resp.status}`);
+      let detail = null;
+      try { const err = await resp.json(); detail = err.detail || err.error?.message; } catch {}
+      const error = new Error(detail || `Server error ${resp.status}`);
+      error._status = resp.status;
+      throw error;
     }
     return await resp.json();
-  } catch (e) {
-    if (e.name === 'AbortError') throw new Error('Request timed out — please try again.');
-    throw e;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+async function markFetch(path, opts = {}) {
+  await warmBackend();
+  try {
+    return await _doFetch(path, opts);
+  } catch (e) {
+    if (_isTransientError(e, e._status)) {
+      // Cold start usually finishes within ~10s. Wait, then retry once with
+      // a tighter timeout so the user gets feedback fast.
+      await new Promise(r => setTimeout(r, 3500));
+      try {
+        return await _doFetch(path, opts);
+      } catch (e2) {
+        if (e2.name === 'AbortError') throw new Error('Mark’s backend timed out after two attempts. Check connection and try again.');
+        if (e2.name === 'TypeError') throw new Error('Cannot reach Mark’s backend. It may be cold-starting — please retry in a few seconds.');
+        throw e2;
+      }
+    }
+    if (e.name === 'AbortError') throw new Error('Request timed out — please try again.');
+    throw e;
   }
 }
 
@@ -1501,6 +1663,11 @@ async function generateQuestions(script) {
   container.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:20px;text-align:center;">Mark is reading your script…</div>';
 
   try {
+    // Render the parse summary up front so the producer sees what Mark
+    // actually extracted from the script before answering questions. If the
+    // numbers look wrong they can paste a tighter brief and re-upload.
+    renderParseSummary();
+
     // Pass 1 — three grounding questions (location, scale, shoot days). These
     // shape rate band + day multiplier + location lines, so they ALWAYS move
     // money. We need them before generating Pass 2 since follow-ups depend
@@ -1544,6 +1711,36 @@ async function generateQuestions(script) {
   }
 }
 
+// Render the script parse summary on step 2. Falls back gracefully when the
+// brief was pasted (no parsedBreakdown), showing scenes/locations as "—".
+function renderParseSummary() {
+  const wrap = document.getElementById('parse-summary');
+  if (!wrap) return;
+  const b = parsedBreakdown;
+  if (!b) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  document.getElementById('ps-scenes').textContent = b.total_scenes || '—';
+  document.getElementById('ps-locs').textContent = (b.unique_locations || []).length || '—';
+  document.getElementById('ps-chars').textContent = (b.characters || []).length || '—';
+  document.getElementById('ps-nights').textContent = b.night_count || '—';
+  const rows = [];
+  const topLocs = (b.unique_locations || []).slice(0, 5);
+  if (topLocs.length) {
+    rows.push(`<div class="ps-row"><span>Top locations</span><b>${topLocs.map(l => `${l.name} · ${l.scene_count}`).join(' · ')}</b></div>`);
+  }
+  const topChars = (b.characters || []).slice(0, 5);
+  if (topChars.length) {
+    rows.push(`<div class="ps-row"><span>Top characters</span><b>${topChars.map(c => `${c.name} · ${c.scene_count}`).join(' · ')}</b></div>`);
+  }
+  if (typeof b.int_count === 'number' || typeof b.ext_count === 'number') {
+    rows.push(`<div class="ps-row"><span>Interior / Exterior split</span><b>${b.int_count || 0} INT · ${b.ext_count || 0} EXT</b></div>`);
+  }
+  if (typeof b.day_count === 'number' || typeof b.night_count === 'number') {
+    rows.push(`<div class="ps-row"><span>Day / Night split</span><b>${b.day_count || 0} DAY · ${b.night_count || 0} NIGHT</b></div>`);
+  }
+  document.getElementById('ps-rows').innerHTML = rows.join('');
+}
+
 // Pass 1: foundational questions. Always 3, always cost-mover, always
 // answerable from the script alone. The model is told what each question
 // must achieve — not just what to ask.
@@ -1553,7 +1750,7 @@ async function generateGroundingQuestions(script) {
 
 OUTPUT SHAPE
 {
-  "intro": "1-2 warm sentences referencing what kind of production this is (TVC, music video, OTT, feature, etc.) — speak as Mark.",
+  "intro": "Exactly 3 short lines, no generic platitudes. Format: 'Logline: <one-line story summary specific to this script>.' / 'Scenes: <N total · <N> INT · <N> EXT.' / 'Characters: <Lead names>; <supporting names>.' Speak as Mark. NEVER say 'every production requires careful budget planning' or anything similar.",
   "questions": [
     {
       "id": "q1",
@@ -2070,6 +2267,17 @@ function buildQAPairs() {
 
 async function generateBudget() {
   const qa = buildQAPairs();
+  // Free-text "Other information" — passed to the agent as a synthetic
+  // qa entry so the SKILL's "every qa answer is ground truth" rule applies.
+  const otherInfo = (document.getElementById('other-info')?.value || '').trim();
+  if (otherInfo) {
+    qa.push({
+      id: 'q_other',
+      question: 'Other information the producer wants Mark to know',
+      answer: otherInfo,
+      options: [],
+    });
+  }
   const payload = {
     script: scriptText.substring(0, 8000),
     region,
@@ -2128,15 +2336,27 @@ function parseJSON(text) {
 }
 
 // ── FORMAT CURRENCY ───────────────────────────────────────────────────────────
+// Spec Rule 7 — INR formatting:
+//   ≥ ₹1 Crore  → "₹X.XX Crore"
+//   ≥ ₹1 Lakh   → "₹X.X Lakh"
+//   < ₹1 Lakh   → "₹XX,XXX" (Indian comma grouping)
+// Grand totals additionally show the raw rupee figure as a tooltip.
 function fmtAmt(n) {
   n = Math.round(Number(n) || 0);
   const sym = currency.symbol;
   if(region === 'india') {
     if(n >= 10000000) return sym + (n/10000000).toFixed(2) + ' Cr';
-    if(n >= 100000) return sym + (n/100000).toFixed(1) + 'L';
+    if(n >= 100000) return sym + (n/100000).toFixed(2) + ' L';
     return sym + n.toLocaleString('en-IN');
   }
   return sym + n.toLocaleString('en-US');
+}
+
+// Full-precision INR formatter for tooltips and grand-total disclosures.
+function fmtAmtFull(n) {
+  n = Math.round(Number(n) || 0);
+  const sym = currency.symbol;
+  return sym + n.toLocaleString(region === 'india' ? 'en-IN' : 'en-US');
 }
 
 // Eased number reveal — used on the budget summary cards. Out-cubic easing.
@@ -2256,7 +2476,23 @@ function renderBudget(data) {
 
   const flagsEl = document.getElementById('flags-list');
   if(flagsList.length) {
-    flagsEl.innerHTML = flagsList.slice(0, 6).map(f => `<div class="flag-item">${f}</div>`).join('');
+    document.getElementById('flags-panel').style.display = 'block';
+    flagsEl.innerHTML = flagsList.slice(0, 6).map((f, i) => `
+      <div class="flag-item" data-flag-idx="${i}" onclick="toggleFlag(this)">
+        <div class="flag-item-head">
+          <svg class="flag-marker" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2 L3 16"/><path d="M3 3 L13 3 L11 7 L13 11 L3 11"/></svg>
+          <div class="flag-item-head-text">${f}</div>
+          <span class="flag-item-arr">Expand ▾</span>
+        </div>
+        <div class="flag-item-body" onclick="event.stopPropagation()">
+          <input type="text" placeholder="Your answer — confirm the number, vendor, or quantity" data-flag-input/>
+          <div class="flag-item-actions">
+            <button class="flag-save" type="button" onclick="resolveFlag(this, ${i})">Save &amp; Update Budget</button>
+            <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.08em;">Mark only updates the line you confirm.</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
   } else {
     document.getElementById('flags-panel').style.display = 'none';
   }
@@ -2289,16 +2525,18 @@ function renderBudget(data) {
           <div class="th">Total</div><div class="th">GST/VAT</div>
           <div class="th">Grand Total</div><div class="th"></div>
         </div>
-        ${s.items.map(li => `
-          <div class="li-row">
+        ${s.items.map((li, idx) => `
+          <div class="li-row" data-sec="${s.code}" data-li="${idx}">
             <div class="li-conf"><div class="cdot ${li.conf==='green'?'cg':li.conf==='amber'?'ca':'cr'}" title="${li.note||''}"></div></div>
             <div class="li-desc"><div>${li.code} · ${li.desc}</div><div class="li-desc-sub">${li.sub||''}</div></div>
             <div class="li-fix">${li._fixed>0?fmtAmt(li._fixed):'—'}</div>
             <div class="li-var">${li._variable>0?fmtAmt(li._variable):'—'}</div>
             <div class="li-tot">${fmtAmt(li._total)}</div>
             <div class="li-gst">${li._gst>0?fmtAmt(li._gst):'—'}</div>
-            <div class="li-grand">${fmtAmt(li._grand)}</div>
-            <div></div>
+            <div class="li-grand" title="Click to edit · Enter to save, Esc to cancel"
+                 onclick="enableEdit(this)" onblur="saveEdit(this,'${s.code}',${idx})"
+                 onkeydown="handleEditKey(event,this)">${fmtAmt(li._grand)}</div>
+            <div class="li-edit" title="Edit line" onclick="(function(td){td.previousElementSibling.click();td.previousElementSibling.focus();})(this)">✎</div>
           </div>
         `).join('')}
       </div>
@@ -2354,7 +2592,7 @@ function renderBudget(data) {
 
   const gt = document.createElement('div');
   gt.className = 'grand-row';
-  gt.innerHTML = `<span class="grand-label">Grand Total (incl. tax & contingency)</span><span class="grand-val">${fmtAmt(grandTotal)}</span>`;
+  gt.innerHTML = `<span class="grand-label">Grand Total (incl. tax &amp; contingency)</span><span class="grand-val" title="${fmtAmtFull(grandTotal)}">${fmtAmt(grandTotal)} <span style="font-size:13px;opacity:0.6;font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-left:8px;">(${fmtAmtFull(grandTotal)})</span></span>`;
   container.appendChild(gt);
 
   const excl = data.excluded || [];
@@ -2366,7 +2604,250 @@ function toggleSec(id) {
   document.getElementById('arr-' + id).classList.toggle('open');
 }
 
+// ── INLINE EDITING ────────────────────────────────────────────────────────────
+// Each .li-grand cell becomes contentEditable on click. Producers can type a
+// new value in any of the supported INR/USD/GBP formats and it parses back
+// to a plain number. Enter saves, Esc reverts. Edits run locally only —
+// totals recompute, and the user can still re-run /budget/refine for an
+// AI-aware change.
+function enableEdit(td) {
+  if (td.getAttribute('contenteditable') === 'true') return;
+  td._prev = td.textContent;
+  td.setAttribute('contenteditable', 'true');
+  td.focus();
+  // Place caret at end
+  const range = document.createRange();
+  range.selectNodeContents(td);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges(); sel.addRange(range);
+}
+
+function handleEditKey(e, td) {
+  if (e.key === 'Enter') { e.preventDefault(); td.blur(); }
+  if (e.key === 'Escape') { td.textContent = td._prev || ''; td.blur(); }
+}
+
+// Parses "2.5L", "1.2Cr", "₹4,25,000", "$3,500", "1500", etc.
+function parseAmountInput(s) {
+  if (s == null) return NaN;
+  let v = String(s).trim().replace(/[₹$£€\s,]/g, '');
+  if (!v) return NaN;
+  const m = v.match(/^(-?[\d.]+)\s*(cr|l|lakh|k)?$/i);
+  if (!m) return NaN;
+  const n = parseFloat(m[1]);
+  if (!Number.isFinite(n)) return NaN;
+  const unit = (m[2] || '').toLowerCase();
+  if (unit === 'cr') return Math.round(n * 10000000);
+  if (unit === 'l' || unit === 'lakh') return Math.round(n * 100000);
+  if (unit === 'k') return Math.round(n * 1000);
+  return Math.round(n);
+}
+
+function saveEdit(td, secCode, idx) {
+  td.setAttribute('contenteditable', 'false');
+  const newVal = parseAmountInput(td.textContent);
+  if (!Number.isFinite(newVal) || newVal < 0) {
+    td.textContent = td._prev || '';
+    return;
+  }
+  if (!budgetData) return;
+  const sec = budgetData.sections.find(s => String(s.code) === String(secCode));
+  if (!sec || !sec.items[idx]) return;
+  const li = sec.items[idx];
+  // The new value is treated as the GRAND TOTAL (incl. GST). Back-solve for
+  // the base AMOUNT using the existing GST rate; this keeps the tax column
+  // consistent without surprising the producer.
+  const rate = li._gst_rate || 0;
+  const base = Math.max(0, Math.round(newVal / (1 + rate)));
+  li.amount = base;
+  li._total = base;
+  li._gst = newVal - base;
+  li._grand = newVal;
+  // Re-split fixed/variable proportionally.
+  const total = li._fixed + li._variable;
+  if (total > 0) {
+    const ratio = base / total;
+    li._fixed = Math.round(li._fixed * ratio);
+    li._variable = base - li._fixed;
+  } else {
+    li._variable = base;
+  }
+  td.classList.add('li-edited');
+  td.textContent = fmtAmt(newVal);
+  // Recompute headline totals.
+  recomputeTotals();
+}
+
+function recomputeTotals() {
+  if (!budgetData) return;
+  let totalATL = 0, totalBTL = 0, totalPost = 0;
+  budgetData.sections.forEach(s => {
+    const st = s.items.reduce((sum, li) => sum + (li._grand || 0), 0);
+    s._total = st;
+    if (s.type === 'above_the_line') totalATL += st;
+    else if (s.type === 'below_the_line') totalBTL += st;
+    else totalPost += st;
+  });
+  const insurance = Math.round(totalBTL * 0.01);
+  const contingency = Math.round((totalATL + totalBTL) * 0.10);
+  const grand = totalATL + totalBTL + totalPost + insurance + contingency;
+  const shootDays = Number(budgetData.shoot_days) || 1;
+  document.getElementById('s-grand').textContent = fmtAmt(grand);
+  document.getElementById('s-day').textContent = fmtAmt(Math.round(grand / shootDays));
+  document.getElementById('s-atl').textContent = fmtAmt(totalATL);
+  document.getElementById('s-btl').textContent = fmtAmt(totalBTL);
+  document.getElementById('s-post').textContent = fmtAmt(totalPost);
+  // Update each section header total
+  document.querySelectorAll('.section-hdr .sec-total').forEach((el, i) => {
+    if (budgetData.sections[i]) el.textContent = fmtAmt(budgetData.sections[i]._total);
+  });
+}
+
+// Open / close a flag card. Stops propagation so the input click doesn't
+// collapse it. The "Save & Update Budget" path sends a targeted refinement
+// to /budget/refine and refreshes the budget in place.
+function toggleFlag(el) {
+  if (el.classList.contains('resolved')) return;
+  el.classList.toggle('open');
+}
+
+async function resolveFlag(btn, idx) {
+  const card = btn.closest('.flag-item');
+  const input = card.querySelector('input[data-flag-input]');
+  const value = (input.value || '').trim();
+  if (!value) { input.focus(); return; }
+  if (!budgetData) return;
+
+  const flagText = card.querySelector('.flag-item-head-text').textContent.trim();
+  const instruction = `Apply this confirmation to the flagged line item: "${flagText}". Producer says: "${value}". Update only that line and any directly-dependent items.`;
+
+  btn.classList.add('busy');
+  btn.textContent = 'Updating…';
+  try {
+    const data = await markFetch('/budget/refine', {
+      json: {
+        budget: budgetData,
+        instruction,
+        region,
+        currency: { code: currency.code, symbol: currency.symbol },
+      },
+      timeoutMs: 180000,
+    });
+    if (data.budget && data.budget.budget_data) {
+      budgetData = data.budget.budget_data;
+      const grandBefore = document.getElementById('s-grand').textContent;
+      renderBudget(budgetData);
+      const grandAfter = document.getElementById('s-grand').textContent;
+      refineHistory.unshift({
+        instruction: `[flag] ${flagText} → ${value}`,
+        notes: budgetData.revision_notes || [],
+        grandBefore, grandAfter,
+        ts: new Date(),
+      });
+      renderRefineHistory();
+      // The re-render replaces the DOM — re-mark this resolved flag if it survives.
+      const newCard = document.querySelector(`.flag-item[data-flag-idx="${idx}"]`);
+      if (newCard) {
+        newCard.classList.add('resolved');
+        newCard.classList.remove('open');
+      }
+    } else {
+      throw new Error('Refine response missing budget');
+    }
+  } catch (e) {
+    btn.classList.remove('busy');
+    btn.textContent = 'Save & Update Budget';
+    alert('Could not update: ' + e.message);
+  }
+}
+
 // ── EXPORT EXCEL ──────────────────────────────────────────────────────────────
+// Implements the AskMark_DeepDive_Sheet_Architecture spec:
+//   Sheet 1   Top Sheet (summary with hyperlinks to deep-dive sheets)
+//   Sheet 2   Detailed Budget (every AMOUNT cell is a formula reference to
+//             the corresponding deep-dive sheet's named total)
+//   Sheets 3+ One per budget code (10000 – 14000), 41 in total. Each has a
+//             "BACK TO DETAILED BUDGET" hyperlink in A1, a 4-row standard
+//             header, item rows pulled from the agent budget where available
+//             or blank rows ready for the producer to fill in, and a TOTAL
+//             row that is referenced as the Excel named range Total_<code>.
+//
+// Tab colours follow the spec: ATL = deep red, BTL Production = dark grey,
+// Post = dark blue, Insurance/Contingency = green.
+
+const DEEP_DIVE_TABS = [
+  // [code, shortName, fullName, phase, defaultColumns?]
+  ['10000', 'Dev',          'PRODUCTION / DEVELOPMENT',        'atl'],
+  ['10100', 'Writers',      'WRITERS',                          'atl'],
+  ['10200', 'Producer',     'PRODUCER / SHOW RUNNER',          'atl'],
+  ['10300', 'Director',     'DIRECTOR',                         'atl'],
+  ['10400', 'Lead Cast',    'PRINCIPAL / LEAD CAST',           'atl'],
+  ['10500', 'Supp. Cast',   'SUPPORTING CAST',                  'btl'],
+  ['10600', 'Dir. Team',    'DIRECTOR TEAM',                    'btl'],
+  ['10700', 'Extras',       'EXTRAS',                           'btl'],
+  ['10800', 'Prod. Staff',  'PRODUCTION STAFF',                 'btl'],
+  ['10900', 'Training',     'TRAINING EXPENSES',                'btl'],
+  ['11000', 'Art Dept',     'ART DEPT & SET CONSTRUCTION',      'btl'],
+  ['11100', 'Grip',         'GRIP / SET OPERATIONS',            'btl'],
+  ['11200', 'Stunts',       'STUNTS',                           'btl'],
+  ['11300', 'Camera',       'CAMERA',                           'btl'],
+  ['11400', 'Sound',        'PRODUCTION SOUND',                 'btl'],
+  ['11500', 'Electrical',   'ELECTRICAL / SET LIGHTING',        'btl'],
+  ['11600', 'SFX',          'SPECIAL EFFECTS',                  'btl'],
+  ['11700', 'Animals',      'ANIMAL HIRE & PERMISSION',         'btl'],
+  ['11800', 'Wardrobe',     'WARDROBE',                         'btl'],
+  ['11900', 'Choreo',       'CHOREOGRAPHY',                     'btl'],
+  ['12000', 'Makeup',       'MAKEUP / HAIR',                    'btl'],
+  ['12100', 'Vehicles',     'ACTION PROPS / PICT. VEHICLES',    'btl'],
+  ['12200', 'Data Storage', 'PRODUCTION RAW STOCK & LAB',       'btl'],
+  ['12300', 'Transport',    'TRANSPORTATION',                   'btl'],
+  ['12400', 'Locations',    'LOCATION HIRING EXPENSES',         'btl'],
+  ['12500', 'Prod. Exp',    'PRODUCTION EXPENSES',              'btl'],
+  ['12600', 'Catering',     'LOCATION CATERING',                'btl'],
+  ['12700', 'Office',       'OFFICE & ADMINISTRATIVE',          'btl'],
+  ['12800', 'Travel',       'TRAVEL & LIVING',                  'btl'],
+  ['12900', 'Post Edit',    'PICTURE EDITORIAL',                'post'],
+  ['13000', 'Sound Edit',   'SOUND EDITORIAL',                  'post'],
+  ['13100', 'Post Sound',   'POST PRODUCTION SOUND',            'post'],
+  ['13200', 'Music',        'MUSIC',                            'post'],
+  ['13300', 'VFX',          'VISUAL EFFECTS — POST',            'post'],
+  ['13400', 'Lab & Print',  'POST PRODUCTION',                  'post'],
+  ['13500', 'Other',        'OTHER CHARGES',                    'post'],
+  ['13600', 'Misc',         'MISCELLANEOUS CHARGES',            'post'],
+  ['13700', 'Insurance',    'INSURANCE',                        'other'],
+  ['13800', 'NCG',          'NON-CLAIMABLE GST',                'other'],
+  ['13900', 'Plateshoot',   'PLATESHOOT',                       'other'],
+  ['14000', 'Contingency',  'CONTINGENCY',                      'other'],
+];
+
+const TAB_COLOR_BY_PHASE = {
+  atl:   '8A2306',    // deep red
+  btl:   '2F2A22',    // dark grey
+  post:  '1F2B5E',    // dark blue
+  other: '2E6B3E',    // green
+};
+
+const STD_COLUMNS = ['S.NO','DESCRIPTION','BASIS','DAYS','UOM','X','RATE','AMOUNT','GST %','GST','TOTAL','REMARKS'];
+const AMOUNT_COL_INDEX = STD_COLUMNS.indexOf('AMOUNT'); // 7
+const GST_PCT_COL_INDEX = STD_COLUMNS.indexOf('GST %');  // 8
+const GST_AMT_COL_INDEX = STD_COLUMNS.indexOf('GST');    // 9
+const TOTAL_COL_INDEX = STD_COLUMNS.indexOf('TOTAL');    // 10
+const REMARKS_COL_INDEX = STD_COLUMNS.indexOf('REMARKS');// 11
+
+// Excel-safe sheet names (max 31 chars, no : \ / ? [ ] *)
+function tabSheetName(code, shortName) {
+  return `${code} · ${shortName}`.replace(/[:\\/?\[\]*]/g, '').slice(0, 31);
+}
+
+// Convert a column index (0-based) to an Excel column letter (A, B, ..., Z, AA).
+function colLetter(idx) {
+  let s = '';
+  let n = idx;
+  while (true) { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; if (n < 0) break; }
+  return s;
+}
+
 function exportExcel() {
   if(!budgetData) { alert('No budget to export yet.'); return; }
 
@@ -2390,6 +2871,124 @@ function exportExcel() {
     return splitFixedVariable(li);
   }
 
+  // ── BUILD WORKBOOK ──────────────────────────────────────────────────────────
+  const wb = XLSX.utils.book_new();
+  const sectionsByCode = {};
+  budgetData.sections.forEach(s => { sectionsByCode[String(s.code)] = s; });
+
+  // Each deep-dive sheet writes its grand total to a fixed cell. The Detailed
+  // Budget AMOUNT column then references that cell via a sheet name. We use
+  // cell references (not named ranges) because SheetJS Community has limited
+  // named-range write support — but the Excel file still recomputes when the
+  // producer edits a rate inside any deep-dive sheet, which is the property
+  // the spec actually cares about.
+  const deepDiveTotalRef = {}; // { '10000': "'10000 · Dev'!K42", ... }
+
+  // ── BUILD EACH DEEP-DIVE SHEET ─────────────────────────────────────────────
+  DEEP_DIVE_TABS.forEach(([code, shortName, fullName, phase]) => {
+    const sheetName = tabSheetName(code, shortName);
+    const sec = sectionsByCode[code];
+
+    const rows = [];
+    // Row 1: back-link + title + section
+    rows.push([
+      { v: '← BACK TO DETAILED BUDGET', l: { Target: "#'Detailed Budget'!A1", Tooltip: 'Return to Detailed Budget' } },
+      title,
+      '', '',
+      `${code} · ${fullName}`,
+      '', '', '', '', '', '', ''
+    ]);
+    // Row 2: production dates / phase
+    rows.push([
+      '', `Phase: ${phase.toUpperCase()}`, '', '',
+      shootDays ? `Shoot days: ${shootDays}` : '',
+      '', '', '', '', '', '', ''
+    ]);
+    // Row 3: blank
+    rows.push([]);
+    // Row 4: column headers
+    rows.push(STD_COLUMNS.slice());
+
+    // Data rows
+    let totalAmount = 0;
+    let totalGst = 0;
+    let totalGrand = 0;
+    if (sec && sec.items && sec.items.length) {
+      sec.items.forEach((li, i) => {
+        const rowIdx = rows.length;       // 0-based
+        const excelRow = rowIdx + 1;      // 1-based for formula
+        const amt = Number(li.amount) || 0;
+        const gstRate = li._gst_rate || 0;
+        const gstAmt = li._gst || Math.round(amt * gstRate);
+        const total = amt + gstAmt;
+        totalAmount += amt; totalGst += gstAmt; totalGrand += total;
+        rows.push([
+          i + 1,
+          li.desc || '',
+          li.sub || '',
+          '',                          // DAYS (blank — producer fills if relevant)
+          '',                          // UOM
+          '',                          // X
+          '',                          // RATE
+          amt,
+          gstRate,
+          { f: `H${excelRow}*I${excelRow}` },
+          { f: `H${excelRow}+J${excelRow}` },
+          li.note || ''
+        ]);
+      });
+    } else {
+      // No agent data for this section — emit 8 blank rows for manual entry.
+      // Each row carries the GST and TOTAL formulas so they recompute as
+      // amounts are typed in by the producer.
+      for (let i = 1; i <= 8; i++) {
+        const excelRow = rows.length + 1;
+        rows.push([
+          i, '', '', '', '', '', '', '', 0,
+          { f: `H${excelRow}*I${excelRow}` },
+          { f: `H${excelRow}+J${excelRow}` },
+          ''
+        ]);
+      }
+    }
+
+    // Blank spacer
+    rows.push([]);
+    // TOTAL row
+    const totalRowExcel = rows.length + 1;  // 1-based
+    const dataStartRow = 5;                 // headers were on row 4
+    const dataEndRow = totalRowExcel - 2;   // row before the blank spacer
+    rows.push([
+      '', 'TOTAL', '', '', '', '', '',
+      { f: `SUM(H${dataStartRow}:H${dataEndRow})` },
+      '',
+      { f: `SUM(J${dataStartRow}:J${dataEndRow})` },
+      { f: `SUM(K${dataStartRow}:K${dataEndRow})` },
+      ''
+    ]);
+
+    // Notes row
+    rows.push(['', `Notes: figures auto-flow to Detailed Budget · cell K${totalRowExcel} is the Total feeding the master.`, '', '', '', '', '', '', '', '', '', '']);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [
+      {wch:6},{wch:36},{wch:24},{wch:8},{wch:8},{wch:6},{wch:12},
+      {wch:14},{wch:8},{wch:12},{wch:14},{wch:28}
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    // Workbook-level tab colour (SheetJS Community supports SheetTabColor).
+    const wbSheets = (wb.Workbook = wb.Workbook || {}).Sheets = wb.Workbook.Sheets || [];
+    wbSheets.push({ name: sheetName, TabColor: { rgb: TAB_COLOR_BY_PHASE[phase] || '888888' } });
+
+    // Remember where this section's grand total lives so Detailed Budget can
+    // pull it via cross-sheet reference.
+    deepDiveTotalRef[code] = `'${sheetName}'!K${totalRowExcel}`;
+  });
+
+  // Legacy summation helpers retained because Top Sheet rendering still uses
+  // them for the "Above the Line / Below the Line / Post" subtotals. These
+  // are static figures shown alongside the formula-driven grand total.
   function grpSums(secs) {
     return secs.reduce((acc, s) => {
       const sums = s.items.reduce((t, li) => {
@@ -2413,149 +3012,137 @@ function exportExcel() {
   const contAmt = Math.round((atlS.amt + btlS.amt) * 0.10);
   const grandTotal = atlS.amt + atlS.gst + btlS.amt + btlS.gst + postS.amt + postS.gst + insAmt + insGst + contAmt;
 
-  // ── SHEET 1: TOP SHEET ──────────────────────────────────────────────────────
-  const T = [];
-  T.push(['', 'SUMMARY SHEET - ' + title.toUpperCase(), 'ACTIVITY', 'MONTHS', 'LOCATION', 'SHOOT DAYS', '', '']);
-  T.push(['', '', 'PRE PRODUCTION', '', locs, shootDays, '', '']);
-  T.push(['', '', 'SHOOT', '', '', '', '', '']);
-  T.push(['', '', 'POST PRODUCTION', '', '', '', '', '']);
-  T.push([]);
-  T.push(['CODE', 'EXPENSE HEAD', 'FIXED', 'VARIABLE', 'TOTAL', 'GST / VAT', 'GRAND TOTAL', '']);
-
-  function tRow(s) {
-    const sums = s.items.reduce((t, li) => {
-      const fv = fvFor(li);
-      t.fixed += fv.fixed; t.variable += fv.variable;
-      t.amt += Number(li.amount)||0; t.gst += li._gst||0;
-      return t;
-    }, { fixed:0, variable:0, amt:0, gst:0 });
-    T.push([s.code, s.name.toUpperCase(), sums.fixed, sums.variable, sums.amt, sums.gst, sums.amt+sums.gst, '']);
-  }
-  function tTotal(label, sums) {
-    T.push(['', label, sums.fixed, sums.variable, sums.amt, sums.gst, sums.amt+sums.gst, '']);
-  }
-
-  atl.forEach(tRow);
-  tTotal('TOTAL ABOVE THE LINE', atlS);
-  btl.forEach(tRow);
-  tTotal('TOTAL BELOW THE LINE', btlS);
-  post.forEach(tRow);
-  tTotal('TOTAL POST PRODUCTION', postS);
-  T.push(['13700', 'INSURANCE', insAmt, 0, insAmt, insGst, insAmt+insGst, '']);
-  T.push(['14000', 'CONTINGENCY (10%)', contAmt, 0, contAmt, 0, contAmt, '']);
-  T.push([]);
-  T.push(['', 'GRAND TOTAL (' + sym + ' ' + cod + ')', '', '', '', '', grandTotal, '']);
-  T.push([]);
-  T.push(['', 'Market: ' + m.label + '  |  Currency: ' + sym + ' ' + cod + '  |  AI Draft generated: ' + new Date().toLocaleDateString('en-GB'), '', '', '', '', '', '']);
-  if(budgetData.excluded && budgetData.excluded.length) {
-    T.push(['', 'EXCLUDED FROM BUDGET: ' + budgetData.excluded.join(', '), '', '', '', '', '', '']);
-  }
-
-  const ws1 = XLSX.utils.aoa_to_sheet(T);
-  ws1['!cols'] = [{wch:8},{wch:38},{wch:14},{wch:16},{wch:16},{wch:16},{wch:18},{wch:4}];
-
   // ── SHEET 2: DETAILED BUDGET ────────────────────────────────────────────────
-  // Columns mirror the top sheet so producers can scan both sheets identically:
-  // CODE | DESCRIPTION | BASIS | LOCATION | CURRENCY | FIXED | VARIABLE | TOTAL | GST/VAT | GRAND TOTAL | REMARKS
+  // The master line-item sheet. AMOUNT cells reference each deep-dive sheet's
+  // total cell, so editing a rate inside any deep-dive sheet flows up here
+  // and through to the Top Sheet. This is what makes the workbook a single
+  // live calculation, per spec §2.2.
   const D = [];
-  D.push(['', 'DETAILED BUDGET - ' + title.toUpperCase(), 'ACTIVITY', 'MONTHS', '', 'LOCATION', 'SHOOT DAYS', '', '', '', '']);
-  D.push(['', '', 'SHOOT', '', '', locs, shootDays, '', '', '', '']);
+  D.push(['DETAILED BUDGET — ' + title.toUpperCase(), '', '', '', '', '', '', '', '']);
+  D.push([`Market: ${m.label}`, `Currency: ${sym} ${cod}`, `Locations: ${locs}`, `Shoot days: ${shootDays}`, '', '', '', '', '']);
   D.push([]);
-  D.push(['BUDGET CODE','BUDGET HEADS','BASIS','LOCATION','CURRENCY','FIXED','VARIABLE','TOTAL','GST / VAT','GRAND TOTAL','REMARKS / CONFIDENCE']);
+  D.push(['CODE','BUDGET HEAD','PHASE','BASIS / NOTES','AMOUNT','GST %','GST / VAT','GRAND TOTAL','CONFIDENCE / REMARKS']);
 
-  function addSec(s) {
-    D.push([s.code, s.name.toUpperCase(), '', '', '', '', '', '', '', '', '']);
-    s.items.forEach(li => {
-      const a = Number(li.amount)||0;
-      const g = li._gst||0;
-      const fv = fvFor(li);
-      const conf = li.conf !== 'green' ? '[' + (li.conf||'').toUpperCase() + '] ' : '';
-      D.push([
-        li.code, li.desc, li.sub || '',
-        locs.split(' · ')[0] || m.label,
-        cod,
-        fv.fixed, fv.variable, a, g, a+g,
-        conf + (li.note || '')
-      ]);
-    });
-    const sums = s.items.reduce((t,li) => {
-      const fv = fvFor(li);
-      t.fixed += fv.fixed; t.variable += fv.variable;
-      t.amt += Number(li.amount)||0; t.gst += li._gst||0;
-      return t;
-    }, { fixed:0, variable:0, amt:0, gst:0 });
-    D.push(['', 'ACCOUNT TOTAL FOR ' + s.code, '', '', '', sums.fixed, sums.variable, sums.amt, sums.gst, sums.amt+sums.gst, '']);
-    D.push([]);
+  // For named-cell tracking on the Detailed Budget side too, so the Top
+  // Sheet can reference these rows by code without re-summing.
+  const detailedRowByCode = {}; // { '10000': 5 (1-based excel row) }
+
+  function _detailedSubtotalFor(phaseFilter, label) {
+    // Aggregate the cell references for sections in this phase. Built once
+    // all section rows have been added so we know which Excel rows to refer to.
+    const refs = DEEP_DIVE_TABS
+      .filter(([code,, , phase]) => phaseFilter.includes(phase))
+      .filter(([code]) => detailedRowByCode[code])
+      .map(([code]) => `H${detailedRowByCode[code]}`);
+    if (!refs.length) {
+      D.push(['', label, '', '', 0, '', 0, 0, '']);
+    } else {
+      D.push(['', label, '', '', '', '', '', { f: refs.join('+') }, '']);
+    }
   }
 
-  atl.forEach(addSec);
-  D.push(['', 'TOTAL ABOVE THE LINE', '', '', '', atlS.fixed, atlS.variable, atlS.amt, atlS.gst, atlS.amt+atlS.gst, '']);
+  DEEP_DIVE_TABS.forEach(([code, shortName, fullName, phase]) => {
+    const ref = deepDiveTotalRef[code];
+    const sec = sectionsByCode[code];
+    const remarks = sec ? `Generated from ${sec.items.length} item(s)` : 'Empty template — fill in deep-dive sheet';
+    const conf = sec ? (sec.items.some(li => li.conf === 'red') ? 'NEEDS INPUT' : sec.items.some(li => li.conf === 'amber') ? 'ESTIMATE' : 'CONFIRMED') : '';
+    const excelRow = D.length + 1;
+    detailedRowByCode[code] = excelRow;
+    // Make the CODE cell a hyperlink to its deep-dive sheet.
+    const sheetName = tabSheetName(code, shortName);
+    D.push([
+      { v: code, l: { Target: `#'${sheetName}'!A1`, Tooltip: `Open ${code} deep-dive` } },
+      fullName,
+      phase.toUpperCase(),
+      sec ? sec.name : '',
+      ref ? { f: ref } : 0,                                       // AMOUNT (cross-sheet)
+      0.18,                                                       // GST %
+      ref ? { f: `${ref}*0.18` } : 0,                             // GST amount
+      ref ? { f: `${ref}*1.18` } : 0,                             // Grand total (incl. GST)
+      `${remarks}${conf ? ' · ' + conf : ''}`,
+    ]);
+  });
+
   D.push([]);
-  btl.forEach(addSec);
-  D.push(['', 'TOTAL BELOW THE LINE', '', '', '', btlS.fixed, btlS.variable, btlS.amt, btlS.gst, btlS.amt+btlS.gst, '']);
+  // Phase subtotals — sum of the AMOUNT column for each phase's section rows.
+  _detailedSubtotalFor(['atl'], 'TOTAL ABOVE THE LINE');
+  _detailedSubtotalFor(['btl'], 'TOTAL BELOW THE LINE');
+  _detailedSubtotalFor(['post'], 'TOTAL POST PRODUCTION');
+  _detailedSubtotalFor(['other'], 'TOTAL OTHERS (Insurance / NCG / Plateshoot / Contingency)');
   D.push([]);
-  post.forEach(addSec);
-  D.push(['', 'TOTAL POST PRODUCTION', '', '', '', postS.fixed, postS.variable, postS.amt, postS.gst, postS.amt+postS.gst, '']);
-  D.push([]);
-  D.push(['13700','INSURANCE (1%)','','','',cod,insAmt,0,insAmt,insGst,insAmt+insGst,'']);
-  D.push(['14000','CONTINGENCY (10%)','','','',cod,contAmt,0,contAmt,0,contAmt,'']);
-  D.push([]);
-  D.push(['','GRAND TOTAL (' + sym + ' ' + cod + ')','','','','','','','','',grandTotal,'']);
+
+  // Grand total — sum of every section row.
+  const everySectionAmtRef = DEEP_DIVE_TABS
+    .filter(([code]) => detailedRowByCode[code])
+    .map(([code]) => `H${detailedRowByCode[code]}`)
+    .join('+');
+  D.push(['', `GRAND TOTAL (${sym} ${cod})`, '', '', '', '', '', { f: everySectionAmtRef || '0' }, 'Incl. GST; excl. contingency above']);
+
+  if(budgetData.excluded && budgetData.excluded.length) {
+    D.push([]);
+    D.push(['', 'EXCLUDED FROM BUDGET: ' + budgetData.excluded.join(', '), '', '', '', '', '', '', '']);
+  }
 
   const ws2 = XLSX.utils.aoa_to_sheet(D);
-  ws2['!cols'] = [
-    {wch:12},{wch:34},{wch:24},{wch:16},{wch:8},
-    {wch:14},{wch:14},{wch:14},{wch:12},{wch:16},{wch:30}
-  ];
+  ws2['!cols'] = [{wch:8},{wch:34},{wch:8},{wch:30},{wch:16},{wch:8},{wch:14},{wch:18},{wch:30}];
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws1, 'Top Sheet');
-  XLSX.utils.book_append_sheet(wb, ws2, 'Detailed Budget');
+  // ── SHEET 1: TOP SHEET ──────────────────────────────────────────────────────
+  // Executive summary. Reads from the Detailed Budget — no data entered here.
+  // Each department total cell is a hyperlinked formula reference to the
+  // corresponding row of the Detailed Budget. Drill-down works in both
+  // directions.
+  const T = [];
+  T.push(['SUMMARY SHEET — ' + title.toUpperCase(), '', '', '', '', '']);
+  T.push([`Market: ${m.label}`, `Currency: ${sym} ${cod}`, `Locations: ${locs}`, `Shoot days: ${shootDays}`, '', '']);
+  T.push([]);
+  T.push(['CODE', 'EXPENSE HEAD', 'PHASE', 'AMOUNT', 'GRAND TOTAL', 'JUMP']);
 
-  // ── DEPARTMENT TEMPLATE SHEETS ──────────────────────────────────────────────
-  function getDeptHeaders(code) {
-    const c = parseInt(code) || 0;
-    if (c <= 10500 || [10600,10700,10800,11000,11200,11900,12000].includes(c))
-      return ['SR NO','CATEGORY / ROLE','PER DAY RATE','ALLOWANCES / DAY','ONE TIME','NO OF PERSONS','PRE DAYS','SHOOT DAYS','BREAK DAYS','TOTAL AMOUNT','REMARKS'];
-    if ([11100,11300,11400,11500,11600].includes(c))
-      return ['SR NO','ITEM / DESCRIPTION','UNIT RATE / DAY','QTY','PRE DAYS','SHOOT DAYS','BREAK DAYS','TOTAL AMOUNT','REMARKS'];
-    if (c === 12300)
-      return ['SR NO','VEHICLE TYPE','RATE PER DAY','NO OF VEHICLES','PRE DAYS','SHOOT DAYS','BREAK DAYS','TOTAL AMOUNT'];
-    if (c === 12400)
-      return ['SR NO','LOCATION / DESCRIPTION','TYPE','RATE','DAYS','TOTAL AMOUNT','REMARKS'];
-    if (c === 12600)
-      return ['SR NO','CATEGORY','NO OF PERSONS','RATE PER DAY','PRE DAYS','SHOOT DAYS','BREAK DAYS','TOTAL AMOUNT'];
-    if (c === 12800)
-      return ['SR NO','DEPARTMENT','PAX','DAYS','ROOM CATEGORY','ROOM RATE / NIGHT','TRAVEL CLASS','TRAVEL RATE','TOTAL AMOUNT'];
-    if (c >= 12900 && c <= 13600)
-      return ['SR NO','SERVICE / ITEM','VENDOR','RATE','DURATION','TOTAL AMOUNT','REMARKS'];
-    return ['SR NO','DESCRIPTION','BASIS','RATE','QTY / DAYS','TOTAL AMOUNT','REMARKS'];
-  }
-
-  budgetData.sections.forEach(s => {
-    const secAmt = s.items.reduce((t,li) => t+(Number(li.amount)||0), 0);
-    const hdrs = getDeptHeaders(s.code);
-    const totalIdx = hdrs.indexOf('TOTAL AMOUNT');
-    const SD = [];
-    SD.push([s.code + ' — ' + s.name.toUpperCase()]);
-    SD.push(['AI ESTIMATED TOTAL: ' + sym + ' ' + secAmt.toLocaleString('en-IN')]);
-    SD.push([]);
-    SD.push(hdrs);
-    for (let i = 1; i <= 15; i++) {
-      const row = [i];
-      for (let j = 1; j < hdrs.length; j++) row.push('');
-      SD.push(row);
+  const PHASE_LABEL = { atl: 'Above the Line', btl: 'Below the Line', post: 'Post Production', other: 'Other' };
+  let lastPhase = null;
+  DEEP_DIVE_TABS.forEach(([code, shortName, fullName, phase]) => {
+    if (lastPhase && lastPhase !== phase) {
+      T.push(['', '— ' + (PHASE_LABEL[phase] || phase).toUpperCase() + ' —', '', '', '', '']);
+    } else if (!lastPhase) {
+      T.push(['', '— ' + (PHASE_LABEL[phase] || phase).toUpperCase() + ' —', '', '', '', '']);
     }
-    const totRow = new Array(hdrs.length).fill('');
-    totRow[0] = 'TOTAL';
-    if (totalIdx >= 0) totRow[totalIdx] = secAmt;
-    SD.push(totRow);
-    const ws = XLSX.utils.aoa_to_sheet(SD);
-    ws['!cols'] = hdrs.map((h,i) => ({ wch: i===0?6 : h==='REMARKS'?24 : h==='CATEGORY / ROLE'||h==='ITEM / DESCRIPTION'||h==='LOCATION / DESCRIPTION'||h==='SERVICE / ITEM'||h==='DESCRIPTION'?28 : 14 }));
-    const safeName = s.name.replace(/[:\\/?\[\]*]/g,'').trim();
-    const sheetName = (s.code + ' ' + safeName).slice(0,31);
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    lastPhase = phase;
+    const detailedRow = detailedRowByCode[code];
+    const sheetName = tabSheetName(code, shortName);
+    T.push([
+      { v: code, l: { Target: `#'${sheetName}'!A1`, Tooltip: `Open ${code} deep-dive` } },
+      fullName,
+      PHASE_LABEL[phase] || phase,
+      detailedRow ? { f: `'Detailed Budget'!H${detailedRow}` } : 0,
+      detailedRow ? { f: `'Detailed Budget'!I${detailedRow}` } : 0,
+      { v: '↗ open', l: { Target: `#'${sheetName}'!A1`, Tooltip: 'Open deep-dive sheet' } },
+    ]);
   });
+  T.push([]);
+  T.push(['', `GRAND TOTAL (${sym} ${cod})`, '', '', { f: everySectionAmtRef ? `(${everySectionAmtRef})*1.18` : '0' }, '']);
+  T.push([]);
+  T.push(['', `AI Draft generated: ${new Date().toLocaleDateString('en-GB')} · See Detailed Budget for full line items.`]);
+
+  const ws1 = XLSX.utils.aoa_to_sheet(T);
+  ws1['!cols'] = [{wch:8},{wch:38},{wch:18},{wch:16},{wch:18},{wch:10}];
+
+  // Top Sheet is sheet 1; Detailed Budget is sheet 2; deep-dives follow.
+  // Workbook tab colors were registered as the deep-dives were appended;
+  // prepend the top + detailed sheets at the beginning of the tab list.
+  const ws1Name = 'Top Sheet';
+  const ws2Name = 'Detailed Budget';
+  // Insert into wb.SheetNames / wb.Sheets first so they appear before the
+  // deep-dive tabs. SheetJS append always pushes to the end; we instead
+  // swap them in at indices 0 and 1.
+  wb.SheetNames.unshift(ws2Name);
+  wb.Sheets[ws2Name] = ws2;
+  wb.SheetNames.unshift(ws1Name);
+  wb.Sheets[ws1Name] = ws1;
+  // Mirror the order in workbook properties (tab colours array). Top + Detailed
+  // get no tab colour (default white) so they stand out.
+  if (wb.Workbook && wb.Workbook.Sheets) {
+    wb.Workbook.Sheets.unshift({ name: ws2Name });
+    wb.Workbook.Sheets.unshift({ name: ws1Name });
+  }
 
   XLSX.writeFile(wb, title.replace(/[^a-zA-Z0-9_\-\s]/g,'_') + '_AskMark_Budget.xlsx');
 }
@@ -2577,6 +3164,34 @@ function showError(msg) {
 function hideError() {
   document.getElementById('error-display').style.display = 'none';
 }
+
+// ── ON LOAD ───────────────────────────────────────────────────────────────────
+// Pre-select India + enable the Continue button so producers don't have to
+// click the only available card before continuing. Other markets show a
+// Coming soon toast. We also kick off a backend warm-up ping so the first
+// real call doesn't pay the Railway cold-start tax.
+(function autoSelectIndia(){
+  selectRegion('india','₹','INR','Indian Rupee');
+})();
+warmBackend();
+
+// Pressing Enter / Cmd+Enter / Ctrl+Enter on the brief textarea advances to
+// the next step instead of inserting a newline. Producers in the video
+// shouldn't have to mouse over to the Continue button after typing.
+document.addEventListener('keydown', (e) => {
+  const ta = document.getElementById('script-text');
+  const active = document.querySelector('.step.active');
+  if (!ta || !active) return;
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && document.activeElement === ta && active.id === 'step1') {
+    e.preventDefault();
+    if (ta.value.trim().length >= 30) startFlow();
+  }
+  // Step 0 — Enter moves on if India is selected (the default)
+  if (e.key === 'Enter' && active.id === 'step0' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    proceedFromMarket();
+  }
+});
 </script>
 </body>
 </html>

@@ -647,6 +647,131 @@ async def parse_script(file: UploadFile = File(...), _=Depends(require_api_key))
 
 _FLUE_BASE_URL = os.getenv("FLUE_BASE_URL", "http://localhost:3583")
 
+# ── UNIPILE INTEGRATION ───────────────────────────────────────────────────────
+# Unipile is a unified messaging API — it proxies Gmail, Outlook, WhatsApp,
+# LinkedIn, Instagram and Telegram behind one HTTP interface. We use it to
+# actually send call sheets to crew, replacing the v1 mocked send.
+#
+# Required env vars (configure on Railway):
+#   UNIPILE_DSN      — full base URL incl. port, e.g. https://api35.unipile.com:16583
+#   UNIPILE_API_KEY  — the X-API-KEY value from the Unipile dashboard
+#
+# Behaviour: if either env var is missing we keep the legacy mocked behaviour
+# so local dev still works without credentials. Production must set both.
+_UNIPILE_DSN = (os.getenv("UNIPILE_DSN") or "").rstrip("/")
+_UNIPILE_API_KEY = os.getenv("UNIPILE_API_KEY") or ""
+
+def _unipile_configured() -> bool:
+    return bool(_UNIPILE_DSN and _UNIPILE_API_KEY)
+
+async def _unipile_request(method: str, path: str, *, json_body=None, data=None, files=None, timeout=30):
+    """Thin httpx wrapper for Unipile. Raises HTTPException on transport failure;
+    returns the raw response so callers can inspect status codes individually."""
+    if not _unipile_configured():
+        raise HTTPException(503, "Unipile integration is not configured on the server (set UNIPILE_DSN and UNIPILE_API_KEY)")
+    url = f"{_UNIPILE_DSN}{path}"
+    headers = {"X-API-KEY": _UNIPILE_API_KEY, "accept": "application/json"}
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            return await client.request(method, url, headers=headers, json=json_body, data=data, files=files)
+    except httpx.TimeoutException:
+        raise HTTPException(504, f"Unipile timed out on {method} {path}")
+    except httpx.RequestError as e:
+        raise HTTPException(502, f"Unipile request failed: {type(e).__name__}")
+
+@app.get("/integrations/unipile/accounts")
+async def unipile_accounts(_=Depends(require_api_key)):
+    """List the messaging accounts the producer has connected on Unipile.
+    The frontend calls this on the call-sheet Send step so the producer can
+    see which Gmail / WhatsApp / LinkedIn accounts will actually send."""
+    if not _unipile_configured():
+        return {"success": True, "configured": False, "accounts": []}
+    resp = await _unipile_request("GET", "/api/v1/accounts")
+    if not resp.is_success:
+        raise HTTPException(resp.status_code, f"Unipile accounts fetch failed: {resp.text[:200]}")
+    payload = resp.json() if resp.content else {}
+    items = payload.get("items") or payload.get("accounts") or payload.get("data") or []
+    return {"success": True, "configured": True, "accounts": items}
+
+# Provider buckets — Unipile labels these on the account record so we can
+# pick the right one per channel.
+_UNIPILE_EMAIL_PROVIDERS = {"GOOGLE", "GOOGLE_OAUTH", "OUTLOOK", "OUTLOOK_OAUTH", "MAIL", "ICLOUD", "GMX"}
+_UNIPILE_WHATSAPP_PROVIDERS = {"WHATSAPP"}
+_UNIPILE_LINKEDIN_PROVIDERS = {"LINKEDIN"}
+_UNIPILE_INSTAGRAM_PROVIDERS = {"INSTAGRAM"}
+_UNIPILE_TELEGRAM_PROVIDERS = {"TELEGRAM"}
+
+def _pick_account(accounts: list, providers: set) -> Optional[dict]:
+    """Return the first connected, OK-status account whose provider matches."""
+    for a in accounts or []:
+        prov = (a.get("type") or a.get("provider") or "").upper()
+        status = (a.get("status") or a.get("sync_status") or "OK").upper()
+        if prov in providers and status in {"OK", "CONNECTED", "ACTIVE"}:
+            return a
+    return None
+
+def _render_callsheet_text(cs: dict, recipient: dict) -> str:
+    """Plain-text call sheet body for WhatsApp / LinkedIn / Telegram. Kept
+    short — these channels render best with a compact summary plus a few
+    must-have details rather than a wall of formatting."""
+    shoot = cs.get("shoot") or {}
+    title = cs.get("project_title") or "Call Sheet"
+    name = (recipient.get("name") or "team").split(" ")[0]
+    lines = [
+        f"Hi {name},",
+        "",
+        f"Call sheet — {title}",
+        f"Day {shoot.get('day_number') or '—'} · {shoot.get('date') or 'TBD'}",
+        f"Unit call: {shoot.get('unit_call') or '—'}    Wrap: {shoot.get('wrap_time') or '—'}",
+    ]
+    if shoot.get("locations"):
+        lines.append(f"Location: {shoot.get('locations')}")
+    if shoot.get("scenes"):
+        lines.append(f"Scenes: {shoot.get('scenes')}")
+    if recipient.get("role"):
+        lines.append(f"Your role: {recipient.get('role')}")
+    if shoot.get("hospital"):
+        lines.append(f"Nearest A&E: {shoot.get('hospital')}")
+    if shoot.get("production_notes"):
+        lines.append("")
+        lines.append(f"Notes: {shoot.get('production_notes')}")
+    lines.append("")
+    lines.append("— Sent via Mark (askmark.co)")
+    return "\n".join(lines)
+
+def _render_callsheet_html(cs: dict, recipient: dict) -> str:
+    """Lightweight HTML body for email — paper-cream styling that survives
+    Gmail / Outlook stripping. No external assets."""
+    shoot = cs.get("shoot") or {}
+    title = cs.get("project_title") or "Call Sheet"
+    name = (recipient.get("name") or "team").split(" ")[0]
+    def row(label, value):
+        if not value: return ""
+        return f"<tr><td style='padding:6px 12px;background:#EBE5D2;font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#3A352D;'>{label}</td><td style='padding:6px 12px;font-family:Inter,Arial,sans-serif;font-size:14px;color:#14110D;'>{value}</td></tr>"
+    notes_block = ""
+    if shoot.get("production_notes"):
+        notes_block = f"<div style='margin-top:16px;padding:12px 14px;background:#EBE5D2;border-left:3px solid #C8330A;font-family:Inter,Arial,sans-serif;font-size:13px;color:#3A352D;line-height:1.6;'>{shoot.get('production_notes')}</div>"
+    return f"""
+    <div style='background:#F5F1E8;padding:24px;font-family:Inter,Arial,sans-serif;color:#14110D;'>
+      <div style='max-width:560px;margin:0 auto;background:#fff;border:1px solid rgba(20,17,13,0.16);padding:28px 32px;'>
+        <div style='font-family:Georgia,serif;font-size:22px;color:#14110D;margin-bottom:4px;'>{title}</div>
+        <div style='font-family:monospace;font-size:11px;color:#8A8275;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:18px;'>Hi {name}, here's your call sheet.</div>
+        <table style='width:100%;border-collapse:collapse;'>
+          {row('Day', shoot.get('day_number'))}
+          {row('Date', shoot.get('date'))}
+          {row('Unit Call', shoot.get('unit_call'))}
+          {row('Wrap', shoot.get('wrap_time'))}
+          {row('Scenes', shoot.get('scenes'))}
+          {row('Location', shoot.get('locations'))}
+          {row('Your Role', recipient.get('role'))}
+          {row('Nearest A&E', shoot.get('hospital'))}
+        </table>
+        {notes_block}
+        <div style='margin-top:24px;font-family:monospace;font-size:10px;letter-spacing:0.08em;color:#8A8275;'>Sent via Mark · askmark.co</div>
+      </div>
+    </div>
+    """
+
 # ── BUDGET ENGINE GUARDRAILS ──────────────────────────────────────────────────
 # Same input → same output. Krish's biggest complaint from the test runs was
 # that running NIKE TVC twice with identical answers produced ₹1.95Cr vs
@@ -965,9 +1090,13 @@ async def get_callsheet(data: dict = None, _=Depends(require_api_key)):
 
 @app.post("/callsheet/send")
 async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
-    """V1 mocked send. Logs intent + recipients to Redis so we can audit who
-    *would* have received what. Real Gmail OAuth + WhatsApp Business API
-    wiring is a Phase-2 lift; the UI surfaces the mocked status."""
+    """Send the call sheet via Unipile (real Gmail / WhatsApp / LinkedIn /
+    Instagram / Telegram dispatch). Falls back to the legacy mock when the
+    Unipile env vars are unset, so local dev keeps working.
+
+    Per-recipient errors do not fail the whole request — we collect them and
+    return a `results` array so the producer can see which sends landed and
+    which need retry."""
     cs = data.callsheet or {}
     crew = cs.get("crew") or []
     channels = data.channels or []
@@ -976,12 +1105,8 @@ async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
     if not channels:
         raise HTTPException(400, "at least one send channel is required")
 
-    # Filter recipients by channel — email needs an email; WhatsApp needs a phone.
-    email_recipients = [c for c in crew if (c.get("email") or "").strip()] if "email" in channels else []
-    whatsapp_recipients = [c for c in crew if (c.get("phone") or "").strip()] if "whatsapp" in channels else []
-
     sid = str(uuid.uuid4())
-    record = {
+    base_record = {
         "id": sid,
         "project_id": data.project_id,
         "channels": channels,
@@ -989,31 +1114,153 @@ async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
         "shoot_day": (cs.get("shoot") or {}).get("day_number"),
         "unit_call": (cs.get("shoot") or {}).get("unit_call"),
         "wrap_time": (cs.get("shoot") or {}).get("wrap_time"),
-        "email_count": len(email_recipients),
-        "whatsapp_count": len(whatsapp_recipients),
         "crew_total": len(crew),
-        "status": "mocked",   # flips to "sent" once real integrations land
         "created_at": now(),
+    }
+
+    # ── MOCK FALLBACK ──────────────────────────────────────────────────────────
+    # Local dev path. Mirrors the v1 mocked behaviour so the UI flow still
+    # works without Unipile credentials.
+    if not _unipile_configured():
+        email_recipients = [c for c in crew if (c.get("email") or "").strip()] if "email" in channels else []
+        whatsapp_recipients = [c for c in crew if (c.get("phone") or "").strip()] if "whatsapp" in channels else []
+        record = {
+            **base_record,
+            "email_count": len(email_recipients),
+            "whatsapp_count": len(whatsapp_recipients),
+            "status": "mocked",
+        }
+        db_set(f"callsheet-send:{sid}", record)
+        db_sadd("callsheet-sends:all", sid)
+        return {
+            "success": True,
+            "send_id": sid,
+            "status": "mocked",
+            "message": f"Unipile not configured — would send to {len(email_recipients)} via email and {len(whatsapp_recipients)} via WhatsApp.",
+            "recipients": {
+                "email": [r.get("email") for r in email_recipients],
+                "whatsapp": [r.get("phone") for r in whatsapp_recipients],
+            },
+            "results": [],
+        }
+
+    # ── REAL SEND VIA UNIPILE ──────────────────────────────────────────────────
+    # Fetch the producer's connected accounts so we can choose the right
+    # account_id per channel. One Unipile workspace can hold many accounts;
+    # we pick the first OK one per provider type. If a producer needs to
+    # pick a specific account in future we'll add an account_id param here.
+    accounts_resp = await _unipile_request("GET", "/api/v1/accounts")
+    if not accounts_resp.is_success:
+        raise HTTPException(accounts_resp.status_code, f"Unipile accounts fetch failed: {accounts_resp.text[:200]}")
+    accounts_payload = accounts_resp.json() if accounts_resp.content else {}
+    accounts = accounts_payload.get("items") or accounts_payload.get("accounts") or accounts_payload.get("data") or []
+
+    email_account = _pick_account(accounts, _UNIPILE_EMAIL_PROVIDERS) if "email" in channels else None
+    whatsapp_account = _pick_account(accounts, _UNIPILE_WHATSAPP_PROVIDERS) if "whatsapp" in channels else None
+    linkedin_account = _pick_account(accounts, _UNIPILE_LINKEDIN_PROVIDERS) if "linkedin" in channels else None
+    instagram_account = _pick_account(accounts, _UNIPILE_INSTAGRAM_PROVIDERS) if "instagram" in channels else None
+    telegram_account = _pick_account(accounts, _UNIPILE_TELEGRAM_PROVIDERS) if "telegram" in channels else None
+
+    results = []  # per-recipient log
+
+    async def _send_email(recipient: dict, account_id: str):
+        addr = (recipient.get("email") or "").strip()
+        if not addr:
+            return {"channel": "email", "name": recipient.get("name"), "ok": False, "error": "no email on record"}
+        payload = {
+            "account_id": account_id,
+            "to": [{"display_name": recipient.get("name") or addr, "identifier": addr}],
+            "subject": f"Call Sheet — Day {(cs.get('shoot') or {}).get('day_number') or '—'} · {(cs.get('shoot') or {}).get('date') or ''}".strip(),
+            "body": _render_callsheet_html(cs, recipient),
+            "is_html": True,
+        }
+        r = await _unipile_request("POST", "/api/v1/emails", json_body=payload, timeout=45)
+        if r.is_success:
+            return {"channel": "email", "name": recipient.get("name"), "ok": True, "to": addr}
+        return {"channel": "email", "name": recipient.get("name"), "ok": False, "to": addr, "error": (r.text or '')[:300], "status": r.status_code}
+
+    async def _send_chat(recipient: dict, account_id: str, channel: str, identifier_field: str):
+        ident = (recipient.get(identifier_field) or "").strip()
+        if not ident:
+            return {"channel": channel, "name": recipient.get("name"), "ok": False, "error": f"no {identifier_field} on record"}
+        text = _render_callsheet_text(cs, recipient)
+        # Unipile chat creation accepts multipart form data; this is the
+        # documented shape for /api/v1/chats. attendees_ids is repeated for
+        # multi-recipient chats; we send 1-1 here.
+        form = {
+            "account_id": account_id,
+            "attendees_ids": ident,
+            "text": text,
+        }
+        r = await _unipile_request("POST", "/api/v1/chats", data=form, timeout=45)
+        if r.is_success:
+            return {"channel": channel, "name": recipient.get("name"), "ok": True, "to": ident}
+        return {"channel": channel, "name": recipient.get("name"), "ok": False, "to": ident, "error": (r.text or '')[:300], "status": r.status_code}
+
+    # EMAIL
+    if email_account:
+        acct_id = email_account.get("id") or email_account.get("account_id")
+        for c in crew:
+            if not (c.get("email") or "").strip():
+                continue
+            results.append(await _send_email(c, acct_id))
+    elif "email" in channels:
+        results.append({"channel": "email", "ok": False, "error": "no Gmail / Outlook account connected on Unipile"})
+
+    # WHATSAPP
+    if whatsapp_account:
+        acct_id = whatsapp_account.get("id") or whatsapp_account.get("account_id")
+        for c in crew:
+            if not (c.get("phone") or "").strip():
+                continue
+            results.append(await _send_chat(c, acct_id, "whatsapp", "phone"))
+    elif "whatsapp" in channels:
+        results.append({"channel": "whatsapp", "ok": False, "error": "no WhatsApp account connected on Unipile"})
+
+    # LINKEDIN / INSTAGRAM / TELEGRAM — best-effort, requires a provider_id
+    # on the crew record (we don't yet collect this in the UI; treat absence
+    # as a "skipped — no handle" rather than an error).
+    for channel_name, account, field in [
+        ("linkedin", linkedin_account, "linkedin"),
+        ("instagram", instagram_account, "instagram"),
+        ("telegram", telegram_account, "telegram"),
+    ]:
+        if not account:
+            if channel_name in channels:
+                results.append({"channel": channel_name, "ok": False, "error": f"no {channel_name.title()} account connected on Unipile"})
+            continue
+        acct_id = account.get("id") or account.get("account_id")
+        for c in crew:
+            if (c.get(field) or "").strip():
+                results.append(await _send_chat(c, acct_id, channel_name, field))
+
+    ok_count = sum(1 for r in results if r.get("ok"))
+    fail_count = len(results) - ok_count
+    record = {
+        **base_record,
+        "results": results,
+        "ok_count": ok_count,
+        "fail_count": fail_count,
+        "status": "sent" if fail_count == 0 and ok_count > 0 else ("partial" if ok_count else "failed"),
     }
     db_set(f"callsheet-send:{sid}", record)
     db_sadd("callsheet-sends:all", sid)
 
-    parts = []
-    if email_recipients:
-        parts.append(f"{len(email_recipients)} via email")
-    if whatsapp_recipients:
-        parts.append(f"{len(whatsapp_recipients)} via WhatsApp")
-    msg = "Mocked send logged: " + ", ".join(parts) + ". Gmail / WhatsApp integration is the next deploy."
+    if ok_count and not fail_count:
+        msg = f"Sent to {ok_count} recipient(s) via Unipile."
+    elif ok_count:
+        msg = f"Partial send — {ok_count} delivered, {fail_count} failed. See results for detail."
+    else:
+        msg = f"All sends failed. See results for detail."
 
     return {
         "success": True,
         "send_id": sid,
-        "status": "mocked",
+        "status": record["status"],
         "message": msg,
-        "recipients": {
-            "email": [r.get("email") for r in email_recipients],
-            "whatsapp": [r.get("phone") for r in whatsapp_recipients],
-        },
+        "ok_count": ok_count,
+        "fail_count": fail_count,
+        "results": results,
     }
 
 @app.post("/crew/enrich")

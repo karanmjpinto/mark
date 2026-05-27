@@ -345,6 +345,11 @@ input[type=file]{display:none;}
   font-size:9px;font-family:'DM Mono',monospace;padding:3px 8px;
   border:1px solid var(--gold);color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;
 }
+.channel-tag.ready{border-color:var(--green);color:var(--green);}
+.channel-tag.not-connected{border-color:var(--rule-strong);color:var(--muted);}
+.channel-toggle.disabled{opacity:0.5;cursor:not-allowed;}
+.channel-toggle.disabled:hover{transform:none;border-color:var(--rule);}
+.channel-acct{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0.04em;margin-left:6px;}
 .channel-toggle .channel-check{
   width:22px;height:22px;border:2px solid var(--rule-strong);border-radius:4px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -696,20 +701,37 @@ input[type=file]{display:none;}
 
     <div class="panel">
       <div class="panel-title">Send <em>channels</em></div>
+      <div id="unipile-status" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-bottom:14px;">Checking Unipile accounts…</div>
       <div class="channel-toggle" id="ch-email" onclick="toggleChannel('email')">
         <div class="channel-info">
-          <div class="channel-name">Gmail</div>
-          <div class="channel-desc">Personalised email per crew, PDF attached. Sends from your Gmail (one-time OAuth in full build).</div>
+          <div class="channel-name">Email <span class="channel-acct" id="acct-email"></span></div>
+          <div class="channel-desc">Personalised HTML email per crew. Sent via your connected Gmail / Outlook account on Unipile.</div>
         </div>
-        <span class="channel-tag">Mocked in V1</span>
+        <span class="channel-tag" id="tag-email">Checking…</span>
         <div class="channel-check">✓</div>
       </div>
       <div class="channel-toggle" id="ch-whatsapp" onclick="toggleChannel('whatsapp')">
         <div class="channel-info">
-          <div class="channel-name">WhatsApp Broadcast</div>
-          <div class="channel-desc">Direct WhatsApp message to every crew member's number with call summary + link.</div>
+          <div class="channel-name">WhatsApp <span class="channel-acct" id="acct-whatsapp"></span></div>
+          <div class="channel-desc">Direct WhatsApp message to every crew member's number with call summary.</div>
         </div>
-        <span class="channel-tag">Mocked in V1</span>
+        <span class="channel-tag" id="tag-whatsapp">Checking…</span>
+        <div class="channel-check">✓</div>
+      </div>
+      <div class="channel-toggle" id="ch-linkedin" onclick="toggleChannel('linkedin')">
+        <div class="channel-info">
+          <div class="channel-name">LinkedIn <span class="channel-acct" id="acct-linkedin"></span></div>
+          <div class="channel-desc">DM via LinkedIn. Requires a LinkedIn provider id on each crew record.</div>
+        </div>
+        <span class="channel-tag" id="tag-linkedin">Checking…</span>
+        <div class="channel-check">✓</div>
+      </div>
+      <div class="channel-toggle" id="ch-instagram" onclick="toggleChannel('instagram')">
+        <div class="channel-info">
+          <div class="channel-name">Instagram <span class="channel-acct" id="acct-instagram"></span></div>
+          <div class="channel-desc">DM via Instagram. Requires an Instagram handle on each crew record.</div>
+        </div>
+        <span class="channel-tag" id="tag-instagram">Checking…</span>
         <div class="channel-check">✓</div>
       </div>
     </div>
@@ -772,7 +794,34 @@ const MARK_API = (() => {
 })();
 const MARK_API_KEY = localStorage.getItem('mark_api_key_header') || '';
 
-async function markFetch(path, { json, form, timeoutMs = 60000 } = {}) {
+// Pings /health on first call so Railway's free-tier sleeping container has
+// a chance to wake before the first real POST. Auto-retries once on transient
+// network errors (cold-start 502/504/connection-reset).
+let _backendWarmed = false;
+let _warmingPromise = null;
+async function warmBackend() {
+  if (_backendWarmed) return;
+  if (_warmingPromise) return _warmingPromise;
+  _warmingPromise = (async () => {
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 30000);
+      const r = await fetch(`${MARK_API}/health`, { method: 'GET', signal: ctl.signal });
+      clearTimeout(t);
+      if (r.ok) _backendWarmed = true;
+    } catch (e) { /* swallow — the real call retries */ }
+    finally { _warmingPromise = null; }
+  })();
+  return _warmingPromise;
+}
+function _isTransientError(e, status) {
+  if (e && e.name === 'TypeError') return true;
+  if (e && e.name === 'AbortError') return true;
+  if (typeof status === 'number' && [502, 503, 504, 408].includes(status)) return true;
+  return false;
+}
+async function _doFetch(path, opts) {
+  const { json, form, timeoutMs = 60000 } = opts;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   const headers = {};
@@ -783,14 +832,32 @@ async function markFetch(path, { json, form, timeoutMs = 60000 } = {}) {
   try {
     const resp = await fetch(`${MARK_API}${path}`, { method: 'POST', headers, body, signal: ctrl.signal });
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.detail || err.error?.message || `Server error ${resp.status}`);
+      let detail = null;
+      try { const err = await resp.json(); detail = err.detail || err.error?.message; } catch {}
+      const error = new Error(detail || `Server error ${resp.status}`);
+      error._status = resp.status;
+      throw error;
     }
     return await resp.json();
+  } finally { clearTimeout(timer); }
+}
+async function markFetch(path, opts = {}) {
+  await warmBackend();
+  try {
+    return await _doFetch(path, opts);
   } catch (e) {
+    if (_isTransientError(e, e._status)) {
+      await new Promise(r => setTimeout(r, 3500));
+      try { return await _doFetch(path, opts); }
+      catch (e2) {
+        if (e2.name === 'AbortError') throw new Error('Mark’s backend timed out after two attempts. Check connection and try again.');
+        if (e2.name === 'TypeError') throw new Error('Cannot reach Mark’s backend. It may be cold-starting — please retry in a few seconds.');
+        throw e2;
+      }
+    }
     if (e.name === 'AbortError') throw new Error('Request timed out — please try again.');
     throw e;
-  } finally { clearTimeout(timer); }
+  }
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
@@ -886,6 +953,10 @@ function addCrewRow(prefill = {}) {
     department: prefill.department || '',
     email: prefill.email || '',
     phone: prefill.phone || '',
+    // Optional handles for Unipile send via LinkedIn / Instagram. Empty
+    // unless the producer adds them — used by the Send step only.
+    linkedin: prefill.linkedin || '',
+    instagram: prefill.instagram || '',
   };
   callsheet.crew.push(row);
   renderCrewTable();
@@ -969,6 +1040,8 @@ function showStep1Toast(msg, isErr=false){
 
 // Sync brief textarea changes into state.
 document.addEventListener('DOMContentLoaded', () => {
+  // Kick the backend awake so the first /callsheet/refine call doesn't fail.
+  warmBackend();
   // Pre-populate 4 blank crew rows (per spec).
   for (let i = 0; i < 4; i++) addCrewRow();
   // Wire the brief textarea.
@@ -1053,7 +1126,7 @@ function goTo(id){
   const lab = document.getElementById('back-btn-label');
   lab.textContent = _backMap[id] ? 'Back' : 'Back to home';
   if (id === 'step3' || id === 'step4') renderCallSheet();
-  if (id === 'step5') renderSendSummary();
+  if (id === 'step5') { renderSendSummary(); loadUnipileAccounts(); }
 }
 function goBack(){
   const cur = document.querySelector('.step.active');
@@ -1218,6 +1291,76 @@ function useChatSuggestion(text){
   inp.value = text; refreshChatGate(); inp.focus();
 }
 
+// Local fast-path patterns for the simple call-sheet edits that came up in
+// the user video — unit call time, wrap time, date, scenes, locations,
+// production notes. These run synchronously (no backend) so the producer
+// gets immediate visual feedback. If a phrase doesn't match any pattern we
+// fall through to the LLM refine endpoint.
+function tryLocalCallsheetEdit(instruction) {
+  const s = instruction.toLowerCase();
+  const notes = [];
+  let applied = false;
+
+  function normalizeTime(t) {
+    if (!t) return null;
+    t = t.replace(/\./g, ':').replace(/\s+/g, '');
+    const ampm = /(am|pm)$/i.exec(t);
+    let core = ampm ? t.slice(0, -2) : t;
+    if (!core.includes(':')) core = core + ':00';
+    const [hStr, mStr = '00'] = core.split(':');
+    let h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    if (ampm) {
+      const isPM = ampm[1].toLowerCase() === 'pm';
+      if (isPM && h < 12) h += 12;
+      if (!isPM && h === 12) h = 0;
+    }
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  // "unit call 7am" / "change unit call to 7am" / "call time 06:30"
+  const callMatch = s.match(/(?:unit\s*call|call\s*time|call)[^\d]*([\d:.]+\s*(?:am|pm)?)/);
+  if (callMatch) {
+    const t = normalizeTime(callMatch[1]);
+    if (t) { callsheet.shoot.unit_call = t; notes.push('Unit call → ' + t); applied = true; }
+  }
+
+  // "wrap 9pm" / "change wrap to 21:00"
+  const wrapMatch = s.match(/wrap[^\d]*([\d:.]+\s*(?:am|pm)?)/);
+  if (wrapMatch) {
+    const t = normalizeTime(wrapMatch[1]);
+    if (t) { callsheet.shoot.wrap_time = t; notes.push('Wrap → ' + t); applied = true; }
+  }
+
+  // "day 7 of 28" / "day number 4"
+  const dayMatch = instruction.match(/day\s*(?:number)?\s*(\d+)(?:\s*of\s*(\d+))?/i);
+  if (dayMatch) {
+    callsheet.shoot.day_number = dayMatch[2] ? `${dayMatch[1]} of ${dayMatch[2]}` : dayMatch[1];
+    notes.push('Day → ' + callsheet.shoot.day_number);
+    applied = true;
+  }
+
+  // "scenes 7, 11, 14" / "scene 11"
+  const sceneMatch = instruction.match(/scenes?\s+([0-9,\s\-]+)/i);
+  if (sceneMatch && !callMatch) {
+    callsheet.shoot.scenes = sceneMatch[1].trim();
+    notes.push('Scenes → ' + sceneMatch[1].trim());
+    applied = true;
+  }
+
+  // "add note: …" or "production note: …"
+  const noteMatch = instruction.match(/(?:add\s+(?:a\s+)?note|note|production\s*note)s?\s*[:\-—]\s*(.+)/i);
+  if (noteMatch) {
+    const existing = (callsheet.shoot.production_notes || '').trim();
+    callsheet.shoot.production_notes = existing ? existing + '\n• ' + noteMatch[1].trim() : '• ' + noteMatch[1].trim();
+    notes.push('Note appended');
+    applied = true;
+  }
+
+  return applied ? notes : null;
+}
+
 async function sendChat(){
   const inp = document.getElementById('chat-input');
   const text = inp.value.trim();
@@ -1225,6 +1368,17 @@ async function sendChat(){
   inp.value = '';
   refreshChatGate();
   appendChat('user', text);
+
+  // Local fast-path — apply instantly for simple field changes. Falls through
+  // to the AI refine if no pattern matched.
+  const localNotes = tryLocalCallsheetEdit(text);
+  if (localNotes) {
+    callsheet.revisions.unshift({ instruction: text, notes: localNotes, ts: new Date().toISOString() });
+    renderCallSheet();
+    appendChat('mark', '✓ ' + localNotes.join(' · '));
+    return;
+  }
+
   const thinking = appendChat('mark', '…');
   try {
     const data = await markFetch('/callsheet/refine', {
@@ -1261,11 +1415,81 @@ function appendChat(role, text){
 
 // ── SEND (Step 5) ─────────────────────────────────────────────────────────────
 function toggleChannel(name){
+  const tile = document.getElementById('ch-' + name);
+  if (tile && tile.classList.contains('disabled')) return;     // not connected on Unipile
   const idx = callsheet.send.channels.indexOf(name);
   if (idx >= 0) callsheet.send.channels.splice(idx, 1);
   else callsheet.send.channels.push(name);
-  document.getElementById('ch-' + name).classList.toggle('sel', callsheet.send.channels.includes(name));
+  if (tile) tile.classList.toggle('sel', callsheet.send.channels.includes(name));
   renderSendSummary();
+}
+
+const CHANNEL_LABEL = { email: 'Email', whatsapp: 'WhatsApp', linkedin: 'LinkedIn', instagram: 'Instagram', telegram: 'Telegram' };
+
+// Map a Unipile provider name → the channel id we use in the UI.
+function _unipileChannel(prov) {
+  prov = (prov || '').toUpperCase();
+  if (['GOOGLE','GOOGLE_OAUTH','OUTLOOK','OUTLOOK_OAUTH','MAIL','ICLOUD','GMX'].includes(prov)) return 'email';
+  if (prov === 'WHATSAPP') return 'whatsapp';
+  if (prov === 'LINKEDIN') return 'linkedin';
+  if (prov === 'INSTAGRAM') return 'instagram';
+  if (prov === 'TELEGRAM') return 'telegram';
+  return null;
+}
+
+// Hits the backend, which proxies to Unipile, and updates each channel tile.
+let _unipileLoaded = false;
+async function loadUnipileAccounts() {
+  if (_unipileLoaded) return;
+  const status = document.getElementById('unipile-status');
+  try {
+    const resp = await fetch(`${MARK_API}/integrations/unipile/accounts`, {
+      headers: MARK_API_KEY ? { 'X-API-Key': MARK_API_KEY } : {},
+    });
+    const data = await resp.json();
+    _unipileLoaded = true;
+    if (!data.configured) {
+      status.textContent = 'Unipile not configured on the server — sends will be mocked.';
+      ['email','whatsapp','linkedin','instagram'].forEach(c => _markChannelTile(c, null));
+      return;
+    }
+    const byChannel = {};
+    (data.accounts || []).forEach(a => {
+      const ch = _unipileChannel(a.type || a.provider);
+      if (!ch) return;
+      if (!byChannel[ch]) byChannel[ch] = [];
+      byChannel[ch].push(a);
+    });
+    ['email','whatsapp','linkedin','instagram'].forEach(c => _markChannelTile(c, byChannel[c] || null));
+    const connected = Object.keys(byChannel).map(c => `${CHANNEL_LABEL[c]} (${byChannel[c].length})`).join(' · ');
+    status.textContent = connected ? `Connected on Unipile: ${connected}` : 'No accounts connected on Unipile yet — connect one in your Unipile dashboard.';
+  } catch (e) {
+    _unipileLoaded = false;
+    status.textContent = 'Could not reach Unipile — sends will use the local fallback.';
+    ['email','whatsapp','linkedin','instagram'].forEach(c => _markChannelTile(c, null));
+  }
+}
+
+function _markChannelTile(channel, accounts) {
+  const tile = document.getElementById('ch-' + channel);
+  const tag = document.getElementById('tag-' + channel);
+  const acctEl = document.getElementById('acct-' + channel);
+  if (!tile) return;
+  if (accounts && accounts.length) {
+    tile.classList.remove('disabled');
+    const a = accounts[0];
+    const name = a.name || a.account_name || a.identifier || a.email || a.username || a.id || '';
+    if (acctEl) acctEl.textContent = name ? `· ${name}` : '';
+    if (tag) { tag.textContent = 'Ready'; tag.classList.add('ready'); tag.classList.remove('not-connected'); }
+  } else {
+    tile.classList.add('disabled');
+    if (acctEl) acctEl.textContent = '';
+    if (tag) { tag.textContent = 'Not connected'; tag.classList.remove('ready'); tag.classList.add('not-connected'); }
+    // De-select if it was selected before we learned it's unavailable.
+    const idx = callsheet.send.channels.indexOf(channel);
+    if (idx >= 0) callsheet.send.channels.splice(idx, 1);
+    tile.classList.remove('sel');
+  }
 }
 
 function renderSendSummary(){
@@ -1275,7 +1499,7 @@ function renderSendSummary(){
   document.getElementById('sum-wrap').textContent = callsheet.shoot.wrap_time || '—';
   document.getElementById('sum-crew').textContent = callsheet.crew.length;
   const ch = callsheet.send.channels;
-  document.getElementById('sum-channels').textContent = ch.length ? ch.map(c => c === 'email' ? 'Gmail' : 'WhatsApp').join(' · ') : '—';
+  document.getElementById('sum-channels').textContent = ch.length ? ch.map(c => CHANNEL_LABEL[c] || c).join(' · ') : '—';
   document.getElementById('send-btn').classList.toggle('disabled', ch.length === 0);
 }
 
@@ -1291,17 +1515,32 @@ async function sendCallSheet(){
         callsheet,
         channels: callsheet.send.channels,
       },
-      timeoutMs: 30000,
+      timeoutMs: 120000,
     });
-    okEl.textContent = data.message || `Logged: would send to ${callsheet.crew.length} crew via ${callsheet.send.channels.join(', ')}. (Real Gmail / WhatsApp wiring is next.)`;
-    okEl.style.display = 'block';
     callsheet.send.status = data.status || 'mocked';
-    showNextDayBanner();
+    okEl.innerHTML = _renderSendResults(data);
+    okEl.style.display = 'block';
+    if (data.status !== 'failed') showNextDayBanner();
+    if (data.fail_count) document.getElementById('send-btn').classList.remove('disabled');
   } catch (e) {
     errEl.textContent = 'Send failed: ' + e.message;
     errEl.style.display = 'block';
     document.getElementById('send-btn').classList.remove('disabled');
   }
+}
+
+function _renderSendResults(data){
+  const head = `<div style="font-weight:600;margin-bottom:8px;">${escHtml(data.message || 'Sent.')}</div>`;
+  const results = data.results || [];
+  if (!results.length) return head;
+  const rows = results.map(r => {
+    const label = `${CHANNEL_LABEL[r.channel] || r.channel}${r.name ? ' · ' + escHtml(r.name) : ''}${r.to ? ' · ' + escHtml(r.to) : ''}`;
+    const status = r.ok
+      ? '<span style="color:var(--green);font-family:DM Mono,monospace;font-size:11px;">✓ sent</span>'
+      : `<span style="color:var(--accent);font-family:DM Mono,monospace;font-size:11px;">✗ ${escHtml(r.error || 'failed')}</span>`;
+    return `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--rule);font-size:13px;">${label}<span>${status}</span></div>`;
+  }).join('');
+  return head + '<div style="margin-top:10px;max-height:240px;overflow:auto;">' + rows + '</div>';
 }
 
 function showNextDayBanner(){

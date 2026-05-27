@@ -297,6 +297,10 @@ section{padding:120px 60px;position:relative;}
   padding:3px 8px;font-family:'DM Mono',monospace;letter-spacing:0.1em;
   position:absolute;top:14px;right:14px;
 }
+.feature-card.coming{opacity:0.78;}
+.feature-card.coming .feature-badge{color:var(--muted);border-color:var(--rule-strong);}
+.feature-card.coming:hover{opacity:1;}
+.feature-card.coming:hover .feature-badge{color:var(--accent);border-color:var(--accent);}
 
 /* CTA */
 .final-cta{text-align:center;background:var(--paper-deep);border-top:1px solid var(--rule);position:relative;overflow:hidden;}
@@ -642,7 +646,18 @@ footer{
       <div class="feature-title">Call sheet builder</div>
       <div class="feature-desc">Build, approve and send branded call sheets to your entire crew via email and WhatsApp.</div>
     </a>
-    <div class="feature-card reveal">
+    <a href="budget.html" class="feature-card reveal" title="Open the budget tool">
+      <span class="feature-badge">● Live</span>
+      <svg class="feature-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 26 L8 26 L12 14 L18 26 L24 8 L29 8"/>
+        <line x1="3" y1="3" x2="29" y2="3"/>
+        <line x1="3" y1="29" x2="29" y2="29"/>
+      </svg>
+      <div class="feature-title">Budget tracker</div>
+      <div class="feature-desc">Estimated vs actual. Department breakdowns. Colour-coded alerts when you're running over.</div>
+    </a>
+    <a href="mailto:hello@askmark.co?subject=Crew%20Directory%20wait%20list" class="feature-card reveal coming">
+      <span class="feature-badge">Coming soon</span>
       <svg class="feature-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="4"/>
         <path d="M3 26 Q3 18 11 18 Q19 18 19 26"/>
@@ -651,25 +666,18 @@ footer{
       </svg>
       <div class="feature-title">Crew directory</div>
       <div class="feature-desc">Every crew member, role, rate, contact and contract — searchable, filterable, always up to date.</div>
-    </div>
-    <div class="feature-card reveal">
-      <svg class="feature-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 26 L8 26 L12 14 L18 26 L24 8 L29 8"/>
-        <line x1="3" y1="3" x2="29" y2="3"/>
-        <line x1="3" y1="29" x2="29" y2="29"/>
-      </svg>
-      <div class="feature-title">Budget tracker</div>
-      <div class="feature-desc">Estimated vs actual. Department breakdowns. Colour-coded alerts when you're running over.</div>
-    </div>
-    <div class="feature-card reveal">
+    </a>
+    <a href="mailto:hello@askmark.co?subject=Locations%20wait%20list" class="feature-card reveal coming">
+      <span class="feature-badge">Coming soon</span>
       <svg class="feature-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
         <path d="M16 2 Q24 2 24 12 Q24 20 16 30 Q8 20 8 12 Q8 2 16 2 Z"/>
         <circle cx="16" cy="12" r="4"/>
       </svg>
       <div class="feature-title">Locations</div>
       <div class="feature-desc">Location details, permits, recce photos, maps and cut-off times — all in one place.</div>
-    </div>
-    <div class="feature-card reveal">
+    </a>
+    <a href="mailto:hello@askmark.co?subject=Contracts%20wait%20list" class="feature-card reveal coming">
+      <span class="feature-badge">Coming soon</span>
       <svg class="feature-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
         <path d="M5 4 L21 4 L27 10 L27 28 L5 28 Z"/>
         <path d="M21 4 L21 10 L27 10"/>
@@ -677,8 +685,9 @@ footer{
       </svg>
       <div class="feature-title">Contracts &amp; NDAs</div>
       <div class="feature-desc">Generate, send and track contracts. Mark knows who has signed and who hasn't.</div>
-    </div>
-    <div class="feature-card reveal">
+    </a>
+    <a href="mailto:hello@askmark.co?subject=Voice%20notes%20wait%20list" class="feature-card reveal coming">
+      <span class="feature-badge">Coming soon</span>
       <svg class="feature-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
         <rect x="13" y="3" width="6" height="16" rx="3"/>
         <path d="M7 14 Q7 22 16 22 Q25 22 25 14"/>
@@ -687,8 +696,9 @@ footer{
       </svg>
       <div class="feature-title">Voice notes</div>
       <div class="feature-desc">Record a voice note on set. Mark transcribes it and turns it into an action.</div>
-    </div>
-    <div class="feature-card reveal">
+    </a>
+    <a href="mailto:hello@askmark.co?subject=Ask%20Mark%20AI%20wait%20list" class="feature-card reveal coming">
+      <span class="feature-badge">Coming soon</span>
       <svg class="feature-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
         <rect x="6" y="10" width="20" height="16" rx="2"/>
         <circle cx="12" cy="18" r="1.4" fill="currentColor"/>
@@ -700,7 +710,7 @@ footer{
       </svg>
       <div class="feature-title">Ask Mark AI</div>
       <div class="feature-desc">Ask anything in plain English or Hindi. Mark knows your entire production inside out.</div>
-    </div>
+    </a>
   </div>
 </section>
 
