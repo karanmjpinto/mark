@@ -4,19 +4,19 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>M·ARK — Production OS for film. Script in. Budget out.</title>
-<meta name="description" content="An AI line producer for film. Reads scripts, builds budgets, drops call sheets on WhatsApp. Indian Cinema beta."/>
+<meta name="description" content="A new production house. Half emerging creatives with on-set credits at YSL × Dua Lipa, Dior, BBC, Royal Enfield. Half agentic AI trained on real production data. Embedded humans, multiplied by AI."/>
 <!-- M·ARK favicon — the brand mark inlined as an SVG data URL. Slate body,
      striped snap arm, italic Fraunces "M" in paper, brand-red tally dot.
      Renders crisp at every browser size (favicons up to 64px). -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%2314110D'/&gt;&lt;g transform='rotate(-52 40 11)'&gt;&lt;rect x='-30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='-10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='50' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;text x='40' y='66' fill='%23F5F1E8' font-family='Georgia,serif' font-style='italic' font-size='50' font-weight='600' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='68' cy='68' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
 <!-- Open Graph + Twitter share images use the same mark -->
-<meta property="og:title" content="M·ARK — Production OS for film"/>
-<meta property="og:description" content="An AI line producer. Reads scripts, builds budgets, drops call sheets on WhatsApp. Indian Cinema beta."/>
+<meta property="og:title" content="M·ARK — A new production house · Half humans, half agentic AI"/>
+<meta property="og:description" content="Production support made by the creatives who've been on the set of YSL × Dua Lipa, Dior, BBC, Royal Enfield. Multiplied by agentic AI trained on real production data."/>
 <meta property="og:image" content="https://karanmjpinto.github.io/mark/og.svg"/>
 <meta property="og:type" content="website"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="M·ARK — Production OS for film"/>
-<meta name="twitter:description" content="Script in. Budget out. Call sheet on WhatsApp."/>
+<meta name="twitter:title" content="M·ARK — A new production house · Half humans, half agentic AI"/>
+<meta name="twitter:description" content="Embedded creatives + agentic AI trained on real production data. The team has shipped work for YSL, Dior, BBC, Royal Enfield."/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -268,6 +268,150 @@ section{padding:120px 60px;position:relative;}
   letter-spacing:-0.01em;font-variation-settings:"opsz" 144;
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   THE HUMANS — proof-of-credibility section. Big editorial header,
+   one featured human card with real credits, two "open seat" cards
+   for incoming creatives, and a credit-roll of brands the team has
+   shipped work for. This is the positioning beat: M·ARK is humans
+   first, AI second.
+   ════════════════════════════════════════════════════════════════════ */
+.humans-section{background:var(--paper);border-bottom:1px solid var(--rule);}
+.humans-grid{
+  display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:14px;margin-top:48px;
+}
+.human-card{
+  background:var(--paper-deep);border:1px solid var(--rule);
+  padding:32px 28px;display:flex;flex-direction:column;gap:14px;
+  transition:transform 0.35s var(--ease-out),border-color 0.2s,box-shadow 0.3s;
+  position:relative;overflow:hidden;
+}
+.human-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent);
+  transform:scaleY(0);transform-origin:top;transition:transform 0.5s var(--ease-out);
+}
+.human-card:hover{border-color:var(--rule-strong);box-shadow:0 6px 28px var(--paper-shadow);transform:translateY(-2px);}
+.human-card:hover::before{transform:scaleY(1);}
+.human-card-eyebrow{
+  font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);
+  font-family:'DM Mono',monospace;font-weight:500;
+}
+.human-card-name{
+  font-family:'Fraunces',serif;font-weight:500;font-size:30px;color:var(--ink);
+  letter-spacing:-0.015em;line-height:1.05;font-variation-settings:"opsz" 144;
+}
+.human-card-meta{font-size:13px;color:var(--ink-soft);line-height:1.55;font-family:'Inter',sans-serif;}
+.human-card-link{
+  margin-top:auto;padding-top:14px;font-family:'DM Mono',monospace;font-size:11px;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--ink);text-decoration:none;
+  border-top:1px solid var(--rule);display:inline-block;
+  transition:color 0.2s,padding-left 0.25s var(--ease-out);
+}
+.human-card-link:hover{color:var(--accent);padding-left:4px;}
+
+.credit-list{
+  display:flex;flex-direction:column;gap:0;margin-top:6px;
+  border-top:1px solid var(--rule);
+}
+.credit-line{
+  display:grid;grid-template-columns:90px 1fr auto;gap:14px;align-items:baseline;
+  padding:10px 0;border-bottom:1px solid var(--rule);font-size:12.5px;
+}
+.credit-line:last-child{border-bottom:none;}
+.credit-role{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--muted);
+}
+.credit-name{
+  font-family:'Inter',sans-serif;font-weight:500;color:var(--ink);line-height:1.4;
+}
+.credit-client{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.06em;
+  text-transform:uppercase;color:var(--ink-soft);text-align:right;
+}
+.human-card-open{background:var(--paper);border-style:dashed;}
+.human-card-open .human-card-name{font-style:italic;color:var(--ink-soft);font-weight:400;}
+.human-card-open .human-card-eyebrow{color:var(--muted);}
+
+/* CREDIT ROLL — brands the team has shipped work for. A confident,
+   restrained marquee that doesn't oversell. */
+.credit-roll{
+  margin-top:48px;padding:28px 0;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+}
+.credit-roll-label{
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);
+  font-family:'DM Mono',monospace;text-align:center;margin-bottom:18px;font-weight:500;
+}
+.credit-roll-marks{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;align-items:center;
+}
+.cr-mark{
+  font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:var(--ink);
+  font-variation-settings:"opsz" 144;letter-spacing:-0.005em;line-height:1;
+  padding:8px 14px;border:1px solid var(--rule);background:var(--paper);
+  transition:border-color 0.2s,color 0.2s,transform 0.25s var(--ease-out);
+}
+.cr-mark:hover{border-color:var(--ink);transform:translateY(-1px);}
+
+/* ════════════════════════════════════════════════════════════════════
+   THE MODEL — four-pillar block explaining why M·ARK is not an AI tool.
+   Each pillar is numbered, has a typewriter-monospace title, and a
+   short body. The closer quote anchors the manifesto.
+   ════════════════════════════════════════════════════════════════════ */
+.model-section{background:var(--paper-deep);border-bottom:1px solid var(--rule);}
+.pillars{display:grid;grid-template-columns:repeat(4, 1fr);gap:14px;margin-top:48px;}
+.pillar{
+  background:var(--paper);border:1px solid var(--rule);
+  padding:28px 24px;display:flex;flex-direction:column;gap:12px;
+  position:relative;overflow:hidden;
+  transition:border-color 0.2s,box-shadow 0.3s,transform 0.35s var(--ease-out);
+}
+.pillar::before{
+  content:'';position:absolute;left:0;top:0;width:0;height:2px;background:var(--accent);
+  transition:width 0.5s var(--ease-out);
+}
+.pillar:hover{border-color:var(--rule-strong);box-shadow:0 4px 20px var(--paper-shadow);transform:translateY(-2px);}
+.pillar:hover::before{width:100%;}
+.pillar-num{
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.18em;
+  color:var(--accent);font-weight:600;
+}
+.pillar-title{
+  font-family:'Fraunces',serif;font-weight:500;font-size:22px;color:var(--ink);
+  letter-spacing:-0.01em;line-height:1.1;font-variation-settings:"opsz" 144;
+}
+.pillar-body{
+  font-size:13.5px;color:var(--ink-soft);line-height:1.6;font-family:'Inter',sans-serif;
+}
+.model-closer{
+  margin-top:56px;padding:36px 40px;background:var(--ink);color:var(--paper);
+  position:relative;overflow:hidden;
+}
+.model-closer::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent);
+}
+.model-closer-quote{
+  font-family:'Fraunces',serif;font-style:italic;font-weight:400;
+  font-size:clamp(20px,2.4vw,28px);line-height:1.35;letter-spacing:-0.01em;
+  font-variation-settings:"opsz" 144;color:var(--paper);
+}
+.model-closer-attr{
+  margin-top:14px;font-family:'DM Mono',monospace;font-size:11px;
+  letter-spacing:0.14em;text-transform:uppercase;color:var(--paper);opacity:0.6;
+}
+
+@media (max-width:900px){
+  .humans-grid{grid-template-columns:1fr;}
+  .pillars{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:680px){
+  .pillars{grid-template-columns:1fr;}
+  .credit-line{grid-template-columns:1fr;gap:4px;}
+  .credit-client{text-align:left;}
+  .cr-mark{font-size:14px;padding:6px 10px;}
+  .model-closer{padding:24px 22px;}
+}
+
 /* HOW IT WORKS */
 .how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:64px;}
 .how-step{
@@ -490,8 +634,9 @@ footer{
     <span class="wm-m">M</span><span class="wm-dot" aria-hidden="true"></span><span class="wm-ark">ARK</span>
   </a>
   <div class="nav-links">
+    <a href="#humans">The humans</a>
+    <a href="#model">The model</a>
     <a href="#how">How it works</a>
-    <a href="#features">Features</a>
     <a href="mailto:hello@askmark.co">Contact</a>
     <a href="budget.html" class="nav-cta">Try Budget Tool</a>
   </div>
@@ -500,9 +645,9 @@ footer{
 <!-- HERO -->
 <section class="hero">
   <div class="hero-content">
-    <div class="hero-eyebrow">M·ARK / Production OS / Indian Cinema · Beta</div>
+    <div class="hero-eyebrow">M·ARK / A new production house · Half humans, half agentic AI</div>
     <h1 class="hero-title">Ask <em>Mark.</em></h1>
-    <p class="hero-subtitle">Your 1st AD's 1st AD. Reads scripts, builds budgets, drops call sheets on WhatsApp before the kraft table opens. You shoot. Mark handles the paperwork.</p>
+    <p class="hero-subtitle">Production support made by the creatives who&rsquo;ve been on the set of YSL&thinsp;&times;&thinsp;Dua Lipa, Dior AW25, BBC, Royal Enfield. Multiplied by agentic AI trained on real production data. Not a SaaS &mdash; a new way to make ads, films, music videos. Tastefully. With humans in the room.</p>
     <div class="typewriter" id="typewriter">to <span id="tw-text"></span><span id="tw-cursor">|</span></div>
     <div class="hero-ctas">
       <a href="budget.html" class="btn-primary"><span>Build a budget free →</span></a>
@@ -615,7 +760,7 @@ footer{
 <!-- WISHES -->
 <section class="wishes">
   <div class="section-label">Sc. 02 / What you actually ask</div>
-  <div class="section-title">The stuff you'd<br/>shout at a 1st <em>AD.</em></div>
+  <div class="section-title">Three voice notes<br/>across a <em>shoot day.</em></div>
   <div class="wishes-grid">
     <div class="wish"><div class="wish-label">06:14 AM</div><div class="wish-text">"Sc. 41 moved indoors — push the genny call to 8 and tell catering."</div></div>
     <div class="wish"><div class="wish-label">12:50 PM</div><div class="wish-text">"What's left in 11300 camera? We've burned two days."</div></div>
@@ -626,32 +771,161 @@ footer{
   </div>
 </section>
 
+<!-- ════════════════════════════════════════════════════════════════════
+     SC. 03 · THE HUMANS — Who is actually behind M·ARK
+     Positioning beat #1: this is built by creatives with real on-set
+     credits. The proof is the credit roll. The AI is the multiplier.
+     ════════════════════════════════════════════════════════════════════ -->
+<section id="humans" class="humans-section">
+  <div class="section-label">Sc. 03 / The humans</div>
+  <div class="section-title">Built by the people who&rsquo;ve been<br/>the runner, the AC, the <em>1st AD.</em></div>
+  <p class="section-body" style="margin-top:18px;max-width:680px;">The team behind M·ARK has held the slate on YSL&thinsp;&times;&thinsp;Dua Lipa. Run the camera car on Christian Dior. Kept the unit fed on Royal Enfield&rsquo;s Bullet 650. Sound-checked the Idris Elba BBC documentary. The AI is built around how they actually work &mdash; not how an outsider thinks production works.</p>
+
+  <div class="humans-grid">
+    <!-- Featured creative card — Krish -->
+    <article class="human-card">
+      <div class="human-card-eyebrow">Founding creative · Cinematographer</div>
+      <div class="human-card-name">Krish Pinto</div>
+      <div class="human-card-meta">London · MetFilm School &middot; Straight 8 winner 2022 &amp; 2023 &middot; Author, &ldquo;Becoming a Filmmaker&rdquo;</div>
+      <div class="credit-list">
+        <div class="credit-line">
+          <span class="credit-role">Camera dept</span>
+          <span class="credit-name">YSL Beauty &ldquo;Lovestore&rdquo; ft. Dua Lipa</span>
+          <span class="credit-client">Yves Saint Laurent</span>
+        </div>
+        <div class="credit-line">
+          <span class="credit-role">Camera dept</span>
+          <span class="credit-name">Dior AW 2025–26</span>
+          <span class="credit-client">Christian Dior</span>
+        </div>
+        <div class="credit-line">
+          <span class="credit-role">Camera dept</span>
+          <span class="credit-name">Bullet 650 · House of Classic · Classic 350 Unveiled</span>
+          <span class="credit-client">Royal Enfield</span>
+        </div>
+        <div class="credit-line">
+          <span class="credit-role">Production</span>
+          <span class="credit-name">Idris Elba: Our Knife Crime Crisis</span>
+          <span class="credit-client">BBC One &times; 22 Summers</span>
+        </div>
+        <div class="credit-line">
+          <span class="credit-role">Cinematographer</span>
+          <span class="credit-name">OMF · Energy · Nostalgia</span>
+          <span class="credit-client">Dappy &middot; Tinie Tempah &middot; Sammy Virji</span>
+        </div>
+        <div class="credit-line">
+          <span class="credit-role">Camera dept</span>
+          <span class="credit-name">Mutual Funds</span>
+          <span class="credit-client">PhonePe</span>
+        </div>
+      </div>
+      <a href="https://krish-portfolio.vercel.app/" class="human-card-link" target="_blank" rel="noopener">Full portfolio &nbsp;&rarr;</a>
+    </article>
+
+    <!-- Placeholder creative slots — future team members. Shown as
+         "open desks" rather than fake names. -->
+    <article class="human-card human-card-open">
+      <div class="human-card-eyebrow">Open seat · Line producer</div>
+      <div class="human-card-name">Looking for you.</div>
+      <div class="human-card-meta">3+ years on commercial &amp; OTT. Indian Cinema or UK commercial. Knows the rate cards by heart. Embeds with our budget module.</div>
+      <a href="mailto:hello@askmark.co?subject=Joining M·ARK · Line producer" class="human-card-link">Get in touch &nbsp;&rarr;</a>
+    </article>
+
+    <article class="human-card human-card-open">
+      <div class="human-card-eyebrow">Open seat · 1st AD</div>
+      <div class="human-card-name">Looking for you.</div>
+      <div class="human-card-meta">5+ years on the floor. Runs the call sheet module. Embeds with productions on day-1, builds the schedule on day-2, hands it back to the producer on day-3.</div>
+      <a href="mailto:hello@askmark.co?subject=Joining M·ARK · 1st AD" class="human-card-link">Get in touch &nbsp;&rarr;</a>
+    </article>
+  </div>
+
+  <!-- Credit roll — brands the team has shipped work for -->
+  <div class="credit-roll">
+    <div class="credit-roll-label">The team has shipped work for</div>
+    <div class="credit-roll-marks">
+      <span class="cr-mark">BBC</span>
+      <span class="cr-mark">YSL Beauty</span>
+      <span class="cr-mark">Christian Dior</span>
+      <span class="cr-mark">Royal Enfield</span>
+      <span class="cr-mark">PhonePe</span>
+      <span class="cr-mark">Amazon MGM Studios</span>
+      <span class="cr-mark">Universal Music</span>
+      <span class="cr-mark">Architectural Digest India</span>
+      <span class="cr-mark">22 Summers</span>
+      <span class="cr-mark">North Six</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SC. 04 · THE MODEL — Why this isn't just an AI tool
+     Positioning beat #2: the agentic + datasets + RL story, paired with
+     the "embedded humans" frame. AI is the engine; the creative is the
+     steering wheel.
+     ════════════════════════════════════════════════════════════════════ -->
+<section id="model" class="model-section">
+  <div class="section-label">Sc. 04 / The model</div>
+  <div class="section-title">Not an AI tool.<br/>A new <em>production house.</em></div>
+  <p class="section-body" style="margin-top:18px;max-width:680px;">Every M·ARK module ships with two layers &mdash; a domain-expert creative who has done the job, and an agentic AI built for that job. The creative makes the call. The AI does the work nobody wanted to do anyway. AI doesn&rsquo;t replace the producer&rsquo;s taste &mdash; it gives them more time to use it.</p>
+
+  <div class="pillars">
+    <article class="pillar">
+      <div class="pillar-num">01</div>
+      <div class="pillar-title">Embedded creatives</div>
+      <p class="pillar-body">Each module is owned by a creative who has done the job at scale &mdash; not a PM, not a designer with a moodboard. A line producer owns the budget. A 1st AD owns the call sheet. A production designer owns the breakdown. Their taste is the product.</p>
+    </article>
+
+    <article class="pillar">
+      <div class="pillar-num">02</div>
+      <div class="pillar-title">Agentic search</div>
+      <p class="pillar-body">We crawl the production web wide and far &mdash; rate cards, union schedules, vendor catalogues, weather windows, location permits, equipment houses. The AI brings back the answer the producer would have spent half a day googling. Every decision shows its sources.</p>
+    </article>
+
+    <article class="pillar">
+      <div class="pillar-num">03</div>
+      <div class="pillar-title">Proprietary datasets</div>
+      <p class="pillar-body">Market-specific local data the rest of the AI stack doesn&rsquo;t have. Indian Cinema rate cards. UK commercial vendor maps. Music-video crew rosters. Built from real call sheets and real budgets we&rsquo;ve worked on. The model knows what an Alexa 35 actually rents for in Mumbai vs Manchester.</p>
+    </article>
+
+    <article class="pillar">
+      <div class="pillar-num">04</div>
+      <div class="pillar-title">RL environments</div>
+      <p class="pillar-body">Every production that runs through M·ARK feeds back. What came in under budget. What overran. Which line items the producer cut. Which vendors delivered. The system trains on outcomes &mdash; not opinions &mdash; from the productions our creatives actually shipped.</p>
+    </article>
+  </div>
+
+  <div class="model-closer">
+    <div class="model-closer-quote">&ldquo;The most personal is the most creative. Humans don&rsquo;t scale; AI doesn&rsquo;t taste. Put them in the same room and you get production support that didn&rsquo;t exist before.&rdquo;</div>
+    <div class="model-closer-attr">&mdash; The M·ARK working principle</div>
+  </div>
+</section>
+
 <!-- HOW IT WORKS -->
 <section id="how">
-  <div class="section-label">Sc. 03 / How it works</div>
-  <div class="section-title">Pre-production to wrap.<br/>One <em>slate.</em></div>
+  <div class="section-label">Sc. 05 / How it works</div>
+  <div class="section-title">Slate. Wire. Ship.<br/>With a human in the <em>cut.</em></div>
   <div class="how-steps">
     <div class="how-step reveal">
       <div class="step-num">01</div>
       <div class="step-title">Slate the production</div>
-      <div class="step-desc">Drop in the script, the dates, the lead cast — or just paste a paragraph. Mark sluglines the scenes, counts the days, builds the breakdown.</div>
+      <div class="step-desc">Drop in the script, the dates, the lead cast &mdash; or just paste a paragraph. The agentic layer sluglines the scenes, counts the days, builds the breakdown. The line producer on duty checks it before you see it.</div>
     </div>
     <div class="how-step reveal">
       <div class="step-num">02</div>
       <div class="step-title">Wire the floor</div>
-      <div class="step-desc">Plug in Gmail, WhatsApp, Drive. Crew, vendors, location managers, NDAs — Mark holds the rolodex and the paper trail.</div>
+      <div class="step-desc">Plug in Gmail, WhatsApp, Drive. Crew, vendors, location managers, NDAs &mdash; M·ARK holds the rolodex and the paper trail. Our 1st AD on the module makes sure the call sheet reads like a call sheet, not a SaaS export.</div>
     </div>
     <div class="how-step reveal">
       <div class="step-num">03</div>
       <div class="step-title">Ask, and it ships</div>
-      <div class="step-desc">"Cut tomorrow's call sheet." "Trim catering by ₹2L." "Send the new SOC to all 40 crew." English or Hindi. On set or back at base.</div>
+      <div class="step-desc">&ldquo;Cut tomorrow&rsquo;s call sheet.&rdquo; &ldquo;Trim catering by &#8377;2L.&rdquo; &ldquo;Send the new SOC to all 40 crew.&rdquo; English or Hindi. The AI does the busywork; the human reviews anything you&rsquo;d want a human to review.</div>
     </div>
   </div>
 </section>
 
 <!-- INTEGRATIONS -->
 <section style="background:var(--paper-deep);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);">
-  <div class="section-label">Sc. 04 / Integrations</div>
+  <div class="section-label">Sc. 06 / Integrations</div>
   <div class="section-title">The whole floor<br/>routes through <em>Mark.</em></div>
   <div class="integrations-hub">
     <div class="integration-cards">
@@ -710,7 +984,7 @@ footer{
 
 <!-- FEATURES -->
 <section id="features">
-  <div class="section-label">Sc. 05 / Departments Mark covers</div>
+  <div class="section-label">Sc. 07 / Modules</div>
   <div class="section-title">Production, broken out<br/>by <em>department.</em></div>
   <div class="features-grid">
     <a href="budget.html" class="feature-card reveal">
@@ -809,10 +1083,11 @@ footer{
 <!-- CTA -->
 <section class="final-cta">
   <div class="cta-watermark">M·ARK</div>
-  <div class="section-label" style="justify-content:center;">Sc. 06 / Roll camera</div>
-  <div class="cta-title">Slate the next one.<br/><em>Now.</em></div>
-  <div class="cta-sub">Indian Cinema live · Hollywood / UK · Europe coming</div>
-  <a href="budget.html" class="btn-primary"><span>Build a budget free →</span></a>
+  <div class="section-label" style="justify-content:center;">Sc. 08 / Roll camera</div>
+  <div class="cta-title">Slate the next one.<br/><em>With humans.</em></div>
+  <div class="cta-sub">Indian Cinema live · UK commercial in beta · Embedded creatives + agentic AI</div>
+  <a href="budget.html" class="btn-primary"><span>Build a budget free &rarr;</span></a>
+  <div style="margin-top:24px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.08em;">No card · 60 seconds · A creative reviews it before lock</div>
 </section>
 
 <!-- CONTACT -->
