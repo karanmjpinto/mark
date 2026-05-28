@@ -5,9 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>M·ARK — Production OS for film. Script in. Budget out.</title>
 <meta name="description" content="An AI line producer for film. Reads scripts, builds budgets, drops call sheets on WhatsApp. Indian Cinema beta."/>
-<!-- CLAPPERBOARD FAVICON — slate-snap silhouette as an SVG data URL so
-     the tab reads instantly as production paperwork. No extra request. -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;rect width='32' height='32' fill='%23F5F1E8'/&gt;&lt;g transform='rotate(-10 16 12)'&gt;&lt;rect x='4' y='4' width='24' height='6' fill='%2314110D'/&gt;&lt;rect x='6' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='12' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='18' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;rect x='24' y='4' width='3' height='6' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;rect x='4' y='12' width='24' height='16' fill='%2314110D'/&gt;&lt;text x='16' y='24' font-family='Georgia,serif' font-style='italic' font-size='13' fill='%23C8330A' text-anchor='middle' font-weight='600'&gt;M&lt;/text&gt;&lt;/svg&gt;"/>
+<!-- M·ARK favicon — the brand mark inlined as an SVG data URL. Slate body,
+     striped snap arm, italic Fraunces "M" in paper, brand-red tally dot.
+     Renders crisp at every browser size (favicons up to 64px). -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%2314110D'/&gt;&lt;g transform='rotate(-52 40 11)'&gt;&lt;rect x='-30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='-10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='50' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;text x='40' y='66' fill='%23F5F1E8' font-family='Georgia,serif' font-style='italic' font-size='50' font-weight='600' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='68' cy='68' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
+<!-- Open Graph + Twitter share images use the same mark -->
+<meta property="og:title" content="M·ARK — Production OS for film"/>
+<meta property="og:description" content="An AI line producer. Reads scripts, builds budgets, drops call sheets on WhatsApp. Indian Cinema beta."/>
+<meta property="og:image" content="https://karanmjpinto.github.io/mark/og.svg"/>
+<meta property="og:type" content="website"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="M·ARK — Production OS for film"/>
+<meta name="twitter:description" content="Script in. Budget out. Call sheet on WhatsApp."/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -84,10 +93,22 @@ nav{
 }
 nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .nav-logo{
-  font-family:'Fraunces',serif;font-weight:600;font-size:24px;color:var(--ink);
-  text-decoration:none;letter-spacing:-0.01em;font-variation-settings:"opsz" 144;
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:'Fraunces',serif;font-weight:600;font-size:22px;color:var(--ink);
+  text-decoration:none;letter-spacing:0.02em;font-variation-settings:"opsz" 144;
+  text-transform:uppercase;
 }
-.nav-logo span{color:var(--accent);font-style:italic;font-weight:400;}
+.nav-logo svg.mark{width:28px;height:28px;flex-shrink:0;}
+.nav-logo .wm-m{font-style:italic;font-weight:600;}
+.nav-logo .wm-dot{
+  display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--accent);margin:0 4px 4px 4px;vertical-align:middle;
+  box-shadow:0 0 0 2px rgba(200,51,10,0.18);
+}
+.nav-logo .wm-ark{
+  font-family:'Inter',sans-serif;font-weight:700;font-size:18px;
+  letter-spacing:0.08em;
+}
 .nav-links{display:flex;align-items:center;gap:32px;}
 .nav-links a{
   color:var(--ink-soft);font-size:11px;text-decoration:none;
@@ -273,11 +294,10 @@ section{padding:120px 60px;position:relative;}
 /* INTEGRATIONS */
 .integrations-hub{display:flex;flex-direction:column;align-items:center;margin-top:64px;gap:24px;}
 .hub-center{
-  width:88px;height:88px;background:var(--ink);border-radius:50%;
+  width:74px;height:74px;background:transparent;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
-  font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:36px;color:var(--paper);
-  position:relative;flex-shrink:0;
-  box-shadow:0 1px 0 rgba(255,255,255,0.5) inset, 0 8px 28px rgba(20,17,13,0.14);
+  position:relative;flex-shrink:0;padding:8px;
+  box-shadow:0 8px 28px rgba(20,17,13,0.14);
 }
 .hub-center::before,.hub-center::after{
   content:'';position:absolute;inset:-12px;border:1px solid var(--ink);border-radius:50%;
@@ -368,8 +388,18 @@ footer{
   padding:40px 60px;border-top:1px solid var(--rule);
   display:flex;align-items:center;justify-content:space-between;background:var(--paper-deep);
 }
-.footer-logo{font-family:'Fraunces',serif;font-weight:600;font-size:18px;color:var(--ink);font-variation-settings:"opsz" 144;}
-.footer-logo span{color:var(--accent);font-style:italic;font-weight:400;}
+.footer-logo{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'Fraunces',serif;font-weight:600;font-size:18px;color:var(--ink);
+  font-variation-settings:"opsz" 144;letter-spacing:0.02em;text-transform:uppercase;
+}
+.footer-logo svg.mark{width:22px;height:22px;flex-shrink:0;}
+.footer-logo .wm-m{font-style:italic;font-weight:600;}
+.footer-logo .wm-dot{
+  display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--accent);margin:0 3px 3px 3px;vertical-align:middle;
+}
+.footer-logo .wm-ark{font-family:'Inter',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.08em;}
 .footer-copy{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;}
 .footer-email a{font-size:12px;color:var(--ink-soft);text-decoration:none;font-family:'DM Mono',monospace;letter-spacing:0.06em;transition:color 0.2s;}
 .footer-email a:hover{color:var(--accent);}
@@ -410,10 +440,55 @@ footer{
 </head>
 <body>
 
+<!-- ════════════════════════════════════════════════════════════════════
+     M·ARK BRAND MARK · reusable SVG defs
+     The mark is a stylised film slate: a black body with a diagonal-stripe
+     snap arm across the top, an italic Fraunces "M" set in cream paper
+     centred in the body, and a small red tally light in the lower-right
+     corner. The wordmark sits to the right: "M" in italic Fraunces,
+     a brand-red filled dot (the "live / recording" tally light film
+     cameras show), and "ARK" in tight Inter all-caps. Together they
+     read as both the company name and a film artefact.
+     ════════════════════════════════════════════════════════════════════ -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <symbol id="mark-icon" viewBox="0 0 80 80">
+      <!-- Slate body -->
+      <rect width="80" height="80" rx="3" fill="#14110D"/>
+      <!-- Snap arm — top 22 px, diagonal stripes via inline rects -->
+      <g>
+        <rect x="0" y="0" width="80" height="22" fill="#14110D"/>
+        <g transform="rotate(-52 40 11)">
+          <rect x="-30" y="-6" width="10" height="40" fill="#F5F1E8"/>
+          <rect x="-10" y="-6" width="10" height="40" fill="#F5F1E8"/>
+          <rect x="10"  y="-6" width="10" height="40" fill="#F5F1E8"/>
+          <rect x="30"  y="-6" width="10" height="40" fill="#F5F1E8"/>
+          <rect x="50"  y="-6" width="10" height="40" fill="#F5F1E8"/>
+        </g>
+        <!-- Hairline seam between snap and body -->
+        <line x1="0" y1="22" x2="80" y2="22" stroke="#F5F1E8" stroke-width="0.8" opacity="0.4"/>
+      </g>
+      <!-- Italic serif M in the slate body -->
+      <text x="40" y="66" fill="#F5F1E8"
+            font-family="Fraunces, Georgia, serif"
+            font-style="italic"
+            font-size="50"
+            font-weight="600"
+            text-anchor="middle"
+            letter-spacing="-0.025em">M</text>
+      <!-- Tally light — small red dot bottom-right -->
+      <circle cx="68" cy="68" r="3.4" fill="#C8330A"/>
+      <circle cx="68" cy="68" r="6" fill="none" stroke="#C8330A" stroke-width="0.6" opacity="0.4"/>
+    </symbol>
+  </defs>
+</svg>
 <div class="slate-stripe" aria-hidden="true"></div>
 
 <nav id="nav">
-  <a href="./" class="nav-logo">M<span>.</span>ARK</a>
+  <a href="./" class="nav-logo" aria-label="M·ARK — Production OS">
+    <svg class="mark" aria-hidden="true"><use href="#mark-icon"/></svg>
+    <span class="wm-m">M</span><span class="wm-dot" aria-hidden="true"></span><span class="wm-ark">ARK</span>
+  </a>
   <div class="nav-links">
     <a href="#how">How it works</a>
     <a href="#features">Features</a>
@@ -603,7 +678,9 @@ footer{
     </div>
     <div class="hub-rail">
       <div class="hub-rail-line"></div>
-      <div class="hub-center">M</div>
+      <div class="hub-center" aria-label="M·ARK">
+        <svg style="width:54px;height:54px;border-radius:4px;" aria-hidden="true"><use href="#mark-icon"/></svg>
+      </div>
       <div class="hub-rail-line"></div>
     </div>
     <div class="integration-cards">
@@ -731,7 +808,7 @@ footer{
 
 <!-- CTA -->
 <section class="final-cta">
-  <div class="cta-watermark">Mark</div>
+  <div class="cta-watermark">M·ARK</div>
   <div class="section-label" style="justify-content:center;">Sc. 06 / Roll camera</div>
   <div class="cta-title">Slate the next one.<br/><em>Now.</em></div>
   <div class="cta-sub">Indian Cinema live · Hollywood / UK · Europe coming</div>
@@ -746,8 +823,11 @@ footer{
 </section>
 
 <footer>
-  <div class="footer-logo">M<span>.</span>ARK</div>
-  <div class="footer-copy">© 2025 Mark · Production OS · Built by Agemo</div>
+  <div class="footer-logo" aria-label="M·ARK — Production OS">
+    <svg class="mark" aria-hidden="true"><use href="#mark-icon"/></svg>
+    <span class="wm-m">M</span><span class="wm-dot" aria-hidden="true"></span><span class="wm-ark">ARK</span>
+  </div>
+  <div class="footer-copy">© 2026 M·ARK · Production OS · Built by Agemo</div>
   <div class="footer-email"><a href="mailto:hello@askmark.co">hello@askmark.co</a></div>
 </footer>
 
