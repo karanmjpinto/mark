@@ -240,104 +240,215 @@ input[type=file]{display:none;}
 .shoot-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .shoot-grid > .full{grid-column:1/-1;}
 
-/* CALL SHEET PREVIEW */
+/* ════════════════════════════════════════════════════════════════════════
+   CALL SHEET PREVIEW — modelled on North Six / Sarmad Varraich / DUDU
+   real production call sheets. Pure Helvetica / Arial sans throughout
+   (no serifs anywhere in the document). White paper, black bars,
+   tight cell padding. The producer's eye should land on this and
+   read it as a real call sheet, not a designed website.
+   ════════════════════════════════════════════════════════════════════════ */
 .callsheet-doc{
-  background:#fff;color:#14110D;border:1.5px solid #14110D;padding:0;
-  font-family:'Inter',sans-serif;font-size:11px;line-height:1.5;
-  max-width:840px;margin:0 auto 18px;box-shadow:0 4px 24px var(--paper-shadow);
+  background:#fff;color:#14110D;border:1px solid #14110D;padding:0;
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:10.5px;line-height:1.35;
+  max-width:880px;margin:0 auto 18px;box-shadow:0 4px 24px var(--paper-shadow);
   position:relative;
 }
-/* Slate snap-band at the top of the call sheet preview itself — so the
-   printed / exported sheet reads as a real piece of production paperwork.*/
-.callsheet-doc::before{
-  content:'';display:block;height:16px;
-  background-image:repeating-linear-gradient(
-    -52deg,
-    #14110D 0 13px,
-    #fff 13px 26px
-  );
-  border-bottom:1.5px solid #14110D;
+
+/* TOP UTILITY STRIP — date · project title · shoot day / job # */
+.cs-utility{
+  display:grid;grid-template-columns:1fr 2fr 1fr;
+  padding:8px 14px;background:#fff;color:#14110D;font-size:10px;
+  border-bottom:1px solid #14110D;letter-spacing:0.02em;
 }
-.cs-header{
-  display:grid;grid-template-columns:1.2fr 2fr 1.4fr;
-  border-bottom:2px solid #14110D;
+.cs-utility .cs-u-mid{text-align:center;}
+.cs-utility .cs-u-right{text-align:right;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;font-size:9px;}
+
+/* PRODUCTION COMPANY WORDMARK — big bold ALL-CAPS on a black bar.
+   The single biggest tell of a real call sheet vs a designed website. */
+.cs-wordmark{
+  background:#14110D;color:#fff;text-align:center;
+  padding:14px 14px 16px;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:38px;font-weight:900;letter-spacing:0.04em;line-height:1;
+  text-transform:uppercase;
 }
-.cs-header > div{padding:14px 18px;border-right:1px solid var(--rule);}
-.cs-header > div:last-child{border-right:none;}
-.cs-h-label{
-  font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:#8A8275;
-  font-family:'DM Mono',monospace;margin-bottom:4px;
+
+/* LOGO ROW — 3 to 4 columns: Director · Client · Studio · Production Contacts */
+.cs-logos{
+  display:grid;grid-template-columns:1fr 1fr 1.2fr;
+  border-bottom:1px solid #14110D;
 }
-.cs-h-val{font-family:'Fraunces',serif;font-size:14px;font-weight:500;}
+.cs-logo-cell{
+  padding:18px 18px;border-right:1px solid rgba(20,17,13,0.18);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;text-align:center;font-size:11px;
+}
+.cs-logo-cell:last-child{border-right:none;}
+.cs-logo-cell .cs-logo-label{
+  font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#14110D;
+  font-weight:700;margin-bottom:2px;
+}
+.cs-logo-cell .cs-logo-name{
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight:700;font-size:15px;letter-spacing:0.02em;line-height:1.15;
+  text-transform:uppercase;color:#14110D;
+}
+.cs-logo-cell .cs-logo-meta{font-size:10px;color:#3A352D;line-height:1.4;}
+.cs-logo-cell .cs-logo-contacts{font-size:10px;color:#14110D;line-height:1.55;text-align:center;}
+.cs-logo-cell .cs-logo-contacts strong{font-weight:700;}
+
+/* CLOSED SET BANNER — every real call sheet carries it. Black band,
+   ALL-CAPS, centred, two asterisks on either side. */
+.cs-closed-set{
+  background:#14110D;color:#fff;text-align:center;
+  padding:9px 14px;font-weight:700;font-size:11px;letter-spacing:0.22em;
+  text-transform:uppercase;
+}
+
+/* MAIN BANNER — Day X · Date / Unit Call / Wrap / Crew Count */
 .cs-banner{
-  background:#14110D;color:#F5F1E8;padding:14px 22px;
+  background:#14110D;color:#fff;padding:12px 22px;
   display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;
+  border-bottom:1px solid #14110D;
 }
 .cs-banner-item{text-align:center;}
 .cs-banner-item:first-child{text-align:left;}
 .cs-banner-item:last-child{text-align:right;}
 .cs-banner-label{
-  font-size:8px;letter-spacing:0.16em;text-transform:uppercase;
-  font-family:'DM Mono',monospace;opacity:0.7;margin-bottom:4px;
+  font-size:9px;letter-spacing:0.16em;text-transform:uppercase;
+  opacity:0.7;margin-bottom:3px;font-weight:500;
 }
 .cs-banner-val{
-  font-family:'Fraunces',serif;font-size:24px;font-weight:500;letter-spacing:-0.01em;
-  color:#C8330A;font-variant-numeric:tabular-nums;
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:22px;font-weight:800;letter-spacing:0.02em;
+  color:#FFC940;font-variant-numeric:tabular-nums;
 }
-/* SUN BAND — sunrise / sunset / conditions / temp row beneath the banner.
-   The DOP reads this for the magic-hour window; the 1st AD reads it for
-   the day-for-night window. Tight grid, mono throughout. */
+
+/* SCHEDULE BLOCK — flat time + event list. Always two columns side by side
+   so it doesn't push the sheet height. */
+.cs-schedule{
+  padding:14px 22px;border-bottom:1px solid #14110D;
+  display:grid;grid-template-columns:1fr 1fr;column-gap:32px;row-gap:4px;
+  font-size:11px;background:#FAF7EE;
+}
+.cs-schedule .cs-sched-row{
+  display:grid;grid-template-columns:70px 1fr;gap:14px;align-items:baseline;
+  padding:3px 0;border-bottom:1px dotted rgba(20,17,13,0.20);
+}
+.cs-sched-row .cs-sched-time{
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-weight:700;
+  letter-spacing:0.04em;color:#14110D;font-variant-numeric:tabular-nums;
+}
+.cs-sched-row .cs-sched-event{color:#14110D;}
+.cs-schedule-title{
+  grid-column:1/-1;font-size:10px;font-weight:700;letter-spacing:0.18em;
+  text-transform:uppercase;padding:2px 0 6px;color:#14110D;
+  border-bottom:1px solid #14110D;margin-bottom:6px;
+}
+/* SUN BAND — sunrise / sunset / conditions / temp / wind / humidity / precipitation
+   row beneath the banner. The DOP reads this for the magic-hour window; the
+   1st AD reads it for the day-for-night window. All Helvetica, tight grid. */
 .cs-sun-band{
-  display:grid;grid-template-columns:repeat(4, 1fr);
-  background:#fff;color:#14110D;border-bottom:1px solid var(--rule);
+  display:grid;grid-template-columns:repeat(6, 1fr);
+  background:#fff;color:#14110D;border-bottom:1px solid #14110D;
 }
 .cs-sun-cell{
-  padding:10px 16px;border-right:1px solid var(--rule);
-  display:flex;flex-direction:column;gap:3px;
+  padding:9px 12px;border-right:1px solid rgba(20,17,13,0.18);
+  display:flex;flex-direction:column;gap:2px;
 }
 .cs-sun-cell:last-child{border-right:none;}
 .cs-sun-key{
-  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;
-  text-transform:uppercase;color:#8A8275;font-weight:500;
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;
+  color:#3A352D;font-weight:600;
 }
 .cs-sun-val{
-  font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:#14110D;
-  letter-spacing:0.04em;text-transform:uppercase;
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:13px;font-weight:700;color:#14110D;letter-spacing:0.02em;
 }
 @media (max-width:680px){
-  .cs-sun-band{grid-template-columns:1fr 1fr;}
-  .cs-sun-cell{border-bottom:1px solid var(--rule);}
+  .cs-sun-band{grid-template-columns:repeat(3, 1fr);}
+  .cs-sun-cell{border-bottom:1px solid rgba(20,17,13,0.18);}
 }
 
-.cs-section{padding:14px 22px;border-bottom:1px solid var(--rule);}
+/* ════════════════════════════════════════════════════════════════════════
+   CREW TABLE — North Six column structure. The black bar above each dept
+   acts as the section title; columns under it are Role | Name | Phone |
+   Driver | Pick Up | Call | Notes. All Helvetica, no serifs anywhere.
+   ════════════════════════════════════════════════════════════════════════ */
+.cs-crew-section{border-bottom:0;}
+.cs-crew-table{width:100%;border-collapse:collapse;border-top:1px solid #14110D;}
+.cs-crew-table thead th{
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:9px;letter-spacing:0.12em;text-transform:uppercase;
+  text-align:left;padding:7px 10px;font-weight:700;
+  background:#fff;color:#14110D;
+  border-bottom:1px solid #14110D;
+}
+.cs-crew-table thead th.cs-th-call,
+.cs-crew-table thead th.cs-th-pickup,
+.cs-crew-table thead th.cs-th-driver{text-align:left;}
+.cs-crew-table tbody td{
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:10.5px;padding:6px 10px;
+  border-bottom:1px solid rgba(20,17,13,0.10);vertical-align:middle;color:#14110D;
+}
+.cs-crew-table tbody td.cs-td-name{font-weight:700;}
+.cs-crew-table tbody td.cs-td-role{color:#3A352D;}
+.cs-crew-table tbody td.cs-td-call{font-weight:700;font-variant-numeric:tabular-nums;}
+.cs-crew-table tbody tr:hover{background:#FAF7EE;}
+.cs-crew-table tbody tr.cs-dept-row td{
+  background:#14110D;color:#fff;text-align:center;
+  font-weight:700;font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;
+  padding:7px 10px;border-bottom:1px solid #14110D;
+}
+
+.cs-crew-table .cs-crew-code{
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;
+  padding:2px 6px;border:1px solid #14110D;color:#14110D;background:#fff;
+  display:inline-block;
+}
+
+/* CONTENT SECTIONS — Production notes, Emergency, Invoice — every block is
+   a small framed cell, no serifs, terse labels. */
+.cs-section{padding:12px 22px;border-bottom:1px solid #14110D;color:#14110D;}
 .cs-section:last-child{border-bottom:none;}
 .cs-section-title{
   font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#14110D;
-  margin-bottom:10px;font-weight:700;padding-bottom:6px;
-  border-bottom:2px solid #14110D;display:inline-block;
+  font-size:9.5px;letter-spacing:0.20em;text-transform:uppercase;color:#14110D;
+  margin-bottom:8px;font-weight:700;display:block;
 }
-.cs-dept-row td{
-  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight:700;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
-  background:#14110D;color:#fff;padding:6px 10px;
+.cs-text{font-size:11px;line-height:1.55;color:#14110D;}
+
+/* DEPT-WIDE LOCATION / EMERGENCY rows used in DUDU + Royal Enfield */
+.cs-info-table{width:100%;border-collapse:collapse;margin-top:6px;}
+.cs-info-table th, .cs-info-table td{
+  font-size:10px;padding:5px 8px;border:1px solid rgba(20,17,13,0.18);
+  text-align:left;color:#14110D;
 }
-.cs-crew-table{width:100%;border-collapse:collapse;margin-top:6px;}
-.cs-crew-table thead th{
-  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;
-  text-transform:uppercase;text-align:left;padding:6px 10px;
-  border-bottom:2px solid #14110D;color:#14110D;font-weight:700;
+.cs-info-table th{
+  background:#14110D;color:#fff;font-size:9px;letter-spacing:0.14em;
+  text-transform:uppercase;font-weight:700;
 }
-.cs-crew-table tbody td{
-  font-family:'Inter',sans-serif;font-size:12px;padding:7px 10px;
-  border-bottom:1px solid rgba(20,17,13,0.10);vertical-align:middle;
+
+/* FOOTER — Job ref + invoicing + confidentiality. Sober, small. */
+.cs-footer-grid{
+  display:grid;grid-template-columns:1fr 1fr;border-top:2px solid #14110D;
 }
-.cs-crew-table tbody tr:hover{background:#FAF7EE;}
-.cs-crew-table .cs-crew-code{
-  font-family:'DM Mono',monospace;font-size:9px;font-weight:700;
-  letter-spacing:0.12em;text-transform:uppercase;padding:2px 6px;
-  border:1px solid #14110D;color:#14110D;background:#fff;
-  display:inline-block;
+.cs-footer-grid > div{
+  padding:12px 22px;border-right:1px solid rgba(20,17,13,0.18);
+  font-size:10px;color:#14110D;line-height:1.5;
+}
+.cs-footer-grid > div:last-child{border-right:none;text-align:right;}
+.cs-footer-grid .cs-footer-label{
+  font-size:9px;letter-spacing:0.18em;text-transform:uppercase;
+  font-weight:700;margin-bottom:4px;color:#14110D;
+}
+.cs-confidentiality{
+  background:#14110D;color:#fff;padding:10px 22px;
+  font-size:9px;letter-spacing:0.12em;text-transform:uppercase;
+  text-align:center;font-weight:600;
 }
 .cs-text{font-size:12px;line-height:1.65;white-space:pre-wrap;}
 .cs-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
@@ -503,8 +614,7 @@ input[type=file]{display:none;}
   .gate-overlay, .coming-toast, .feedback-card,
   #step1, #step2, #step3, #step5, .next-day-banner { display:none !important; }
   #step4 { display:block !important; }
-  .callsheet-doc { border:1.5px solid #14110D !important; box-shadow:none !important; max-width:none; margin:0; }
-  .callsheet-doc::before { background-image: repeating-linear-gradient(-52deg, #14110D 0 13px, #fff 13px 26px) !important; }
+  .callsheet-doc { border:1px solid #14110D !important; box-shadow:none !important; max-width:none; margin:0; }
   #app{padding:0;max-width:none;}
 }
 
@@ -688,6 +798,66 @@ input[type=file]{display:none;}
         <div class="full">
           <label class="field-label">Invoice address</label>
           <textarea id="shoot-invoice" placeholder="Company address + email + job reference" style="min-height:70px;"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANONICAL CALL-SHEET FIELDS — match the North Six / Sarmad
+         Varraich / DUDU format. Optional; the preview shows — for any
+         field left blank. -->
+    <div class="panel">
+      <div class="panel-title">Production <em>masthead</em> · the canonical call-sheet fields</div>
+      <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;">These are the fields that make the export read as a real call sheet. All optional — fill what you have, refine the rest in chat ("director is Tarun Achpal", "job ref RK150225").</p>
+      <div class="shoot-grid">
+        <div>
+          <label class="field-label">Production company</label>
+          <input type="text" id="shoot-prod-co" placeholder="e.g. M·ARK · Sarmad Varraich · North Six"/>
+        </div>
+        <div>
+          <label class="field-label">Job ref</label>
+          <input type="text" id="shoot-job-ref" placeholder="e.g. RK150225 · 1494 · YSL-1476"/>
+        </div>
+        <div>
+          <label class="field-label">Director</label>
+          <input type="text" id="shoot-director" placeholder="Director name"/>
+        </div>
+        <div>
+          <label class="field-label">DOP</label>
+          <input type="text" id="shoot-dop" placeholder="Cinematographer name"/>
+        </div>
+        <div>
+          <label class="field-label">Client</label>
+          <input type="text" id="shoot-client" placeholder="e.g. Royal Enfield · Yves Saint Laurent · Dior"/>
+        </div>
+        <div>
+          <label class="field-label">Studio</label>
+          <input type="text" id="shoot-studio" placeholder="e.g. Sky Studios Elstree · Film City Stage 5"/>
+        </div>
+        <div>
+          <label class="field-label">Client address</label>
+          <input type="text" id="shoot-client-addr" placeholder="Optional"/>
+        </div>
+        <div>
+          <label class="field-label">Studio address</label>
+          <input type="text" id="shoot-studio-addr" placeholder="Optional"/>
+        </div>
+        <div>
+          <label class="field-label">Production contact 1</label>
+          <input type="text" id="shoot-c1" placeholder="Name / phone"/>
+        </div>
+        <div>
+          <label class="field-label">Production contact 2</label>
+          <input type="text" id="shoot-c2" placeholder="Name / phone"/>
+        </div>
+        <div class="full">
+          <label class="field-label">Schedule · one line per event, format <code style="font-family:'DM Mono',monospace;">HH:MM Event</code></label>
+          <textarea id="shoot-schedule" placeholder="06:00  Catering call&#10;07:00  Crew arrival&#10;07:30  Camera ready&#10;08:00  First shot&#10;12:30  Lunch&#10;19:00  Wrap" style="min-height:130px;font-family:'DM Mono',monospace;font-size:12px;"></textarea>
+        </div>
+        <div class="full">
+          <label class="field-label" style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="shoot-closed-set" checked style="width:18px;height:18px;cursor:pointer;"/>
+            Closed set · show <strong>★ Closed set · No social media · No unauthorised personnel ★</strong> banner on the sheet
+          </label>
         </div>
       </div>
     </div>
@@ -965,11 +1135,24 @@ const callsheet = {
     date: '', day_number: '', unit_call: '', wrap_time: '',
     scenes: '', locations: '', hospital: '', police: '',
     weather: '', production_notes: '', invoice_address: '',
-    // Sun + weather block — real call sheets carry these on the second
-    // banner row. Producer can fill them by hand or paste an instruction
-    // ("sunrise 06:14, sunset 18:42, cloudy 28°C") which the refine
-    // skill maps onto these fields.
     sunrise: '', sunset: '', temperature: '', conditions: '',
+    // Canonical-format fields — match North Six / Sarmad Varraich / DUDU
+    // real call sheets. Producer can fill any of these via the chat
+    // refine ("director is Tarun Achpal", "client is Royal Enfield",
+    // "studio is Sky Studios Elstree"). The HTML preview shows a slot
+    // for every field, populated with — when blank.
+    production_company: 'M·ARK',
+    director: '', dop: '',
+    client: '', client_address: '',
+    studio: '', studio_address: '',
+    job_ref: '',
+    fuel_per_litre: '',
+    parking: '',
+    contact_1_name: '', contact_1_phone: '',
+    contact_2_name: '', contact_2_phone: '',
+    closed_set: true,            // CLOSED SET — NO SOCIAL MEDIA banner
+    schedule: '',                 // free-form schedule block, one line per event
+    precipitation: '', humidity: '', wind: '',
   },
   send: { channels: [], status: 'draft' },
   revisions: [],                              // [{ instruction, notes, ts }]
@@ -1174,12 +1357,40 @@ function wireShootInputs(){
     'shoot-date':'date','shoot-day-num':'day_number','shoot-call-time':'unit_call','shoot-wrap-time':'wrap_time',
     'shoot-scenes':'scenes','shoot-locations':'locations','shoot-hospital':'hospital','shoot-police':'police',
     'shoot-weather':'weather','shoot-notes':'production_notes','shoot-invoice':'invoice_address',
+    // Canonical-format fields
+    'shoot-prod-co':'production_company','shoot-job-ref':'job_ref',
+    'shoot-director':'director','shoot-dop':'dop',
+    'shoot-client':'client','shoot-studio':'studio',
+    'shoot-client-addr':'client_address','shoot-studio-addr':'studio_address',
+    'shoot-schedule':'schedule',
   };
   Object.entries(map).forEach(([elId, field]) => {
     const el = document.getElementById(elId);
+    if (!el) return;
     el.addEventListener('input', () => { callsheet.shoot[field] = el.value; refreshStep2Gate(); });
     el.addEventListener('change', () => { callsheet.shoot[field] = el.value; refreshStep2Gate(); });
   });
+  // Contact splitter — "Maria Domican / +44 7983 604708" → name + phone
+  ['c1', 'c2'].forEach((tag, idx) => {
+    const el = document.getElementById('shoot-' + tag);
+    if (!el) return;
+    const fname = 'contact_' + (idx + 1) + '_name';
+    const fphone = 'contact_' + (idx + 1) + '_phone';
+    el.addEventListener('input', () => {
+      const parts = el.value.split('/');
+      callsheet.shoot[fname] = (parts[0] || '').trim();
+      callsheet.shoot[fphone] = (parts[1] || '').trim();
+      refreshStep2Gate();
+    });
+  });
+  // Closed set checkbox
+  const csBox = document.getElementById('shoot-closed-set');
+  if (csBox) {
+    csBox.addEventListener('change', () => {
+      callsheet.shoot.closed_set = csBox.checked;
+      refreshStep2Gate();
+    });
+  }
 }
 
 // ── GATING ────────────────────────────────────────────────────────────────────
@@ -1242,128 +1453,176 @@ function renderCallSheet(){
 }
 
 function buildCallSheetHtml(cs){
-  const title = cs.project_title || extractTitle(cs.brief) || 'Call Sheet';
+  // ─── Header field resolution ──────────────────────────────────────────
+  const title = cs.project_title || extractTitle(cs.brief) || 'Untitled Production';
   const niceDate = formatDate(cs.shoot.date);
   const dayN = cs.shoot.day_number || '—';
   const unit = cs.shoot.unit_call || '—';
   const wrap = cs.shoot.wrap_time || '—';
   const today = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  const dayLabel = cs.shoot.day_number ? `Shoot Day ${cs.shoot.day_number}` : 'Shoot Day';
 
+  // ─── Schedule block ──────────────────────────────────────────────────
+  // Producer's free-form schedule text → array of {time, event} rows.
+  // Each non-empty line is parsed as `<time><space or tab><event>`.
+  // Falls back gracefully when blank.
+  const scheduleRows = (cs.shoot.schedule || '').split(/\n+/).map(l => {
+    const m = l.trim().match(/^([\d.:apmAPM]+)\s+(.+)$/);
+    return m ? { time: m[1], event: m[2] } : (l.trim() ? { time: '', event: l.trim() } : null);
+  }).filter(Boolean);
+
+  // ─── Crew table — North Six column structure ────────────────────────
   const groupedCrew = groupCrewByDept(cs.crew);
-  const crewHtml = groupedCrew.map(({ dept, members }) => `
-    <tr class="cs-dept-row"><td colspan="5">${escHtml(dept).toUpperCase()}</td></tr>
+  const crewRowsHtml = groupedCrew.map(({ dept, members }) => `
+    <tr class="cs-dept-row"><td colspan="7">${escHtml(dept).toUpperCase()}</td></tr>
     ${members.map(m => `
       <tr>
-        <td><span class="cs-crew-code">${escHtml(roleCode(m.role, m.department))}</span></td>
-        <td><strong>${escHtml(m.name)}</strong></td>
-        <td>${escHtml(m.role)}</td>
-        <td>${escHtml(m.email)}</td>
-        <td>${escHtml(m.phone || '—')}</td>
+        <td class="cs-td-role">${escHtml(m.role || '—')}</td>
+        <td class="cs-td-name">${escHtml(m.name || '—')}</td>
+        <td>${escHtml(m.phone || m.email || '—')}</td>
+        <td>—</td>
+        <td>—</td>
+        <td class="cs-td-call">${escHtml(cs.shoot.unit_call || '—')}</td>
+        <td>${escHtml(m.email || '')}</td>
       </tr>
     `).join('')}
   `).join('');
 
+  // ─── HTML ────────────────────────────────────────────────────────────
   return `
     <div class="callsheet-doc">
-      <div class="cs-header">
-        <div>
-          <div class="cs-h-label">Production</div>
-          <div class="cs-h-val">M.ARK</div>
+
+      <!-- Top utility strip — date / project title / shoot type -->
+      <div class="cs-utility">
+        <div class="cs-u-left">${escHtml(niceDate)}</div>
+        <div class="cs-u-mid">${escHtml(title)}</div>
+        <div class="cs-u-right">${escHtml(dayLabel)}${cs.shoot.job_ref ? ' · ' + escHtml(cs.shoot.job_ref) : ''}</div>
+      </div>
+
+      <!-- Production company wordmark — big, bold, all-caps on a black bar. -->
+      <div class="cs-wordmark">${escHtml(cs.shoot.production_company || 'M·ARK')}</div>
+
+      <!-- Logo row — Director · Client · Studio · Production Contacts -->
+      <div class="cs-logos">
+        <div class="cs-logo-cell">
+          <div class="cs-logo-label">Director / DOP</div>
+          <div class="cs-logo-name">${escHtml(cs.shoot.director || '—')}</div>
+          <div class="cs-logo-meta">${cs.shoot.dop ? 'DOP · ' + escHtml(cs.shoot.dop) : ''}</div>
         </div>
-        <div>
-          <div class="cs-h-label">Project</div>
-          <div class="cs-h-val">${escHtml(title)}</div>
+        <div class="cs-logo-cell">
+          <div class="cs-logo-label">Client</div>
+          <div class="cs-logo-name">${escHtml(cs.shoot.client || '—')}</div>
+          <div class="cs-logo-meta">${escHtml(cs.shoot.client_address || '')}</div>
         </div>
-        <div>
-          <div class="cs-h-label">Generated</div>
-          <div class="cs-h-val">${escHtml(today)}</div>
+        <div class="cs-logo-cell">
+          <div class="cs-logo-label">Studio / Location</div>
+          <div class="cs-logo-name">${escHtml(cs.shoot.studio || cs.shoot.locations || '—')}</div>
+          <div class="cs-logo-meta">${escHtml(cs.shoot.studio_address || '')}</div>
+          ${(cs.shoot.contact_1_name || cs.shoot.contact_2_name) ? `
+            <div class="cs-logo-contacts" style="margin-top:8px;border-top:1px solid rgba(20,17,13,0.18);padding-top:8px;width:100%;">
+              <strong>Production Contacts</strong><br/>
+              ${cs.shoot.contact_1_name ? `${escHtml(cs.shoot.contact_1_name)}${cs.shoot.contact_1_phone ? ' / ' + escHtml(cs.shoot.contact_1_phone) : ''}<br/>` : ''}
+              ${cs.shoot.contact_2_name ? `${escHtml(cs.shoot.contact_2_name)}${cs.shoot.contact_2_phone ? ' / ' + escHtml(cs.shoot.contact_2_phone) : ''}` : ''}
+            </div>
+          ` : ''}
         </div>
       </div>
+
+      ${cs.shoot.closed_set !== false ? `
+      <div class="cs-closed-set">★ Closed set · No social media · No unauthorised personnel ★</div>
+      ` : ''}
+
+      <!-- Main banner — Day / Unit Call / Wrap -->
       <div class="cs-banner">
         <div class="cs-banner-item">
-          <div class="cs-banner-label">Day ${escHtml(dayN)} · ${escHtml(niceDate)}</div>
-          <div class="cs-banner-val">${escHtml(unit)}</div>
+          <div class="cs-banner-label">${escHtml(dayLabel)} · ${escHtml(niceDate)}</div>
+          <div class="cs-banner-val">UNIT CALL ${escHtml(unit)}</div>
         </div>
         <div class="cs-banner-item">
           <div class="cs-banner-label">Estimated Wrap</div>
           <div class="cs-banner-val">${escHtml(wrap)}</div>
         </div>
         <div class="cs-banner-item">
-          <div class="cs-banner-label">Crew</div>
+          <div class="cs-banner-label">Crew on Sheet</div>
           <div class="cs-banner-val">${cs.crew.length}</div>
         </div>
       </div>
-      <!-- SUN / WEATHER BAND — real call sheets carry sunrise + sunset on
-           the second row so the DOP knows the magic-hour window and the
-           1st AD knows the day-for-night window. Plus current forecast. -->
+
+      <!-- Sun / weather band -->
       <div class="cs-sun-band">
-        <div class="cs-sun-cell">
-          <span class="cs-sun-key">↑ Sunrise</span>
-          <span class="cs-sun-val">${escHtml(cs.shoot.sunrise || '—')}</span>
-        </div>
-        <div class="cs-sun-cell">
-          <span class="cs-sun-key">↓ Sunset</span>
-          <span class="cs-sun-val">${escHtml(cs.shoot.sunset || '—')}</span>
-        </div>
-        <div class="cs-sun-cell">
-          <span class="cs-sun-key">Conditions</span>
-          <span class="cs-sun-val">${escHtml(cs.shoot.conditions || '—')}</span>
-        </div>
-        <div class="cs-sun-cell">
-          <span class="cs-sun-key">Temp</span>
-          <span class="cs-sun-val">${escHtml(cs.shoot.temperature || '—')}</span>
-        </div>
+        <div class="cs-sun-cell"><span class="cs-sun-key">↑ Sunrise</span><span class="cs-sun-val">${escHtml(cs.shoot.sunrise || '—')}</span></div>
+        <div class="cs-sun-cell"><span class="cs-sun-key">↓ Sunset</span><span class="cs-sun-val">${escHtml(cs.shoot.sunset || '—')}</span></div>
+        <div class="cs-sun-cell"><span class="cs-sun-key">Conditions</span><span class="cs-sun-val">${escHtml(cs.shoot.conditions || '—')}</span></div>
+        <div class="cs-sun-cell"><span class="cs-sun-key">Temp</span><span class="cs-sun-val">${escHtml(cs.shoot.temperature || '—')}</span></div>
+        <div class="cs-sun-cell"><span class="cs-sun-key">Wind</span><span class="cs-sun-val">${escHtml(cs.shoot.wind || '—')}</span></div>
+        <div class="cs-sun-cell"><span class="cs-sun-key">Humidity</span><span class="cs-sun-val">${escHtml(cs.shoot.humidity || '—')}</span></div>
       </div>
 
-      ${cs.shoot.scenes ? `
-      <div class="cs-section">
-        <div class="cs-section-title">Sc.</div>
-        <div class="cs-text">${escHtml(cs.shoot.scenes)}</div>
+      ${scheduleRows.length ? `
+      <div class="cs-schedule">
+        <div class="cs-schedule-title">Schedule</div>
+        ${scheduleRows.map((r, i) => `
+          <div class="cs-sched-row">
+            <div class="cs-sched-time">${escHtml(r.time || '—')}</div>
+            <div class="cs-sched-event">${escHtml(r.event)}</div>
+          </div>
+        `).join('')}
       </div>` : ''}
 
-      ${cs.shoot.locations ? `
+      ${(cs.shoot.scenes || cs.shoot.locations) ? `
       <div class="cs-section">
-        <div class="cs-section-title">INT / EXT — Location</div>
-        <div class="cs-text">${escHtml(cs.shoot.locations)}</div>
-      </div>` : ''}
-
-      ${cs.shoot.weather ? `
-      <div class="cs-section">
-        <div class="cs-section-title">Weather</div>
-        <div class="cs-text">${escHtml(cs.shoot.weather)}</div>
+        ${cs.shoot.scenes ? `<div style="margin-bottom:8px;"><span class="cs-section-title" style="display:inline;">Sc. </span><span class="cs-text" style="display:inline;">${escHtml(cs.shoot.scenes)}</span></div>` : ''}
+        ${cs.shoot.locations ? `<div><span class="cs-section-title" style="display:inline;">Int / Ext / Location </span><span class="cs-text" style="display:inline;">${escHtml(cs.shoot.locations)}</span></div>` : ''}
+        ${cs.shoot.parking ? `<div style="margin-top:6px;"><span class="cs-section-title" style="display:inline;">Parking </span><span class="cs-text" style="display:inline;">${escHtml(cs.shoot.parking)}</span></div>` : ''}
       </div>` : ''}
 
       ${cs.shoot.production_notes ? `
       <div class="cs-section">
         <div class="cs-section-title">Production Notes</div>
-        <div class="cs-text">${escHtml(cs.shoot.production_notes)}</div>
+        <div class="cs-text" style="white-space:pre-wrap;">${escHtml(cs.shoot.production_notes)}</div>
       </div>` : ''}
 
-      <div class="cs-section">
-        <div class="cs-section-title">Crew &amp; Cast</div>
+      <!-- Crew table — North Six column structure -->
+      <div class="cs-crew-section">
         <table class="cs-crew-table">
-          <thead><tr><th>Code</th><th>Name</th><th>Role</th><th>Email</th><th>Phone</th></tr></thead>
-          <tbody>${crewHtml}</tbody>
+          <thead><tr>
+            <th>Role</th>
+            <th>Name</th>
+            <th>Telephone</th>
+            <th class="cs-th-driver">Driver</th>
+            <th class="cs-th-pickup">Pick Up</th>
+            <th class="cs-th-call">Call</th>
+            <th>Notes</th>
+          </tr></thead>
+          <tbody>${crewRowsHtml}</tbody>
         </table>
       </div>
 
       ${(cs.shoot.hospital || cs.shoot.police) ? `
       <div class="cs-section">
-        <div class="cs-section-title">Emergency</div>
-        <div class="cs-grid-2">
-          ${cs.shoot.hospital ? `<div><div class="cs-section-title cs-emergency-item">Nearest A&amp;E</div><div class="cs-text">${escHtml(cs.shoot.hospital)}</div></div>` : ''}
-          ${cs.shoot.police ? `<div><div class="cs-section-title cs-emergency-item">Nearest Police</div><div class="cs-text">${escHtml(cs.shoot.police)}</div></div>` : ''}
+        <div class="cs-section-title">Emergency Numbers · Always call 999 in an emergency</div>
+        <table class="cs-info-table">
+          <tbody>
+            ${cs.shoot.hospital ? `<tr><th style="width:160px;">Nearest A&amp;E</th><td>${escHtml(cs.shoot.hospital)}</td></tr>` : ''}
+            ${cs.shoot.police ? `<tr><th>Nearest Police</th><td>${escHtml(cs.shoot.police)}</td></tr>` : ''}
+          </tbody>
+        </table>
+      </div>` : ''}
+
+      <!-- Footer — Job ref + invoicing + confidentiality -->
+      <div class="cs-footer-grid">
+        <div>
+          <div class="cs-footer-label">Invoice Information</div>
+          <div>${escHtml(cs.shoot.invoice_address || 'Please address invoices to ' + (cs.shoot.production_company || 'M·ARK'))}</div>
         </div>
-      </div>` : ''}
-
-      ${cs.shoot.invoice_address ? `
-      <div class="cs-section">
-        <div class="cs-section-title">Invoice</div>
-        <div class="cs-text">${escHtml(cs.shoot.invoice_address)}</div>
-      </div>` : ''}
-
-      <div class="cs-footer">
-        Confidential — for crew use only. Generated by M.ARK · askmark.co
+        <div>
+          <div class="cs-footer-label">Job Ref</div>
+          <div style="font-weight:700;font-size:13px;letter-spacing:0.04em;">${escHtml(cs.shoot.job_ref || '—')}</div>
+          <div style="margin-top:6px;">Please include tax ref &amp; NI number (if applicable)</div>
+        </div>
+      </div>
+      <div class="cs-confidentiality">
+        This call sheet contains confidential information · Not for circulation · Generated by M·ARK
       </div>
     </div>
   `;
@@ -1521,6 +1780,62 @@ function tryLocalCallsheetEdit(instruction) {
   if (sceneMatch && !callMatch) {
     callsheet.shoot.scenes = sceneMatch[1].trim();
     notes.push('Scenes → ' + sceneMatch[1].trim());
+    applied = true;
+  }
+
+  // ── Canonical-format fields ─────────────────────────────────────────
+  // The producer types things like "director is Tarun Achpal", "client
+  // is Royal Enfield", "studio is Sky Studios Elstree", "job ref RK150225",
+  // "production company is Sarmad Varraich", "DOP Tarun Achpal".
+  const FIELD_PATTERNS = [
+    [/(?:director|dir)\s+(?:is\s+)?([^,;.]+)/i, 'director'],
+    [/(?:dop|director of photography|cinematograph(?:er)?)\s+(?:is\s+)?([^,;.]+)/i, 'dop'],
+    [/client\s+(?:is\s+)?([^,;.]+)/i, 'client'],
+    [/client(?:\s*address)?\s*[:\-]\s*([^,;.]+)/i, 'client_address'],
+    [/(?:studio|location)\s+(?:is\s+)?([^,;.]+)/i, 'studio'],
+    [/(?:studio|location)(?:\s*address)?\s*[:\-]\s*([^,;.]+)/i, 'studio_address'],
+    [/(?:production\s*company|prod\.?\s*co\.?)\s+(?:is\s+)?([^,;.]+)/i, 'production_company'],
+    [/(?:job\s*ref|job\s*number|ref(?:erence)?)\s*[:\-]?\s*([A-Z0-9_\-\/]+)/i, 'job_ref'],
+    [/parking\s+(?:is\s+|at\s+)?([^,;.]+)/i, 'parking'],
+  ];
+  for (const [re, field] of FIELD_PATTERNS) {
+    const mm = instruction.match(re);
+    if (mm && mm[1]) {
+      callsheet.shoot[field] = mm[1].trim();
+      notes.push(field.replace(/_/g, ' ') + ' → ' + callsheet.shoot[field]);
+      applied = true;
+    }
+  }
+
+  // Closed set toggle — explicit on/off
+  if (/closed\s*set\s*(?:on|true|yes)/i.test(instruction)) {
+    callsheet.shoot.closed_set = true; notes.push('Closed set → ON'); applied = true;
+  }
+  if (/closed\s*set\s*(?:off|false|no)|open\s*set/i.test(instruction)) {
+    callsheet.shoot.closed_set = false; notes.push('Closed set → OFF'); applied = true;
+  }
+
+  // Schedule — "schedule: <line>\n<line>\n..." appends; "set schedule to" replaces.
+  const setSchedMatch = instruction.match(/(?:set|reset)\s*schedule\s*(?:to|with|:|=)\s*([\s\S]+)$/i);
+  const addSchedMatch = !setSchedMatch && instruction.match(/(?:schedule|sched)\s*(?:add|:|=|\-)\s*([\s\S]+)$/i);
+  if (setSchedMatch) {
+    callsheet.shoot.schedule = setSchedMatch[1].trim();
+    notes.push('Schedule replaced');
+    applied = true;
+  } else if (addSchedMatch) {
+    const existing = (callsheet.shoot.schedule || '').trim();
+    callsheet.shoot.schedule = existing ? existing + '\n' + addSchedMatch[1].trim() : addSchedMatch[1].trim();
+    notes.push('Schedule line added');
+    applied = true;
+  }
+
+  // Production contact 1 / 2 — "contact 1: Maria Domican / +44 7983 604708"
+  const contactMatch = instruction.match(/contact\s*(\d)\s*[:\-]\s*([^\/]+)\s*\/\s*([+\d\s\-]+)/i);
+  if (contactMatch) {
+    const idx = contactMatch[1] === '2' ? 2 : 1;
+    callsheet.shoot['contact_' + idx + '_name'] = contactMatch[2].trim();
+    callsheet.shoot['contact_' + idx + '_phone'] = contactMatch[3].trim();
+    notes.push(`Contact ${idx} → ${contactMatch[2].trim()}`);
     applied = true;
   }
 

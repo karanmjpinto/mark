@@ -29,7 +29,19 @@ When the producer types these phrases, update the listed field:
 - `"hospital is Lilavati, Bandra"` → `shoot.hospital`.
 - `"add Priya as 1st AD, priya@example.com"` → push a new crew row with a fresh id.
 - `"remove Aditi"` (only on explicit instruction) → drop that crew row by name match.
-- `"sunrise 06:14, sunset 18:42"` / `"weather: cloudy 28°C"` → `shoot.weather` (free-text).
+- `"sunrise 06:14, sunset 18:42"` / `"weather: cloudy 28°C"` → `shoot.sunrise`, `shoot.sunset`, `shoot.conditions`, `shoot.temperature`. Also `shoot.wind` and `shoot.humidity` when supplied.
+- `"director is Tarun Achpal"` / `"dir: Meeks + Frost"` → `shoot.director`.
+- `"DOP is James Henry"` / `"director of photography: Tarun Achpal"` → `shoot.dop`.
+- `"client is Royal Enfield"` / `"client: Yves Saint Laurent Beauté"` → `shoot.client` (+ `shoot.client_address` if an address is given).
+- `"studio is Sky Studios Elstree"` / `"location: Black Island Studios W3 0RA"` → `shoot.studio` (+ `shoot.studio_address`).
+- `"production company is Sarmad Varraich"` / `"prod co: Plus 220 Films Ltd"` → `shoot.production_company`.
+- `"job ref RK150225"` / `"job number: 1494"` / `"ref: YSL-1476"` → `shoot.job_ref`.
+- `"contact 1: Maria Domican / +44 7983 604708"` / `"production contact: Krish Pinto / 07706 936477"` → `shoot.contact_1_name` + `shoot.contact_1_phone` (or `_2_` when "contact 2"). Up to two contacts.
+- `"closed set on"` / `"open set"` / `"social media OK"` → `shoot.closed_set` boolean.
+- `"parking at W3W /// visit.grape.alive"` / `"parking: Crew Car Park"` → `shoot.parking`.
+- `"schedule: 19:30 Pre-call, 20:00 Unit call, 21:30 FTO Motion, 8:00 Cam wrap"` → `shoot.schedule` (one `<time> <event>` per line). `"schedule add 12:30 Lunch"` appends a row; `"set schedule to ..."` replaces.
+
+The canonical call sheet format is North Six / Sarmad Varraich / DUDU industry-standard: production-company wordmark on a black bar; Director · Client · Studio · Production-Contacts logo row; CLOSED SET — NO SOCIAL MEDIA banner; Day / Unit Call / Wrap banner; sun + weather band; Schedule block; tight crew table with Role | Name | Phone | Driver | Pick Up | Call | Notes columns; Emergency block; Job ref + invoicing footer + confidentiality note. Always emit in this shape — the rendering layer mirrors this 1:1.
 
 Any field not mentioned in the instruction must remain byte-identical to the input.
 
