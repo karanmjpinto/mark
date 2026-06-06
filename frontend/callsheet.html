@@ -223,7 +223,9 @@ input[type=file]{display:none;}
 /* CREW TABLE */
 .crew-table{
   background:var(--paper);border:1px solid var(--rule);overflow:hidden;
+  transition:box-shadow 0.2s,outline-color 0.2s;outline:2px solid transparent;outline-offset:3px;
 }
+.crew-table.drag-active{outline-color:var(--ink);box-shadow:0 0 0 4px var(--paper-deep);}
 .crew-row{
   display:grid;grid-template-columns:1.4fr 1.2fr 1.4fr 1.4fr 1fr 32px;gap:1px;
   background:var(--rule);border-bottom:1px solid var(--rule);
@@ -830,7 +832,9 @@ input[type=file]{display:none;}
           <input type="file" id="crew-csv" accept=".csv,.xlsx,.xls,.docx,.doc" style="display:none;" onchange="handleCrewCsv(this.files[0])"/>
         </div>
       </div>
-      <div class="crew-table" id="crew-table">
+      <div id="crew-drop-hint" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-bottom:8px;">Or drag &amp; drop a CSV / Excel file anywhere on the table below.</div>
+      <div class="crew-table" id="crew-table"
+           ondragover="crewDragOver(event)" ondragleave="crewDragLeave(event)" ondrop="crewDrop(event)">
         <div class="crew-row crew-hdr">
           <div>Name *</div><div>Role *</div><div>Department</div><div>Email *</div><div>Phone</div><div></div>
         </div>
@@ -1450,6 +1454,14 @@ function ingestCrewRows(rows, fileName){
   if (added) showStep1Toast(`Imported ${added} crew member${added===1?'':'s'} from ${fileName}`);
   else showStep1Toast(`No rows found in ${fileName}. Use columns: Name, Role, Department, Email, Phone.`, true);
   refreshStep1Gate();
+}
+function crewDragOver(e){ e.preventDefault(); document.getElementById('crew-table').classList.add('drag-active'); }
+function crewDragLeave(e){ if (e.target.id === 'crew-table') document.getElementById('crew-table').classList.remove('drag-active'); }
+function crewDrop(e){
+  e.preventDefault();
+  document.getElementById('crew-table').classList.remove('drag-active');
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) handleCrewCsv(f);
 }
 function handleCrewCsv(file){
   if (!file) return;
