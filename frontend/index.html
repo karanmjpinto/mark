@@ -53,14 +53,14 @@
   --ease-soft:cubic-bezier(.4,0,.2,1);
 }
 
-html{scroll-behavior:smooth;}
+html{scroll-behavior:smooth;overflow-x:clip;}
 body{
   background:var(--paper);
   color:var(--ink);
   font-family:'Inter',-apple-system,sans-serif;
   font-size:16px;
   font-feature-settings:"ss01","cv11";
-  overflow-x:hidden;
+  overflow-x:clip;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
 
@@ -89,7 +89,7 @@ body::after{
 nav{
   position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 40px;
   display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid transparent;transition:all 0.3s var(--ease-out);
+  border-bottom:1px solid transparent;transition:background-color 0.3s var(--ease-out),border-color 0.3s var(--ease-out),backdrop-filter 0.3s var(--ease-out);
 }
 nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .nav-logo{

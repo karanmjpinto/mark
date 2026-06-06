@@ -37,11 +37,11 @@
   --ease-out:cubic-bezier(.16,1,.3,1);
   --ease-soft:cubic-bezier(.4,0,.2,1);
 }
-html{scroll-behavior:smooth;}
+html{scroll-behavior:smooth;overflow-x:clip;}
 body{
   background:var(--paper);color:var(--ink);
   font-family:'Inter',-apple-system,sans-serif;font-size:16px;
-  font-feature-settings:"ss01","cv11";min-height:100vh;
+  font-feature-settings:"ss01","cv11";min-height:100vh;overflow-x:clip;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
 body::after{
@@ -102,7 +102,7 @@ body::after{
 .si-num{
   width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:10px;font-weight:600;flex-shrink:0;font-family:'Fraunces',serif;font-style:italic;
-  transition:all 0.3s var(--ease-out);
+  transition:background-color 0.3s var(--ease-out),border-color 0.3s var(--ease-out),color 0.3s var(--ease-out);
 }
 .si-item.active .si-num{background:var(--ink);color:var(--paper);}
 .si-item.done .si-num{background:transparent;color:var(--ink);border:1px solid var(--ink);}
@@ -157,7 +157,7 @@ label.field-label{
 .btn-sm{
   padding:8px 14px;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
   cursor:pointer;border:1px solid var(--rule-strong);font-family:'Inter',sans-serif;
-  background:transparent;color:var(--ink-soft);transition:all 0.2s;
+  background:transparent;color:var(--ink-soft);transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .btn-sm:hover{border-color:var(--ink);color:var(--ink);background:var(--paper);}
 .btn-sm-accent{background:var(--ink);color:var(--paper);border-color:var(--ink);}
@@ -168,7 +168,7 @@ label.field-label{
 .mode-tab{
   padding:10px 18px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;
   text-transform:uppercase;color:var(--muted);background:transparent;border:none;cursor:pointer;
-  border-bottom:2px solid transparent;transition:all 0.2s;
+  border-bottom:2px solid transparent;transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .mode-tab:hover{color:var(--ink-soft);}
 .mode-tab.active{color:var(--ink);border-bottom-color:var(--accent);}
@@ -251,7 +251,7 @@ input[type=file]{display:none;}
   display:inline-flex;align-items:center;gap:8px;margin-top:12px;
   padding:8px 14px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;
   background:transparent;border:1px solid var(--rule-strong);color:var(--ink-soft);cursor:pointer;
-  text-transform:uppercase;transition:all 0.2s;
+  text-transform:uppercase;transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .crew-add-btn:hover{border-color:var(--ink);color:var(--ink);}
 
@@ -570,7 +570,7 @@ input[type=file]{display:none;}
 .chat-chip{
   font-size:11px;padding:6px 12px;background:var(--paper);border:1px solid var(--rule-strong);
   cursor:pointer;color:var(--ink-soft);font-family:'Inter',sans-serif;
-  transition:all 0.2s;
+  transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .chat-chip:hover{border-color:var(--ink);color:var(--ink);}
 .chat-input-row{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--rule);background:var(--paper);}
@@ -592,7 +592,7 @@ input[type=file]{display:none;}
 .channel-toggle{
   display:flex;align-items:center;justify-content:space-between;gap:14px;
   padding:18px 20px;background:var(--paper);border:1px solid var(--rule);
-  margin-bottom:10px;cursor:pointer;transition:all 0.2s;
+  margin-bottom:10px;cursor:pointer;transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .channel-toggle:hover{border-color:var(--rule-strong);}
 .channel-toggle.sel{border-color:var(--ink);background:var(--paper-deep);}
@@ -611,7 +611,7 @@ input[type=file]{display:none;}
 .channel-toggle .channel-check{
   width:22px;height:22px;border:2px solid var(--rule-strong);border-radius:4px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  font-size:13px;font-weight:700;color:transparent;transition:all 0.2s;
+  font-size:13px;font-weight:700;color:transparent;transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .channel-toggle.sel .channel-check{background:var(--ink);border-color:var(--ink);color:var(--paper);}
 
@@ -636,7 +636,7 @@ input[type=file]{display:none;}
 .next-day-actions button{
   background:transparent;color:var(--paper);border:1px solid rgba(245,241,232,0.4);
   padding:9px 16px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;
-  text-transform:uppercase;cursor:pointer;transition:all 0.2s;
+  text-transform:uppercase;cursor:pointer;transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .next-day-actions button:hover{border-color:var(--paper);background:rgba(245,241,232,0.08);}
 .next-day-actions button.primary{background:var(--accent);border-color:var(--accent);}
@@ -687,6 +687,9 @@ input[type=file]{display:none;}
 
 @media (max-width:768px){
   #app{padding:24px 16px 60px;}
+  /* iOS Safari zooms in on focus when an input's font-size is < 16px. Pin
+     all form controls to 16px on small screens to keep focus stable. */
+  textarea, input, select, .chat-input-row input, .crew-cell input, .crew-cell select{font-size:16px;}
   .step-indicator{padding:10px 12px;overflow-x:auto;}
   .si-label{display:none;}
   .si-line{min-width:12px;margin:0 8px;}
@@ -738,9 +741,63 @@ input[type=file]{display:none;}
     <p class="hero-sub">Mark builds your call sheet from a brief and a crew list, lets you refine it in plain English, then sends it to your whole team. Input once, never again.</p>
   </div>
 
-  <!-- STEP 1: BRIEF + CREW -->
-  <div class="step active" id="step1">
+  <!-- STEP 0: TEMPLATE — upload your own, or use AskMark's standard format -->
+  <div class="step active" id="step0">
     <div class="step-indicator">
+      <div class="si-item active"><div class="si-num">0</div><div class="si-label">Template</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">3</div><div class="si-label">Preview</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">4</div><div class="si-label">Refine</div></div>
+      <div class="si-line"></div>
+      <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Send</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Start with your <em>template</em></div>
+      <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;">Each production team has its own call-sheet style. Upload your own template and Mark builds every call sheet in <strong>your</strong> format. No template? Mark uses its standard format. This is optional — you can skip straight ahead.</p>
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-tmode="standard" onclick="setTemplateMode('standard')">Use AskMark's standard format</button>
+        <button class="mode-tab" data-tmode="upload" onclick="setTemplateMode('upload')">Upload my own template</button>
+      </div>
+      <div class="mode-pane active" id="template-standard">
+        <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin:6px 2px;">Mark's standard format is the North Six / Sarmad Varraich industry-standard call sheet — clean, complete, and ready to send.</p>
+      </div>
+      <div class="mode-pane" id="template-upload">
+        <div class="upload-zone" id="template-upload-zone"
+             onclick="document.getElementById('template-file').click()"
+             ondragover="templateDragOver(event)" ondragleave="templateDragLeave(event)" ondrop="templateDrop(event)">
+          <input type="file" id="template-file" accept=".pdf,.docx,.doc,.xlsx,.xls,.txt,.html,.htm,.md" onchange="handleTemplateFile(this.files[0])"/>
+          <div id="template-upload-icon" style="margin-bottom:10px;">
+            <svg width="36" height="44" viewBox="0 0 40 48" fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4 L24 4 L36 16 L36 44 L4 44 Z"/>
+              <path d="M24 4 L24 16 L36 16"/>
+              <line x1="10" y1="24" x2="30" y2="24"/>
+              <line x1="10" y1="30" x2="30" y2="30"/>
+              <line x1="10" y1="36" x2="22" y2="36"/>
+            </svg>
+          </div>
+          <div id="template-upload-title" style="font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload your template</div>
+          <div id="template-upload-sub" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — PDF, DOCX, XLSX, TXT, HTML</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-red" id="step0-next" onclick="goTo('step1')"><span>Continue →</span></button>
+      <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;" id="step0-progress">Using AskMark's standard format</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: BRIEF + CREW -->
+  <div class="step" id="step1">
+    <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">0</div><div class="si-label">Template</div></div>
+      <div class="si-line"></div>
       <div class="si-item active"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
       <div class="si-line"></div>
       <div class="si-item inactive"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
@@ -854,6 +911,8 @@ input[type=file]{display:none;}
   <!-- STEP 2: SHOOT DETAILS -->
   <div class="step" id="step2">
     <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">0</div><div class="si-label">Template</div></div>
+      <div class="si-line"></div>
       <div class="si-item done"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
       <div class="si-line"></div>
       <div class="si-item active"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
@@ -999,6 +1058,8 @@ input[type=file]{display:none;}
   <!-- STEP 3: PREVIEW -->
   <div class="step" id="step3">
     <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">0</div><div class="si-label">Template</div></div>
+      <div class="si-line"></div>
       <div class="si-item done"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
       <div class="si-line"></div>
       <div class="si-item done"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
@@ -1034,6 +1095,8 @@ input[type=file]{display:none;}
   <!-- STEP 4: REFINE -->
   <div class="step" id="step4">
     <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">0</div><div class="si-label">Template</div></div>
+      <div class="si-line"></div>
       <div class="si-item done"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
       <div class="si-line"></div>
       <div class="si-item done"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
@@ -1079,6 +1142,8 @@ input[type=file]{display:none;}
   <!-- STEP 5: SEND -->
   <div class="step" id="step5">
     <div class="step-indicator">
+      <div class="si-item done"><div class="si-num">0</div><div class="si-label">Template</div></div>
+      <div class="si-line"></div>
       <div class="si-item done"><div class="si-num">1</div><div class="si-label">Brief &amp; Crew</div></div>
       <div class="si-line"></div>
       <div class="si-item done"><div class="si-num">2</div><div class="si-label">Shoot Details</div></div>
@@ -1255,6 +1320,19 @@ async function markFetch(path, opts = {}) {
 const DEPARTMENTS = ['Direction','Production','Camera','Lighting & Grip','Sound','Art Department','Costume & Makeup','Locations','Post Production','Cast','Other'];
 
 const callsheet = {
+  // ── TEMPLATE ──────────────────────────────────────────────────────────
+  // The producer's optional own call-sheet template. This drives the ONE
+  // branch that decides how the call sheet is formatted:
+  //   source === 'standard'  → Pre-existing format (AskMark's standard layout)
+  //   source === 'upload'    → Format of template uploaded (follow the user's)
+  // Uploading is never mandatory; 'standard' is the default.
+  template: {
+    source: 'standard',                       // 'standard' | 'upload'
+    file_name: '',                            // uploaded file name, for display
+    text: '',                                 // extracted text of the uploaded template
+    rendered_html: '',                        // call sheet rendered in the uploaded format (cached)
+    dirty: false,                             // true when rendered_html is stale and must regenerate
+  },
   brief: '',
   brief_source: 'type',                       // type | upload | demo
   production_type: '',                        // film | commercial | music
@@ -1370,6 +1448,78 @@ async function handleBriefFile(file){
   }
   callsheet.brief_source = 'upload';
   refreshStep1Gate();
+}
+
+// ── TEMPLATE (Step 0) ─────────────────────────────────────────────────────────
+// The producer picks one of two formats here. 'standard' is the default and
+// requires no input. 'upload' lets them bring their own template, which Mark
+// then follows for every call sheet.
+function setTemplateMode(mode){
+  document.querySelectorAll('#step0 .mode-tab').forEach(t => t.classList.toggle('active', t.dataset.tmode === mode));
+  document.getElementById('template-standard').classList.toggle('active', mode === 'standard');
+  document.getElementById('template-upload').classList.toggle('active', mode === 'upload');
+  if (mode === 'standard') {
+    // Switching back to standard clears the uploaded template entirely so the
+    // branch in renderCallSheet is unambiguous.
+    callsheet.template.source = 'standard';
+  } else if (callsheet.template.text) {
+    callsheet.template.source = 'upload';
+  }
+  refreshStep0Status();
+}
+function refreshStep0Status(){
+  const el = document.getElementById('step0-progress');
+  if (!el) return;
+  if (callsheet.template.source === 'upload' && callsheet.template.file_name) {
+    el.textContent = `Using your template · ${callsheet.template.file_name}`;
+  } else {
+    el.textContent = "Using AskMark's standard format";
+  }
+}
+function templateDragOver(e){ e.preventDefault(); document.getElementById('template-upload-zone').classList.add('drag-active'); }
+function templateDragLeave(e){ document.getElementById('template-upload-zone').classList.remove('drag-active'); }
+function templateDrop(e){
+  e.preventDefault();
+  document.getElementById('template-upload-zone').classList.remove('drag-active');
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) handleTemplateFile(f);
+}
+async function handleTemplateFile(file){
+  if (!file) return;
+  const title = document.getElementById('template-upload-title');
+  const sub = document.getElementById('template-upload-sub');
+  title.textContent = 'Reading…';
+  sub.textContent = file.name;
+
+  // Plain-text formats are read in the browser; binary formats (PDF/DOCX/XLSX)
+  // go to the backend /template/parse extractor.
+  let text = '';
+  try {
+    if (/\.(txt|md|html?|csv)$/i.test(file.name)) {
+      text = await file.text();
+    } else {
+      const fd = new FormData(); fd.append('file', file);
+      const data = await markFetch('/template/parse', { form: fd, timeoutMs: 90000 });
+      text = data.text || '';
+    }
+  } catch (e) {
+    title.textContent = 'Could not read template';
+    sub.textContent = (e.message || 'Try a PDF, DOCX, XLSX, TXT or HTML file.');
+    return;
+  }
+  if (!text.trim()) {
+    title.textContent = 'Template looked empty';
+    sub.textContent = 'No text found — try a different export of your template.';
+    return;
+  }
+  callsheet.template.source = 'upload';
+  callsheet.template.file_name = file.name;
+  callsheet.template.text = text;
+  callsheet.template.rendered_html = '';
+  callsheet.template.dirty = true;
+  title.textContent = `Loaded · ${file.name}`;
+  sub.textContent = `Mark will build your call sheet in this format · ${text.length.toLocaleString()} characters read`;
+  refreshStep0Status();
 }
 
 // ── CREW TABLE ────────────────────────────────────────────────────────────────
@@ -1621,7 +1771,7 @@ function finishStep2(){
 }
 
 // ── FLOW ──────────────────────────────────────────────────────────────────────
-const _backMap = { step1:null, step2:'step1', step3:'step2', step4:'step3', step5:'step4' };
+const _backMap = { step0:null, step1:'step0', step2:'step1', step3:'step2', step4:'step3', step5:'step4' };
 function goTo(id){
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1639,12 +1789,77 @@ function goBack(){
 }
 
 // ── CALL SHEET RENDERING (Step 3 + Step 4 preview) ────────────────────────────
+// THE format branch. Exactly two paths, kept deliberately explicit:
+//   • template.source === 'upload'  → Format of template uploaded
+//   • otherwise                     → Pre-existing format (AskMark standard)
 function renderCallSheet(){
-  const html = buildCallSheetHtml(callsheet);
+  if (callsheet.template.source === 'upload') renderUploadedTemplateCallSheet();
+  else                                        renderStandardCallSheet();
+}
+
+function _paintCallSheet(html){
   const a = document.getElementById('callsheet-render');
   const b = document.getElementById('callsheet-render-refine');
   if (a) a.innerHTML = html;
   if (b) b.innerHTML = html;
+}
+
+// Pre-existing format — AskMark's standard layout, built synchronously on the client.
+function renderStandardCallSheet(){
+  _paintCallSheet(buildCallSheetHtml(callsheet));
+}
+
+// Format of template uploaded — Mark reformats the call sheet to follow the
+// producer's own template. The reformat runs through the backend (AI), so we
+// paint the cached result immediately and regenerate in the background when stale.
+function renderUploadedTemplateCallSheet(){
+  const t = callsheet.template;
+  if (t.rendered_html && !t.dirty) { _paintCallSheet(t.rendered_html); return; }
+  _paintCallSheet(t.rendered_html || _templatePendingHtml());
+  regenerateTemplatedCallSheet();
+}
+
+function _templatePendingHtml(){
+  return `<div class="callsheet-doc" style="padding:48px;text-align:center;font-family:'DM Mono',monospace;">
+    <div style="font-size:13px;letter-spacing:0.08em;color:var(--muted);">Building your call sheet in <strong>${escHtml(callsheet.template.file_name || 'your uploaded')}</strong> format…</div>
+  </div>`;
+}
+
+// Calls the backend to render the call sheet in the uploaded template's format.
+// Falls back to the standard format (with a notice) if the render is unavailable,
+// so the producer is never left without a call sheet.
+let _templateRenderInFlight = false;
+async function regenerateTemplatedCallSheet(){
+  const t = callsheet.template;
+  if (t.source !== 'upload' || !t.text) return;
+  if (_templateRenderInFlight) return;
+  _templateRenderInFlight = true;
+  try {
+    const data = await markFetch('/callsheet/render-template', {
+      json: { callsheet, template_text: t.text },
+      timeoutMs: 120000,
+    });
+    if (data && data.html) {
+      t.rendered_html = data.html;
+      t.dirty = false;
+      _paintCallSheet(t.rendered_html);
+    }
+  } catch (e) {
+    // Graceful fallback — keep the producer moving on the standard format.
+    const note = `<div class="success-msg error-msg" style="margin-bottom:14px;">Couldn't build in your template format right now — showing AskMark's standard format instead. ${escHtml(e.message || '')}</div>`;
+    _paintCallSheet(note + buildCallSheetHtml(callsheet));
+  } finally {
+    _templateRenderInFlight = false;
+  }
+}
+
+// The call sheet HTML currently in effect — used by the Word / PDF exports so
+// downloads match whichever format the producer is viewing.
+function activeCallSheetHtml(){
+  if (callsheet.template.source === 'upload' && callsheet.template.rendered_html) {
+    return callsheet.template.rendered_html;
+  }
+  return buildCallSheetHtml(callsheet);
 }
 
 // ── EXPORTS — Word (.doc) + Excel (.xls), client-side, no backend ──────────────
@@ -1672,7 +1887,9 @@ async function generateCallSheetPdfBase64(){
   // affected by surrounding layout / the print-only ::after watermark.
   renderCallSheet();
   const source = document.getElementById('callsheet-render');
-  const node = source && source.querySelector('.callsheet-doc');
+  // Uploaded templates may not use the .callsheet-doc wrapper — fall back to
+  // the first rendered element so PDF export works for any format.
+  const node = source && (source.querySelector('.callsheet-doc') || source.firstElementChild);
   if (!node) return null;
   const clone = node.cloneNode(true);
   clone.style.boxShadow = 'none';
@@ -1698,7 +1915,7 @@ async function generateCallSheetPdfBase64(){
 // Google Docs / Pages as a fully editable document.
 function downloadWord(){
   const css = (document.querySelector('style') || {}).innerHTML || '';
-  const body = buildCallSheetHtml(callsheet);
+  const body = activeCallSheetHtml();
   const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>${css}\nbody::after{display:none !important;}</style></head><body style="background:#fff;">${body}</body></html>`;
   _downloadBlob('\ufeff' + html, _exportName('doc'), 'application/msword');
 }
@@ -2200,9 +2417,12 @@ async function sendChat(){
     if (!data.callsheet || !data.callsheet.shoot) {
       throw new Error('Unexpected response shape');
     }
-    // Merge the agent's revisions into our state.
+    // Merge the agent's revisions into our state. The agent never returns the
+    // template object, so Object.assign leaves it intact.
     Object.assign(callsheet, data.callsheet);
     callsheet.revisions.unshift({ instruction: text, notes: data.revision_notes || [], ts: new Date().toISOString() });
+    // The data changed — any cached uploaded-format render is now stale.
+    if (callsheet.template.source === 'upload') callsheet.template.dirty = true;
     renderCallSheet();
     const summary = (data.revision_notes && data.revision_notes.length)
       ? data.revision_notes.join(' · ')

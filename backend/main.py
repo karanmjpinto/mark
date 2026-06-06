@@ -213,6 +213,11 @@ class CallSheetSave(BaseModel):
     callsheet: dict
     project_id: Optional[str] = None
 
+class CallSheetRenderTemplate(BaseModel):
+    # Render the call sheet in the producer's own uploaded template format.
+    callsheet: dict
+    template_text: str
+
 class CallSheetSend(BaseModel):
     callsheet: dict
     channels: list  # ["email", "whatsapp"]
@@ -646,6 +651,86 @@ async def parse_script(file: UploadFile = File(...), _=Depends(require_api_key))
         "extracted_text": extracted_text,
     }
 
+# ── TEMPLATE PARSING ──────────────────────────────────────────────────────────
+# Extracts the plain text of a producer's uploaded call-sheet template so the
+# render-callsheet-template agent can mimic its layout. Uses only stdlib + the
+# already-installed screenplay parser — no new dependencies. The goal is a
+# faithful-enough textual skeleton of the template (section names, field labels,
+# table headers, ordering), not pixel-perfect layout.
+_MAX_TEMPLATE_BYTES = int(os.getenv("MAX_TEMPLATE_BYTES", str(15 * 1024 * 1024)))  # 15MB
+
+def _strip_xml_tags(xml: str) -> str:
+    import re
+    # Turn block/paragraph/row/cell/tab boundaries into whitespace so words and
+    # cell values don't fuse. Covers Word (w:p/w:tr/w:tc), HTML (tr/td) and
+    # spreadsheet (row/c) element boundaries.
+    xml = re.sub(r"</w:p>|</a:p>|<w:br/?>|</w:tr>|</tr>|</row>", "\n", xml)
+    xml = re.sub(r"<w:tab/?>|</w:tc>|</td>|</c>", "\t", xml)
+    text = re.sub(r"<[^>]+>", "", xml)
+    text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&#160;", " ")
+    lines = [ln.strip() for ln in text.splitlines()]
+    return "\n".join(ln for ln in lines if ln)
+
+def _extract_docx_text(raw: bytes) -> str:
+    import zipfile
+    with zipfile.ZipFile(io.BytesIO(raw)) as z:
+        with z.open("word/document.xml") as f:
+            return _strip_xml_tags(f.read().decode("utf-8", "ignore"))
+
+def _extract_xlsx_text(raw: bytes) -> str:
+    import zipfile, re
+    with zipfile.ZipFile(io.BytesIO(raw)) as z:
+        names = z.namelist()
+        shared = []
+        if "xl/sharedStrings.xml" in names:
+            with z.open("xl/sharedStrings.xml") as f:
+                blob = f.read().decode("utf-8", "ignore")
+            shared = re.findall(r"<t[^>]*>(.*?)</t>", blob, flags=re.DOTALL)
+        sheets = sorted(n for n in names if re.match(r"xl/worksheets/sheet\d+\.xml$", n))
+        out = []
+        for s in sheets:
+            with z.open(s) as f:
+                out.append(_strip_xml_tags(f.read().decode("utf-8", "ignore")))
+        joined = "\n".join(out)
+        if shared:
+            joined += "\n" + "\n".join(t.strip() for t in shared if t.strip())
+        return joined
+
+def _extract_template_sync(filename: str, raw: bytes) -> str:
+    name = (filename or "").lower()
+    if name.endswith(".pdf"):
+        _, text = _parse_pdf_sync(raw)
+        return text
+    if name.endswith(".docx"):
+        return _extract_docx_text(raw)
+    if name.endswith((".xlsx", ".xlsm")):
+        return _extract_xlsx_text(raw)
+    if name.endswith((".html", ".htm")):
+        return _strip_xml_tags(raw.decode("utf-8", "ignore"))
+    # txt, md, csv, and anything else: treat as text.
+    return raw.decode("utf-8", "ignore")
+
+@app.post("/template/parse")
+async def parse_template(file: UploadFile = File(...), _=Depends(require_api_key)):
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "Empty file")
+    if len(raw) > _MAX_TEMPLATE_BYTES:
+        raise HTTPException(413, f"Template too large (max {_MAX_TEMPLATE_BYTES // 1024 // 1024} MB)")
+    name = (file.filename or "").lower()
+    if name.endswith((".doc",)) and not name.endswith(".docx"):
+        raise HTTPException(422, "Legacy .doc isn't supported — please save as .docx, PDF or another format.")
+    try:
+        text = await run_in_threadpool(_extract_template_sync, file.filename or "", raw)
+    except ImportError:
+        raise HTTPException(500, "PDF parser not installed on server")
+    except Exception as e:
+        raise HTTPException(422, f"Could not read template: {e}")
+    text = (text or "").strip()
+    if not text:
+        raise HTTPException(422, "No text found in the template")
+    return {"success": True, "filename": file.filename, "text": text, "chars": len(text)}
+
 # ── FLUE AGENT PROXY ──────────────────────────────────────────────────────────
 # Forwards questionnaire answers + project context to the Flue sidecar so the
 # agent can produce a typed budget. Set FLUE_BASE_URL to the running Flue server
@@ -1065,6 +1150,28 @@ async def refine_callsheet(data: CallSheetRefine, _=Depends(require_api_key)):
         "callsheet": agent_result.get("callsheet", data.callsheet),
         "revision_notes": agent_result.get("revision_notes", []),
         "source": "flue:refine-callsheet",
+    }
+
+@app.post("/callsheet/render-template")
+async def render_callsheet_template(data: CallSheetRenderTemplate, _=Depends(require_api_key)):
+    """Render the call sheet in the producer's own uploaded template format via
+    the render-callsheet-template Flue agent. Returns a self-contained HTML
+    document the frontend drops straight into the preview. The frontend falls
+    back to the standard format if this fails."""
+    if not (data.template_text or "").strip():
+        raise HTTPException(400, "template_text is required")
+    if not data.callsheet:
+        raise HTTPException(400, "callsheet is required")
+
+    payload = {"callsheet": data.callsheet, "template_text": data.template_text}
+    run_id = str(uuid.uuid4())
+    agent_result = await _flue_call("render-callsheet-template", run_id, payload)
+    if isinstance(agent_result, dict) and set(agent_result.keys()) == {"result"}:
+        agent_result = agent_result["result"]
+    return {
+        "success": True,
+        "html": agent_result.get("html", ""),
+        "source": "flue:render-callsheet-template",
     }
 
 @app.post("/callsheet/save")
