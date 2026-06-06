@@ -15,6 +15,7 @@ import uuid
 import json
 import os
 import io
+import base64
 import redis as redis_lib
 from datetime import datetime, timezone
 import httpx
@@ -216,6 +217,11 @@ class CallSheetSend(BaseModel):
     callsheet: dict
     channels: list  # ["email", "whatsapp"]
     project_id: Optional[str] = None
+    # Optional rendered call sheet PDF (base64, no data-URI prefix) generated
+    # client-side from the exact preview. When present it is attached to the
+    # email so crew get the full document, not just the HTML summary.
+    pdf_base64: Optional[str] = None
+    pdf_filename: Optional[str] = None
 
 class BudgetRefine(BaseModel):
     # Standalone flow: pass the budget JSON directly. Project flow: pass project_id.
@@ -1163,20 +1169,48 @@ async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
 
     results = []  # per-recipient log
 
+    # Decode the rendered call sheet PDF once (if the client sent one) so we can
+    # attach it to every email without re-decoding per recipient.
+    pdf_bytes = None
+    pdf_name = (data.pdf_filename or "call-sheet.pdf").strip() or "call-sheet.pdf"
+    if not pdf_name.lower().endswith(".pdf"):
+        pdf_name += ".pdf"
+    if data.pdf_base64:
+        try:
+            b64 = data.pdf_base64.split(",", 1)[-1]  # tolerate a data-URI prefix
+            pdf_bytes = base64.b64decode(b64)
+        except Exception:
+            pdf_bytes = None
+
     async def _send_email(recipient: dict, account_id: str):
         addr = (recipient.get("email") or "").strip()
         if not addr:
             return {"channel": "email", "name": recipient.get("name"), "ok": False, "error": "no email on record"}
-        payload = {
-            "account_id": account_id,
-            "to": [{"display_name": recipient.get("name") or addr, "identifier": addr}],
-            "subject": f"Call Sheet — Day {(cs.get('shoot') or {}).get('day_number') or '—'} · {(cs.get('shoot') or {}).get('date') or ''}".strip(),
-            "body": _render_callsheet_html(cs, recipient),
-            "is_html": True,
-        }
-        r = await _unipile_request("POST", "/api/v1/emails", json_body=payload, timeout=45)
+        subject = f"Call Sheet — Day {(cs.get('shoot') or {}).get('day_number') or '—'} · {(cs.get('shoot') or {}).get('date') or ''}".strip()
+        body_html = _render_callsheet_html(cs, recipient)
+        if pdf_bytes:
+            # Attachments require multipart/form-data. `to` is a JSON-encoded
+            # array of recipients; `is_html` is passed as a string flag.
+            form = {
+                "account_id": account_id,
+                "to": json.dumps([{"display_name": recipient.get("name") or addr, "identifier": addr}]),
+                "subject": subject,
+                "body": body_html,
+                "is_html": "true",
+            }
+            files = [("attachments", (pdf_name, pdf_bytes, "application/pdf"))]
+            r = await _unipile_request("POST", "/api/v1/emails", data=form, files=files, timeout=60)
+        else:
+            payload = {
+                "account_id": account_id,
+                "to": [{"display_name": recipient.get("name") or addr, "identifier": addr}],
+                "subject": subject,
+                "body": body_html,
+                "is_html": True,
+            }
+            r = await _unipile_request("POST", "/api/v1/emails", json_body=payload, timeout=45)
         if r.is_success:
-            return {"channel": "email", "name": recipient.get("name"), "ok": True, "to": addr}
+            return {"channel": "email", "name": recipient.get("name"), "ok": True, "to": addr, "attached": bool(pdf_bytes)}
         return {"channel": "email", "name": recipient.get("name"), "ok": False, "to": addr, "error": (r.text or '')[:300], "status": r.status_code}
 
     async def _send_chat(recipient: dict, account_id: str, channel: str, identifier_field: str):

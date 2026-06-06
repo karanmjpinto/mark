@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 /* Hallmark · pre-emit critique: P5 H4 E5 S5 R4 V5
  * macrostructure: Long-Document + Slate · tone: production-floor editorial
@@ -1662,6 +1663,37 @@ function _exportName(ext){
   const day = callsheet.shoot.day_number ? '-day-' + String(callsheet.shoot.day_number).replace(/\s+/g,'') : '';
   return base + day + '.' + ext;
 }
+// PDF — renders the exact call sheet document (same node the producer sees and
+// downloads) into a real PDF and returns its base64 so it can be attached to
+// the send email. Resolves to null if the library hasn't loaded.
+async function generateCallSheetPdfBase64(){
+  if (typeof html2pdf === 'undefined') return null;
+  // Build a clean, isolated copy of the rendered call sheet so the PDF isn't
+  // affected by surrounding layout / the print-only ::after watermark.
+  renderCallSheet();
+  const source = document.getElementById('callsheet-render');
+  const node = source && source.querySelector('.callsheet-doc');
+  if (!node) return null;
+  const clone = node.cloneNode(true);
+  clone.style.boxShadow = 'none';
+  clone.style.margin = '0';
+  clone.style.maxWidth = 'none';
+  const opt = {
+    margin: [8, 8, 8, 8],
+    filename: _exportName('pdf'),
+    image: { type: 'jpeg', quality: 0.96 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['css', 'legacy'] },
+  };
+  try {
+    const dataUri = await html2pdf().set(opt).from(clone).outputPdf('datauristring');
+    return { base64: dataUri.split(',', 2)[1] || dataUri, filename: _exportName('pdf') };
+  } catch (e) {
+    console.warn('PDF generation failed:', e && e.message);
+    return null;
+  }
+}
 // Word — the rendered call sheet wrapped with the page CSS. Opens in Word /
 // Google Docs / Pages as a fully editable document.
 function downloadWord(){
@@ -2290,10 +2322,21 @@ async function sendCallSheet(){
   errEl.style.display = okEl.style.display = 'none';
   document.getElementById('send-btn').classList.add('disabled');
   try {
+    // Attach the final rendered call sheet as a PDF when email is a channel.
+    let pdf = null;
+    if (callsheet.send.channels.includes('email')) {
+      const btn = document.getElementById('send-btn');
+      const prev = btn.textContent;
+      btn.textContent = 'Preparing PDF…';
+      pdf = await generateCallSheetPdfBase64();
+      btn.textContent = prev;
+    }
     const data = await markFetch('/callsheet/send', {
       json: {
         callsheet,
         channels: callsheet.send.channels,
+        pdf_base64: pdf ? pdf.base64 : null,
+        pdf_filename: pdf ? pdf.filename : null,
       },
       timeoutMs: 120000,
     });
