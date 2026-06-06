@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* Hallmark · pre-emit critique: P5 H4 E5 S5 R4 V5
  * macrostructure: Long-Document + Slate · tone: production-floor editorial
@@ -192,6 +193,23 @@ label.field-label{
 }
 .demo-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.06em;margin-top:2px;}
 
+/* PRODUCTION TYPE SELECTOR — chosen first */
+.prod-type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+@media (max-width:680px){.prod-type-grid{grid-template-columns:1fr;}}
+.prod-type-btn{
+  display:flex;align-items:center;gap:14px;padding:16px 18px;
+  background:var(--paper);border:1px solid var(--rule);color:var(--ink);
+  font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;text-align:left;
+  transition:border-color 0.2s,transform 0.3s var(--ease-out),box-shadow 0.3s;
+}
+.prod-type-btn:hover{border-color:var(--ink);transform:translateY(-1px);box-shadow:0 2px 12px var(--paper-shadow);}
+.prod-type-btn.sel{border-color:var(--accent);background:var(--paper-deep);box-shadow:0 2px 12px var(--paper-shadow);}
+.prod-type-num{
+  font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:24px;
+  color:var(--accent);line-height:1;flex-shrink:0;letter-spacing:-0.01em;
+}
+.prod-type-name{font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);}
+
 /* UPLOAD ZONE */
 .upload-zone{
   border:1px dashed var(--rule-strong);background:var(--paper);padding:36px 24px;
@@ -372,6 +390,49 @@ input[type=file]{display:none;}
 @media (max-width:680px){
   .cs-sun-band{grid-template-columns:repeat(3, 1fr);}
   .cs-sun-cell{border-bottom:1px solid rgba(20,17,13,0.18);}
+}
+
+/* WEATHER BOX — compact box in the top-right corner of the sheet, instead
+   of a full-width row. Sits over the masthead area. */
+.cs-weather-box{
+  position:absolute;top:8px;right:10px;z-index:3;
+  width:188px;background:#fff;border:1px solid #14110D;
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;color:#14110D;
+  box-shadow:0 2px 8px rgba(20,17,13,0.10);
+}
+.cs-weather-box .cs-wx-title{
+  background:#14110D;color:#fff;text-align:center;font-weight:700;
+  font-size:9px;letter-spacing:0.16em;text-transform:uppercase;padding:5px 6px;
+}
+.cs-weather-box .cs-wx-body{display:grid;grid-template-columns:1fr 1fr;gap:1px 0;padding:6px 8px;}
+.cs-weather-box .cs-wx-cell{display:flex;flex-direction:column;padding:3px 2px;}
+.cs-weather-box .cs-wx-cell.full{grid-column:1/-1;}
+.cs-weather-box .cs-wx-key{font-size:7.5px;letter-spacing:0.10em;text-transform:uppercase;color:#3A352D;font-weight:600;}
+.cs-weather-box .cs-wx-val{font-size:11.5px;font-weight:700;color:#14110D;letter-spacing:0.02em;}
+@media (max-width:560px){
+  .cs-weather-box{position:static;width:auto;margin:0 0 -1px;border-left:none;border-right:none;}
+}
+
+/* SPECIAL CAST & CREW — Label / MGMT / Client team / Investors. Black
+   banner + centred rows, matching the real call-sheet evidence. */
+.cs-special-banner{
+  background:#14110D;color:#fff;text-align:center;
+  padding:7px 14px;font-weight:700;font-size:11px;letter-spacing:0.16em;
+  text-transform:uppercase;border-top:1px solid #14110D;
+}
+.cs-special-rows{padding:8px 22px;border-bottom:1px solid #14110D;text-align:center;}
+.cs-special-rows .cs-special-row{
+  font-size:11.5px;color:#14110D;padding:3px 0;line-height:1.5;
+  border-bottom:1px dotted rgba(20,17,13,0.18);
+}
+.cs-special-rows .cs-special-row:last-child{border-bottom:none;}
+
+/* SHOOT NAME — sits above the production company wordmark in the black bar */
+.cs-shoot-name{
+  background:#14110D;color:#fff;text-align:center;
+  padding:10px 14px 0;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:13px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;
+  color:#FFC940;
 }
 
 /* ════════════════════════════════════════════════════════════════════════
@@ -688,16 +749,37 @@ input[type=file]{display:none;}
       <div class="si-item inactive"><div class="si-num">5</div><div class="si-label">Send</div></div>
     </div>
 
+    <!-- PRODUCTION TYPE — chosen first, before anything else -->
+    <div class="panel">
+      <div class="panel-title">Choose your <em>production type</em></div>
+      <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;">Pick one — Mark tailors the call sheet to the kind of production you're running.</p>
+      <div class="prod-type-grid">
+        <button class="prod-type-btn" data-ptype="film" onclick="setProductionType('film')">
+          <span class="prod-type-num">01</span>
+          <span><div class="prod-type-name">Film</div><div class="demo-meta">Narrative · cast &amp; large crew</div></span>
+        </button>
+        <button class="prod-type-btn" data-ptype="commercial" onclick="setProductionType('commercial')">
+          <span class="prod-type-num">02</span>
+          <span><div class="prod-type-name">Commercial</div><div class="demo-meta">Client &amp; agency on set</div></span>
+        </button>
+        <button class="prod-type-btn" data-ptype="music" onclick="setProductionType('music')">
+          <span class="prod-type-num">03</span>
+          <span><div class="prod-type-name">Music Video</div><div class="demo-meta">Artist · label &amp; management</div></span>
+        </button>
+      </div>
+    </div>
+
     <!-- BRIEF -->
     <div class="panel">
-      <div class="panel-title">Production <em>brief</em></div>
+      <div class="panel-title">Add your <em>brief</em></div>
+      <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;">Choose <strong>one</strong> of these three — you don't need all of them. Type your own brief, upload your script, or use a demo to explore.</p>
       <div class="mode-tabs">
-        <button class="mode-tab active" data-mode="type" onclick="setBriefMode('type')">Type brief</button>
-        <button class="mode-tab" data-mode="upload" onclick="setBriefMode('upload')">Upload script</button>
-        <button class="mode-tab" data-mode="demo" onclick="setBriefMode('demo')">Use demo</button>
+        <button class="mode-tab active" data-mode="type" onclick="setBriefMode('type')">Option 1 · Type your brief</button>
+        <button class="mode-tab" data-mode="upload" onclick="setBriefMode('upload')">Option 2 · Upload your script</button>
+        <button class="mode-tab" data-mode="demo" onclick="setBriefMode('demo')">Option 3 · Use a demo</button>
       </div>
       <div class="mode-pane active" id="brief-type">
-        <textarea id="brief-text" placeholder="e.g. Royal Enfield Bullet 650 commercial. Night shoot at Royal Albert Hall. Client: Royal Enfield India. Director: Tarun Achpal. Unit call 20:00, wrap 08:00."></textarea>
+        <textarea id="brief-text" placeholder="e.g. Bullet 650 commercial. Night shoot at Royal Albert Hall. Client: Royal Enfield India. Unit call 20:00, wrap 08:00."></textarea>
       </div>
       <div class="mode-pane" id="brief-upload">
         <div class="upload-zone" id="brief-upload-zone"
@@ -744,8 +826,8 @@ input[type=file]{display:none;}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div class="panel-title" style="margin-bottom:0;">Crew &amp; <em>cast</em></div>
         <div style="display:flex;gap:8px;">
-          <button class="btn-sm" onclick="document.getElementById('crew-csv').click()">Upload CSV</button>
-          <input type="file" id="crew-csv" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleCrewCsv(this.files[0])"/>
+          <button class="btn-sm" onclick="document.getElementById('crew-csv').click()">Upload CSV / Excel</button>
+          <input type="file" id="crew-csv" accept=".csv,.xlsx,.xls,.docx,.doc" style="display:none;" onchange="handleCrewCsv(this.files[0])"/>
         </div>
       </div>
       <div class="crew-table" id="crew-table">
@@ -783,6 +865,7 @@ input[type=file]{display:none;}
         <div>
           <label class="field-label">Shoot date *</label>
           <input type="date" id="shoot-date"/>
+          <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-top:4px;">Past dates are greyed out — you can't time-travel.</div>
         </div>
         <div>
           <label class="field-label">Shooting day *</label>
@@ -834,15 +917,19 @@ input[type=file]{display:none;}
          field left blank. -->
     <div class="panel">
       <div class="panel-title">Production <em>masthead</em> · the canonical call-sheet fields</div>
-      <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;">These are the fields that make the export read as a real call sheet. All optional — fill what you have, refine the rest in chat ("director is Tarun Achpal", "job ref RK150225").</p>
+      <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;">These are the fields that make the export read as a real call sheet. All optional — fill what you have, refine the rest in chat ("director is the named director", "set the job ref").</p>
       <div class="shoot-grid">
+        <div class="full">
+          <label class="field-label">Shoot name / Project *</label>
+          <input type="text" id="shoot-name" placeholder="e.g. Spring Campaign · Bullet 650 · 'Lila' Music Video"/>
+        </div>
         <div>
           <label class="field-label">Production company</label>
-          <input type="text" id="shoot-prod-co" placeholder="e.g. M·ARK · Sarmad Varraich · North Six"/>
+          <input type="text" id="shoot-prod-co" placeholder="e.g. your production company"/>
         </div>
         <div>
           <label class="field-label">Job ref</label>
-          <input type="text" id="shoot-job-ref" placeholder="e.g. RK150225 · 1494 · YSL-1476"/>
+          <input type="text" id="shoot-job-ref" placeholder="e.g. your job reference"/>
         </div>
         <div>
           <label class="field-label">Director</label>
@@ -876,9 +963,17 @@ input[type=file]{display:none;}
           <label class="field-label">Production contact 2</label>
           <input type="text" id="shoot-c2" placeholder="Name / phone"/>
         </div>
+        <div>
+          <label class="field-label">Special section title</label>
+          <input type="text" id="shoot-special-title" placeholder="e.g. Label / MGMT · Client team · Investors"/>
+        </div>
+        <div>
+          <label class="field-label">Special cast &amp; crew · one per line</label>
+          <textarea id="shoot-special" placeholder="Olly Rice — Promised Land&#10;Daisy — Management&#10;Patrick — Management" style="min-height:70px;"></textarea>
+        </div>
         <div class="full">
-          <label class="field-label">Schedule · one line per event, format <code style="font-family:'DM Mono',monospace;">HH:MM Event</code></label>
-          <textarea id="shoot-schedule" placeholder="06:00  Catering call&#10;07:00  Crew arrival&#10;07:30  Camera ready&#10;08:00  First shot&#10;12:30  Lunch&#10;19:00  Wrap" style="min-height:130px;font-family:'DM Mono',monospace;font-size:12px;"></textarea>
+          <label class="field-label">Schedule · one line per event, format <code style="font-family:'DM Mono',monospace;">HH:MM Event</code> — pre-filled, just edit the text</label>
+          <textarea id="shoot-schedule" placeholder="06:00  Catering call&#10;07:00  Crew arrival&#10;07:30  Camera ready&#10;08:00  First shot&#10;12:30  Lunch&#10;19:00  Wrap" style="min-height:160px;font-family:'DM Mono',monospace;font-size:12px;"></textarea>
         </div>
         <div class="full">
           <label class="field-label" style="display:flex;align-items:center;gap:10px;">
@@ -917,6 +1012,8 @@ input[type=file]{display:none;}
       </div>
       <div class="action-btns" style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-sm" onclick="gateAction('export', () => window.print())">Download PDF</button>
+        <button class="btn-sm" onclick="gateAction('export', downloadWord)">Download Word</button>
+        <button class="btn-sm" onclick="gateAction('export', downloadExcel)">Download Excel</button>
         <button class="btn-sm btn-sm-accent" onclick="goTo('step4')">Refine with Mark →</button>
       </div>
     </div>
@@ -1155,10 +1252,13 @@ const DEPARTMENTS = ['Direction','Production','Camera','Lighting & Grip','Sound'
 const callsheet = {
   brief: '',
   brief_source: 'type',                       // type | upload | demo
+  production_type: '',                        // film | commercial | music
   parsed_summary: null,
   project_title: '',                          // set from brief context, used in header
   crew: [],                                   // [{ id, name, role, department, email, phone }]
   shoot: {
+    shoot_name: '',                           // project / shoot name — shows above the company in the masthead
+    special_title: '', special_members: '',   // special cast & crew (label / client team / investors)
     date: '', day_number: '', unit_call: '', wrap_time: '',
     scenes: '', locations: '', hospital: '', police: '',
     weather: '', production_notes: '', invoice_address: '',
@@ -1184,6 +1284,23 @@ const callsheet = {
   send: { channels: [], status: 'draft' },
   revisions: [],                              // [{ instruction, notes, ts }]
 };
+
+// ── PRODUCTION TYPE ───────────────────────────────────────────────────────────
+function setProductionType(type) {
+  callsheet.production_type = type;
+  document.querySelectorAll('.prod-type-btn').forEach(b => b.classList.toggle('sel', b.dataset.ptype === type));
+  // Suggest the special-section title that fits the production type.
+  const titleEl = document.getElementById('shoot-special-title');
+  if (titleEl && !titleEl.value) {
+    const suggested = { music: 'Label / MGMT', commercial: 'Client team', film: 'Investors / Production' }[type] || '';
+    titleEl.value = suggested;
+    callsheet.shoot.special_title = suggested;
+  }
+}
+
+// Standard full-day schedule — pre-filled so the producer can just tweak the
+// times and lines rather than writing it from scratch.
+const DEFAULT_SCHEDULE = "06:00  Catering call\n07:00  Crew arrival\n07:30  Camera ready\n08:00  First shot\n12:30  Lunch (1 hr)\n13:30  Resume\n18:00  Last shot\n19:00  Wrap";
 
 // ── BRIEF MODES ───────────────────────────────────────────────────────────────
 function setBriefMode(mode) {
@@ -1305,34 +1422,61 @@ function renderCrewTable(){
 function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
 function escHtml(s){ return String(s||'').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
-// CSV / Excel upload — Papa parses both .csv and .xlsx (the latter only partially;
-// for .xlsx producers should export to CSV first).
+// Crew upload — routes by file type:
+//   .csv          → PapaParse
+//   .xlsx / .xls  → SheetJS (real binary workbook parsing)
+//   .docx / .doc  → not a table format; tell the producer to export to CSV/XLSX
+// In every case rows map to Name · Role · Department · Email · Phone, leaving
+// any missing field blank.
+function pickCol(row, key){
+  const want = key.toLowerCase();
+  for (const [k, v] of Object.entries(row)) {
+    if (String(k).toLowerCase().trim() === want) return String(v == null ? '' : v).trim();
+  }
+  return '';
+}
+function ingestCrewRows(rows, fileName){
+  const before = callsheet.crew.length;
+  rows.forEach(row => {
+    const name = pickCol(row, 'name');
+    const role = pickCol(row, 'role');
+    const email = pickCol(row, 'email');
+    const dept = pickCol(row, 'department');
+    const phone = pickCol(row, 'phone');
+    if (!name && !role && !email && !dept && !phone) return;  // skip blank rows
+    addCrewRow({ name, role, department: dept, email, phone });
+  });
+  const added = callsheet.crew.length - before;
+  if (added) showStep1Toast(`Imported ${added} crew member${added===1?'':'s'} from ${fileName}`);
+  else showStep1Toast(`No rows found in ${fileName}. Use columns: Name, Role, Department, Email, Phone.`, true);
+  refreshStep1Gate();
+}
 function handleCrewCsv(file){
   if (!file) return;
+  const name = file.name.toLowerCase();
+  if (/\.(xlsx|xls)$/.test(name)) {
+    if (typeof XLSX === 'undefined') { showStep1Toast('Excel reader still loading — try again in a second.', true); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        ingestCrewRows(rows, file.name);
+      } catch (err) { showStep1Toast('Could not read that Excel file: ' + err.message, true); }
+    };
+    reader.onerror = () => showStep1Toast('Could not read that file.', true);
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+  if (/\.(docx|doc)$/.test(name)) {
+    showStep1Toast('Word files aren\u2019t a table format — please export your crew list to CSV or Excel (.xlsx) and upload that.', true);
+    return;
+  }
+  // Default: CSV
   Papa.parse(file, {
     header: true, skipEmptyLines: true,
-    complete: results => {
-      const before = callsheet.crew.length;
-      results.data.forEach(row => {
-        const get = k => {
-          // Be forgiving with column names — match any case + common variants.
-          const want = k.toLowerCase();
-          for (const [key, val] of Object.entries(row)) {
-            if (String(key).toLowerCase().trim() === want) return String(val||'').trim();
-          }
-          return '';
-        };
-        const name = get('name');
-        const role = get('role');
-        const email = get('email');
-        if (!name && !role && !email) return;  // ignore blank rows
-        addCrewRow({ name, role, department: get('department'), email, phone: get('phone') });
-      });
-      // Pop the toast in the brief panel button.
-      const added = callsheet.crew.length - before;
-      if (added) showStep1Toast(`Imported ${added} crew member${added===1?'':'s'} from ${file.name}`);
-      refreshStep1Gate();
-    },
+    complete: results => ingestCrewRows(results.data, file.name),
     error: err => showStep1Toast('CSV parse error: ' + err.message, true),
   });
 }
@@ -1362,6 +1506,15 @@ document.addEventListener('DOMContentLoaded', () => {
   fillTimeOptions('shoot-wrap-time');
   fillDayNumberOptions();
   wireShootInputs();
+  // Grey out past dates — the producer can only pick today or later.
+  const dateEl = document.getElementById('shoot-date');
+  if (dateEl) dateEl.min = new Date().toISOString().split('T')[0];
+  // Pre-fill the schedule with a standard full day so it can just be edited.
+  const schedEl = document.getElementById('shoot-schedule');
+  if (schedEl && !schedEl.value) {
+    schedEl.value = DEFAULT_SCHEDULE;
+    callsheet.shoot.schedule = DEFAULT_SCHEDULE;
+  }
 });
 
 function fillTimeOptions(id){
@@ -1381,6 +1534,8 @@ function fillDayNumberOptions(){
 
 function wireShootInputs(){
   const map = {
+    'shoot-name':'shoot_name',
+    'shoot-special-title':'special_title','shoot-special':'special_members',
     'shoot-date':'date','shoot-day-num':'day_number','shoot-call-time':'unit_call','shoot-wrap-time':'wrap_time',
     'shoot-scenes':'scenes','shoot-locations':'locations','shoot-hospital':'hospital','shoot-police':'police',
     'shoot-weather':'weather','shoot-notes':'production_notes','shoot-invoice':'invoice_address',
@@ -1435,7 +1590,7 @@ function refreshStep1Gate(){
 }
 function refreshStep2Gate(){
   const s = callsheet.shoot;
-  const required = ['date','day_number','unit_call','wrap_time','locations'];
+  const required = ['shoot_name','date','day_number','unit_call','wrap_time','locations'];
   const missing = required.filter(f => !(s[f] || '').toString().trim());
   const btn = document.getElementById('step2-next');
   btn.classList.toggle('disabled', missing.length > 0);
@@ -1479,9 +1634,59 @@ function renderCallSheet(){
   if (b) b.innerHTML = html;
 }
 
+// ── EXPORTS — Word (.doc) + Excel (.xls), client-side, no backend ──────────────
+function _downloadBlob(content, filename, mime){
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+function _exportName(ext){
+  const base = (callsheet.shoot.shoot_name || 'call-sheet')
+    .replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'call-sheet';
+  const day = callsheet.shoot.day_number ? '-day-' + String(callsheet.shoot.day_number).replace(/\s+/g,'') : '';
+  return base + day + '.' + ext;
+}
+// Word — the rendered call sheet wrapped with the page CSS. Opens in Word /
+// Google Docs / Pages as a fully editable document.
+function downloadWord(){
+  const css = (document.querySelector('style') || {}).innerHTML || '';
+  const body = buildCallSheetHtml(callsheet);
+  const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>${css}\nbody::after{display:none !important;}</style></head><body style="background:#fff;">${body}</body></html>`;
+  _downloadBlob('\ufeff' + html, _exportName('doc'), 'application/msword');
+}
+// Excel — a structured HTML table Excel / Google Sheets / Numbers open natively.
+function downloadExcel(){
+  const s = callsheet.shoot;
+  const e = escHtml;
+  const info = [
+    ['Shoot name', s.shoot_name], ['Date', formatDate(s.date)],
+    ['Shooting day', s.day_number], ['Unit call', s.unit_call], ['Estimated wrap', s.wrap_time],
+    ['Production company', s.production_company], ['Job ref', s.job_ref],
+    ['Director', s.director], ['DOP', s.dop], ['Client', s.client],
+    ['Studio / Location', s.studio || s.locations],
+  ];
+  const infoRows = info.map(([k, v]) => `<tr><td style="font-weight:bold;">${e(k)}</td><td>${e(v || '')}</td></tr>`).join('');
+  const crewHead = `<tr style="background:#14110D;color:#fff;font-weight:bold;"><td>Name</td><td>Role</td><td>Department</td><td>Email</td><td>Phone</td><td>Call</td></tr>`;
+  const crewRows = callsheet.crew.map(c =>
+    `<tr><td>${e(c.name)}</td><td>${e(c.role)}</td><td>${e(c.department)}</td><td>${e(c.email)}</td><td>${e(c.phone)}</td><td>${e(s.unit_call || '')}</td></tr>`
+  ).join('');
+  const schedRows = (s.schedule || '').split(/\n+/).map(l => l.trim()).filter(Boolean)
+    .map(l => { const m = l.match(/^(\S+)\s+(.+)$/); return `<tr><td>${e(m ? m[1] : '')}</td><td>${e(m ? m[2] : l)}</td></tr>`; }).join('');
+  const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body>
+    <table border="1"><tr><td colspan="6" style="font-size:16px;font-weight:bold;background:#14110D;color:#fff;">CALL SHEET${s.shoot_name ? ' — ' + e(s.shoot_name) : ''}</td></tr>${infoRows}</table>
+    <br/><table border="1"><tr><td colspan="6" style="font-weight:bold;">CREW &amp; CAST</td></tr>${crewHead}${crewRows}</table>
+    ${schedRows ? `<br/><table border="1"><tr><td colspan="2" style="font-weight:bold;">SCHEDULE</td></tr>${schedRows}</table>` : ''}
+  </body></html>`;
+  _downloadBlob('\ufeff' + html, _exportName('xls'), 'application/vnd.ms-excel');
+}
+
 function buildCallSheetHtml(cs){
   // ─── Header field resolution ──────────────────────────────────────────
-  const title = cs.project_title || extractTitle(cs.brief) || 'Untitled Production';
+  const title = cs.shoot.shoot_name || cs.project_title || extractTitle(cs.brief) || 'Untitled Production';
   const niceDate = formatDate(cs.shoot.date);
   const dayN = cs.shoot.day_number || '—';
   const unit = cs.shoot.unit_call || '—';
@@ -1516,8 +1721,34 @@ function buildCallSheetHtml(cs){
   `).join('');
 
   // ─── HTML ────────────────────────────────────────────────────────────
+  // ─── Weather box — compact, sits top-right instead of a full-width row ──
+  const wx = cs.shoot;
+  const hasWeather = wx.temperature || wx.wind || wx.sunrise || wx.sunset || wx.conditions || wx.humidity || wx.weather;
+  const weatherBox = hasWeather ? `
+    <div class="cs-weather-box">
+      <div class="cs-wx-title">Weather · SR &amp; SS</div>
+      <div class="cs-wx-body">
+        ${wx.temperature ? `<div class="cs-wx-cell"><span class="cs-wx-key">Temp</span><span class="cs-wx-val">${escHtml(wx.temperature)}</span></div>` : ''}
+        ${wx.wind ? `<div class="cs-wx-cell"><span class="cs-wx-key">Wind</span><span class="cs-wx-val">${escHtml(wx.wind)}</span></div>` : ''}
+        ${wx.sunrise ? `<div class="cs-wx-cell"><span class="cs-wx-key">Sunrise</span><span class="cs-wx-val">${escHtml(wx.sunrise)}</span></div>` : ''}
+        ${wx.sunset ? `<div class="cs-wx-cell"><span class="cs-wx-key">Sunset</span><span class="cs-wx-val">${escHtml(wx.sunset)}</span></div>` : ''}
+        ${wx.conditions ? `<div class="cs-wx-cell full"><span class="cs-wx-key">Conditions</span><span class="cs-wx-val">${escHtml(wx.conditions)}</span></div>` : ''}
+        ${wx.humidity ? `<div class="cs-wx-cell"><span class="cs-wx-key">Humidity</span><span class="cs-wx-val">${escHtml(wx.humidity)}</span></div>` : ''}
+        ${(!wx.temperature && !wx.wind && !wx.sunrise && !wx.sunset && wx.weather) ? `<div class="cs-wx-cell full"><span class="cs-wx-val" style="font-weight:600;">${escHtml(wx.weather)}</span></div>` : ''}
+      </div>
+    </div>` : '';
+
+  // ─── Special cast & crew section (label / client team / investors) ──────
+  const specialRows = (cs.shoot.special_members || '').split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const specialBlock = specialRows.length ? `
+    <div class="cs-special-banner">${escHtml(cs.shoot.special_title || 'Special Cast & Crew')}</div>
+    <div class="cs-special-rows">
+      ${specialRows.map(r => `<div class="cs-special-row">${escHtml(r)}</div>`).join('')}
+    </div>` : '';
+
   return `
     <div class="callsheet-doc">
+      ${weatherBox}
 
       <!-- Top utility strip — date / project title / shoot type -->
       <div class="cs-utility">
@@ -1525,6 +1756,8 @@ function buildCallSheetHtml(cs){
         <div class="cs-u-mid">${escHtml(title)}</div>
         <div class="cs-u-right">${escHtml(dayLabel)}${cs.shoot.job_ref ? ' · ' + escHtml(cs.shoot.job_ref) : ''}</div>
       </div>
+
+      ${cs.shoot.shoot_name ? `<div class="cs-shoot-name">${escHtml(cs.shoot.shoot_name)}</div>` : ''}
 
       <!-- Production company wordmark — big, bold, all-caps on a black bar.
            Brand mark sits left when the company is M·ARK (default); for
@@ -1581,16 +1814,6 @@ function buildCallSheetHtml(cs){
         </div>
       </div>
 
-      <!-- Sun / weather band -->
-      <div class="cs-sun-band">
-        <div class="cs-sun-cell"><span class="cs-sun-key">↑ Sunrise</span><span class="cs-sun-val">${escHtml(cs.shoot.sunrise || '—')}</span></div>
-        <div class="cs-sun-cell"><span class="cs-sun-key">↓ Sunset</span><span class="cs-sun-val">${escHtml(cs.shoot.sunset || '—')}</span></div>
-        <div class="cs-sun-cell"><span class="cs-sun-key">Conditions</span><span class="cs-sun-val">${escHtml(cs.shoot.conditions || '—')}</span></div>
-        <div class="cs-sun-cell"><span class="cs-sun-key">Temp</span><span class="cs-sun-val">${escHtml(cs.shoot.temperature || '—')}</span></div>
-        <div class="cs-sun-cell"><span class="cs-sun-key">Wind</span><span class="cs-sun-val">${escHtml(cs.shoot.wind || '—')}</span></div>
-        <div class="cs-sun-cell"><span class="cs-sun-key">Humidity</span><span class="cs-sun-val">${escHtml(cs.shoot.humidity || '—')}</span></div>
-      </div>
-
       ${scheduleRows.length ? `
       <div class="cs-schedule">
         <div class="cs-schedule-title">Schedule</div>
@@ -1630,6 +1853,8 @@ function buildCallSheetHtml(cs){
           <tbody>${crewRowsHtml}</tbody>
         </table>
       </div>
+
+      ${specialBlock}
 
       ${(cs.shoot.hospital || cs.shoot.police) ? `
       <div class="cs-section">
