@@ -354,6 +354,39 @@ section{padding:120px 60px;position:relative;}
 .cr-mark:hover{border-color:var(--ink);transform:translateY(-1px);}
 
 /* ════════════════════════════════════════════════════════════════════
+   ON-SET GALLERY — real production stills. An image-forward interstitial
+   between the marquee and the wishes, so the page earns its claims with
+   actual sets before it makes them in copy. Captions describe only what's
+   in frame — no invented clients.
+   ════════════════════════════════════════════════════════════════════ */
+.set-gallery{background:var(--paper-deep);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);}
+.set-gallery .section-label{justify-content:center;}
+.set-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:8px;}
+.set-figure{
+  margin:0;position:relative;overflow:hidden;background:var(--ink);
+  border:1px solid var(--rule);
+}
+.set-figure img{
+  width:100%;height:100%;display:block;aspect-ratio:3/4;object-fit:cover;
+  transition:transform 0.6s var(--ease-out);
+}
+.set-figure:hover img{transform:scale(1.04);}
+.set-figure figcaption{
+  position:absolute;left:0;right:0;bottom:0;padding:30px 14px 12px;
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--paper);
+  background:linear-gradient(to top,rgba(10,9,8,0.82),rgba(10,9,8,0));
+}
+
+/* HUMANS featured photo — the crew itself, anchoring "The humans". */
+.humans-photo{margin:48px 0 0;border:1px solid var(--rule);background:var(--ink);overflow:hidden;}
+.humans-photo img{width:100%;height:auto;display:block;aspect-ratio:16/11;object-fit:cover;}
+.humans-photo figcaption{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--muted);padding:12px 16px 14px;background:var(--paper-deep);
+}
+
+/* ════════════════════════════════════════════════════════════════════
    THE MODEL — four-pillar block explaining why M·ARK is not an AI tool.
    Each pillar is numbered, has a typewriter-monospace title, and a
    short body. The closer quote anchors the manifesto.
@@ -572,6 +605,9 @@ footer{
   .feature-card{padding:22px 18px;}
   .integration-cards{gap:8px;}
   .int-card{padding:10px 14px;font-size:12px;}
+  .set-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .humans-photo{margin-top:32px;}
+  .humans-photo img{aspect-ratio:4/3;}
   .wish{flex-direction:column;gap:8px;padding:24px 0;}
   .wish-label{padding-top:0;width:auto;}
   .wish-text{font-size:clamp(18px,5.5vw,28px);}
@@ -758,6 +794,31 @@ footer{
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════════════════════════════
+     ON SET — real production stills. Proof before the pitch.
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="set-gallery">
+  <div class="section-label">On set</div>
+  <div class="set-grid">
+    <figure class="set-figure">
+      <img src="assets/set-soundstage.jpg" alt="A film soundstage with a long camera-crane truss rigged over a white floor, monitors and an ARRI camera in the foreground." loading="lazy" decoding="async"/>
+      <figcaption>Soundstage · crane &amp; camera build</figcaption>
+    </figure>
+    <figure class="set-figure">
+      <img src="assets/set-commercial.jpg" alt="A studio set for a vehicle commercial — two cars lit with diffusion frames, a camera dolly on track and lighting rigs." loading="lazy" decoding="async"/>
+      <figcaption>Commercial unit · vehicle set</figcaption>
+    </figure>
+    <figure class="set-figure">
+      <img src="assets/set-cyc.jpg" alt="A darkened cyclorama stage with silhouetted crew around a single lit set piece — a bare tree on a small island of earth." loading="lazy" decoding="async"/>
+      <figcaption>Cyc stage · night build</figcaption>
+    </figure>
+    <figure class="set-figure">
+      <img src="assets/set-wrap.jpg" alt="A black-and-white reflection of a crew member walking while coiling cable, shot upside down in a puddle." loading="lazy" decoding="async"/>
+      <figcaption>Wrap · the walk back</figcaption>
+    </figure>
+  </div>
+</section>
+
 <!-- WISHES -->
 <section class="wishes">
   <div class="section-label">Sc. 02 / What you actually ask</div>
@@ -781,6 +842,11 @@ footer{
   <div class="section-label">Sc. 03 / The humans</div>
   <div class="section-title">Built by the people who&rsquo;ve been<br/>the runner, the AC, the <em>1st AD.</em></div>
   <p class="section-body" style="margin-top:18px;max-width:680px;">The team behind M·ARK has held the slate on YSL&thinsp;&times;&thinsp;Dua Lipa. Run the camera car on Christian Dior. Kept the unit fed on Royal Enfield&rsquo;s Bullet 650. Sound-checked the Idris Elba BBC documentary. The AI is built around how they actually work &mdash; not how an outsider thinks production works.</p>
+
+  <figure class="humans-photo">
+    <img src="assets/set-crew.jpg" alt="Black-and-white group photo of the M·ARK crew on set, with a boom mic overhead and a clapperboard held in the front row." loading="lazy" decoding="async"/>
+    <figcaption>The unit, between setups.</figcaption>
+  </figure>
 
   <div class="humans-grid">
     <!-- Featured creative card — Krish -->
