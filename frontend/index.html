@@ -3,23 +3,23 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>M·ARK — Production OS for film. Script in. Budget out.</title>
+<title>MARK — Production OS for film. Script in. Budget out.</title>
 <meta name="description" content="A new production house. Half emerging creatives with on-set credits at YSL × Dua Lipa, Dior, BBC, Royal Enfield. Half agentic AI trained on real production data. Embedded humans, multiplied by AI."/>
-<!-- M·ARK favicon — the brand mark inlined as an SVG data URL. Slate body,
+<!-- MARK favicon — the brand mark inlined as an SVG data URL. Slate body,
      striped snap arm, italic Fraunces "M" in paper, brand-red tally dot.
      Renders crisp at every browser size (favicons up to 64px). -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%2314110D'/&gt;&lt;g transform='rotate(-52 40 11)'&gt;&lt;rect x='-30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='-10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='50' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;text x='40' y='66' fill='%23F5F1E8' font-family='Georgia,serif' font-style='italic' font-size='50' font-weight='600' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='68' cy='68' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
 <!-- Open Graph + Twitter share images use the same mark -->
-<meta property="og:title" content="M·ARK — A new production house · Half humans, half agentic AI"/>
+<meta property="og:title" content="MARK — A new production house · Half humans, half agentic AI"/>
 <meta property="og:description" content="Production support made by the creatives who've been on the set of YSL × Dua Lipa, Dior, BBC, Royal Enfield. Multiplied by agentic AI trained on real production data."/>
 <meta property="og:image" content="https://karanmjpinto.github.io/mark/og.svg"/>
 <meta property="og:type" content="website"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="M·ARK — A new production house · Half humans, half agentic AI"/>
+<meta name="twitter:title" content="MARK — A new production house · Half humans, half agentic AI"/>
 <meta name="twitter:description" content="Embedded creatives + agentic AI trained on real production data. The team has shipped work for YSL, Dior, BBC, Royal Enfield."/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700&family=Gelasio:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 /* Hallmark · pre-emit critique: P5 H4 E5 S5 R4 V5
  * macrostructure: Long-Document + Slate · tone: production-floor editorial
@@ -57,8 +57,8 @@ html{scroll-behavior:smooth;overflow-x:clip;}
 body{
   background:var(--paper);
   color:var(--ink);
-  font-family:'Inter',-apple-system,sans-serif;
-  font-size:16px;
+  font-family:'Gelasio',Georgia,serif;
+  font-size:18px;
   font-feature-settings:"ss01","cv11";
   overflow-x:clip;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
@@ -94,20 +94,14 @@ nav{
 nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .nav-logo{
   display:inline-flex;align-items:center;gap:10px;
-  font-family:'Fraunces',serif;font-weight:600;font-size:22px;color:var(--ink);
+  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:22px;color:var(--ink);
   text-decoration:none;letter-spacing:0.02em;font-variation-settings:"opsz" 144;
   text-transform:uppercase;
 }
 .nav-logo svg.mark{width:28px;height:28px;flex-shrink:0;}
-.nav-logo .wm-m{font-style:italic;font-weight:600;}
-.nav-logo .wm-dot{
-  display:inline-block;width:7px;height:7px;border-radius:50%;
-  background:var(--accent);margin:0 4px 4px 4px;vertical-align:middle;
-  box-shadow:0 0 0 2px rgba(200,51,10,0.18);
-}
-.nav-logo .wm-ark{
-  font-family:'Inter',sans-serif;font-weight:700;font-size:18px;
-  letter-spacing:0.08em;
+.nav-logo .wm-mark{
+  font-family:'Alegreya',Georgia,serif;font-weight:700;font-size:23px;
+  letter-spacing:0.04em;
 }
 .nav-links{display:flex;align-items:center;gap:32px;}
 .nav-links a{
@@ -117,33 +111,53 @@ nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);b
 }
 .nav-links a:hover{color:var(--ink);}
 .nav-cta{
-  background:var(--ink);color:var(--paper) !important;font-family:'Inter',sans-serif;
+  background:var(--ink);color:var(--paper) !important;font-family:'Gelasio',Georgia,serif;
   font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
   padding:10px 18px;text-decoration:none;position:relative;overflow:hidden;
   transition:background 0.25s var(--ease-out);
 }
 .nav-cta:hover{background:var(--accent);color:var(--paper) !important;}
 
-/* HERO — editorial, generous, asymmetric */
+/* HERO — editorial, generous, full-width single column */
 .hero{
-  min-height:100vh;display:grid;grid-template-columns:1.2fr 1fr;
-  align-items:center;gap:60px;padding:140px 60px 80px;position:relative;
+  min-height:auto;display:block;
+  padding:170px 60px 100px;position:relative;
 }
-.hero-content{position:relative;z-index:2;}
+.hero-content{position:relative;z-index:2;max-width:1120px;}
 .hero-eyebrow{
   font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);
   font-family:'DM Mono',monospace;margin-bottom:24px;display:flex;align-items:center;gap:12px;
 }
 .hero-eyebrow::before{content:'';width:24px;height:1px;background:var(--accent);}
 .hero-title{
-  font-family:'Fraunces',serif;font-weight:600;font-size:clamp(64px,9vw,124px);
-  line-height:0.96;color:var(--ink);margin-bottom:28px;letter-spacing:-0.025em;
+  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:clamp(38px,5.4vw,76px);
+  line-height:1.04;color:var(--ink);margin-bottom:22px;letter-spacing:-0.02em;max-width:15ch;
   font-variation-settings:"opsz" 144;
 }
-.hero-title em{color:var(--accent);font-style:italic;font-weight:400;}
+.hero-title .lead{display:block;font-weight:500;color:var(--ink-soft);font-size:0.62em;
+  line-height:1.2;letter-spacing:-0.01em;margin-bottom:10px;max-width:24ch;}
+.hero-title em{color:var(--accent);font-style:italic;font-weight:700;}
+
+/* ASK MARK TO … — the live animation, promoted up into the hero */
+.hero-ask{
+  display:flex;flex-wrap:wrap;align-items:baseline;
+  margin:6px 0 34px;line-height:1.3;
+}
+.hero-ask .ask-mark{
+  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:600;
+  font-size:clamp(26px,3.4vw,46px);color:var(--ink);letter-spacing:-0.015em;margin-right:12px;
+}
+.hero-ask .ask-to{
+  font-family:'Alegreya',Georgia,serif;font-weight:400;
+  font-size:clamp(22px,2.8vw,38px);color:var(--ink-soft);margin-right:12px;
+}
+.hero-ask #tw-text,.hero-ask #tw-cursor{
+  font-family:'DM Mono',monospace;font-size:clamp(16px,1.9vw,24px);
+  color:var(--accent);letter-spacing:0.01em;
+}
 .hero-subtitle{
-  font-family:'Fraunces',serif;font-weight:400;font-size:clamp(17px,1.8vw,21px);
-  color:var(--ink-soft);line-height:1.55;max-width:540px;margin-bottom:18px;
+  font-family:'Gelasio',Georgia,serif;font-weight:400;font-size:clamp(19px,1.7vw,23px);
+  color:var(--ink-soft);line-height:1.6;max-width:640px;margin-bottom:18px;
   font-variation-settings:"opsz" 24;
 }
 .typewriter{
@@ -153,7 +167,7 @@ nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);b
 .typewriter span{color:var(--accent);}
 .hero-ctas{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
 .btn-primary{
-  background:var(--ink);color:var(--paper);font-family:'Inter',sans-serif;
+  background:var(--ink);color:var(--paper);font-family:'Gelasio',Georgia,serif;
   font-size:13px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
   padding:16px 30px;text-decoration:none;display:inline-block;position:relative;overflow:hidden;
   transition:transform 0.3s var(--ease-out);
@@ -198,7 +212,7 @@ nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);b
   text-transform:uppercase;fill:var(--ink);font-weight:500;
 }
 .hero-art .slate-num{
-  font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:30px;
+  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:500;font-size:30px;
   fill:var(--ink);letter-spacing:-0.01em;
 }
 .hero-art .ink-fill-static{fill:var(--ink);}
@@ -240,14 +254,14 @@ section{padding:120px 60px;position:relative;}
 }
 .section-label::before{content:'';width:24px;height:1px;background:var(--accent);}
 .section-title{
-  font-family:'Fraunces',serif;font-weight:500;font-size:clamp(40px,5.5vw,72px);
+  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:clamp(40px,5.5vw,72px);
   color:var(--ink);line-height:1.04;margin-bottom:24px;letter-spacing:-0.022em;
   font-variation-settings:"opsz" 144;
 }
 .section-title em{font-style:italic;font-weight:400;color:var(--accent);}
 .section-body{
-  font-family:'Fraunces',serif;font-weight:400;font-size:18px;color:var(--ink-soft);
-  line-height:1.55;max-width:580px;font-variation-settings:"opsz" 24;
+  font-family:'Gelasio',Georgia,serif;font-weight:400;font-size:20px;color:var(--ink-soft);
+  line-height:1.6;max-width:720px;font-variation-settings:"opsz" 24;
 }
 
 /* WISHES — quote-style on cream */
@@ -263,7 +277,7 @@ section{padding:120px 60px;position:relative;}
   letter-spacing:0.16em;text-transform:uppercase;padding-top:14px;width:88px;flex-shrink:0;
 }
 .wish-text{
-  font-family:'Fraunces',serif;font-style:italic;font-weight:400;
+  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:400;
   font-size:clamp(22px,2.6vw,34px);color:var(--ink);line-height:1.3;
   letter-spacing:-0.01em;font-variation-settings:"opsz" 144;
 }
@@ -272,7 +286,7 @@ section{padding:120px 60px;position:relative;}
    THE HUMANS — proof-of-credibility section. Big editorial header,
    one featured human card with real credits, two "open seat" cards
    for incoming creatives, and a credit-roll of brands the team has
-   shipped work for. This is the positioning beat: M·ARK is humans
+   shipped work for. This is the positioning beat: MARK is humans
    first, AI second.
    ════════════════════════════════════════════════════════════════════ */
 .humans-section{background:var(--paper);border-bottom:1px solid var(--rule);}
@@ -296,10 +310,10 @@ section{padding:120px 60px;position:relative;}
   font-family:'DM Mono',monospace;font-weight:500;
 }
 .human-card-name{
-  font-family:'Fraunces',serif;font-weight:500;font-size:30px;color:var(--ink);
+  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:30px;color:var(--ink);
   letter-spacing:-0.015em;line-height:1.05;font-variation-settings:"opsz" 144;
 }
-.human-card-meta{font-size:13px;color:var(--ink-soft);line-height:1.55;font-family:'Inter',sans-serif;}
+.human-card-meta{font-size:15px;color:var(--ink-soft);line-height:1.55;font-family:'Gelasio',Georgia,serif;}
 .human-card-link{
   margin-top:auto;padding-top:14px;font-family:'DM Mono',monospace;font-size:11px;
   letter-spacing:0.1em;text-transform:uppercase;color:var(--ink);text-decoration:none;
@@ -314,7 +328,7 @@ section{padding:120px 60px;position:relative;}
 }
 .credit-line{
   display:grid;grid-template-columns:90px 1fr auto;gap:14px;align-items:baseline;
-  padding:10px 0;border-bottom:1px solid var(--rule);font-size:12.5px;
+  padding:11px 0;border-bottom:1px solid var(--rule);font-size:14px;
 }
 .credit-line:last-child{border-bottom:none;}
 .credit-role{
@@ -322,7 +336,7 @@ section{padding:120px 60px;position:relative;}
   text-transform:uppercase;color:var(--muted);
 }
 .credit-name{
-  font-family:'Inter',sans-serif;font-weight:500;color:var(--ink);line-height:1.4;
+  font-family:'Gelasio',Georgia,serif;font-weight:500;color:var(--ink);line-height:1.4;
 }
 .credit-client{
   font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.06em;
@@ -346,7 +360,7 @@ section{padding:120px 60px;position:relative;}
   display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;align-items:center;
 }
 .cr-mark{
-  font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:var(--ink);
+  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:18px;color:var(--ink);
   font-variation-settings:"opsz" 144;letter-spacing:-0.005em;line-height:1;
   padding:8px 14px;border:1px solid var(--rule);background:var(--paper);
   transition:border-color 0.2s,color 0.2s,transform 0.25s var(--ease-out);
@@ -387,7 +401,7 @@ section{padding:120px 60px;position:relative;}
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   THE MODEL — four-pillar block explaining why M·ARK is not an AI tool.
+   THE MODEL — four-pillar block explaining why MARK is not an AI tool.
    Each pillar is numbered, has a typewriter-monospace title, and a
    short body. The closer quote anchors the manifesto.
    ════════════════════════════════════════════════════════════════════ */
@@ -410,11 +424,11 @@ section{padding:120px 60px;position:relative;}
   color:var(--accent);font-weight:600;
 }
 .pillar-title{
-  font-family:'Fraunces',serif;font-weight:500;font-size:22px;color:var(--ink);
+  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:22px;color:var(--ink);
   letter-spacing:-0.01em;line-height:1.1;font-variation-settings:"opsz" 144;
 }
 .pillar-body{
-  font-size:13.5px;color:var(--ink-soft);line-height:1.6;font-family:'Inter',sans-serif;
+  font-size:15px;color:var(--ink-soft);line-height:1.6;font-family:'Gelasio',Georgia,serif;
 }
 .model-closer{
   margin-top:56px;padding:36px 40px;background:var(--ink);color:var(--paper);
@@ -424,7 +438,7 @@ section{padding:120px 60px;position:relative;}
   content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent);
 }
 .model-closer-quote{
-  font-family:'Fraunces',serif;font-style:italic;font-weight:400;
+  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:400;
   font-size:clamp(20px,2.4vw,28px);line-height:1.35;letter-spacing:-0.01em;
   font-variation-settings:"opsz" 144;color:var(--paper);
 }
@@ -458,15 +472,15 @@ section{padding:120px 60px;position:relative;}
 .how-step:hover{border-color:var(--rule-strong);box-shadow:0 4px 20px var(--paper-shadow);transform:translateY(-2px);}
 .how-step:hover::before{width:100%;}
 .step-num{
-  font-family:'Fraunces',serif;font-style:italic;font-weight:400;font-size:88px;
+  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:400;font-size:88px;
   color:var(--accent);line-height:1;margin-bottom:24px;letter-spacing:-0.04em;
   font-variation-settings:"opsz" 144;opacity:0.85;
 }
 .step-title{
-  font-family:'Fraunces',serif;font-weight:500;font-size:20px;color:var(--ink);
+  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:20px;color:var(--ink);
   margin-bottom:10px;letter-spacing:-0.01em;
 }
-.step-desc{font-size:14px;color:var(--ink-soft);line-height:1.65;font-family:'Inter',sans-serif;}
+.step-desc{font-size:16px;color:var(--ink-soft);line-height:1.65;font-family:'Gelasio',Georgia,serif;}
 
 /* INTEGRATIONS */
 .integrations-hub{display:flex;flex-direction:column;align-items:center;margin-top:64px;gap:24px;}
@@ -487,7 +501,7 @@ section{padding:120px 60px;position:relative;}
 .integration-cards{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:760px;}
 .int-card{
   background:var(--paper);border:1px solid var(--rule);padding:14px 18px;
-  display:flex;align-items:center;gap:12px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);
+  display:flex;align-items:center;gap:12px;font-family:'Gelasio',Georgia,serif;font-size:15px;color:var(--ink);
   transition:border-color 0.2s,transform 0.3s var(--ease-out),box-shadow 0.3s;
 }
 .int-card:hover{border-color:var(--ink);transform:translateY(-1px);box-shadow:0 2px 12px var(--paper-shadow);}
@@ -513,10 +527,10 @@ section{padding:120px 60px;position:relative;}
 }
 .feature-card:hover .feature-icon{color:var(--accent);transform:translateY(-2px);}
 .feature-title{
-  font-family:'Fraunces',serif;font-weight:500;font-size:17px;color:var(--ink);
+  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:19px;color:var(--ink);
   margin-bottom:8px;letter-spacing:-0.005em;
 }
-.feature-desc{font-size:13px;color:var(--ink-soft);line-height:1.55;font-family:'Inter',sans-serif;}
+.feature-desc{font-size:15px;color:var(--ink-soft);line-height:1.55;font-family:'Gelasio',Georgia,serif;}
 .feature-badge{
   font-size:9px;background:transparent;border:1px solid var(--accent);color:var(--accent);
   padding:3px 8px;font-family:'DM Mono',monospace;letter-spacing:0.1em;
@@ -530,13 +544,13 @@ section{padding:120px 60px;position:relative;}
 /* CTA */
 .final-cta{text-align:center;background:var(--paper-deep);border-top:1px solid var(--rule);position:relative;overflow:hidden;}
 .cta-watermark{
-  font-family:'Fraunces',serif;font-weight:600;font-style:italic;
+  font-family:'Alegreya',Georgia,serif;font-weight:600;font-style:italic;
   font-size:clamp(120px,20vw,260px);color:var(--ink);opacity:0.04;
   line-height:0.9;margin-bottom:-60px;letter-spacing:-0.04em;pointer-events:none;
   font-variation-settings:"opsz" 144;
 }
 .cta-title{
-  font-family:'Fraunces',serif;font-weight:500;font-size:clamp(40px,5.5vw,72px);
+  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:clamp(40px,5.5vw,72px);
   color:var(--ink);margin-bottom:24px;letter-spacing:-0.022em;line-height:1.04;
   font-variation-settings:"opsz" 144;
 }
@@ -549,7 +563,7 @@ section{padding:120px 60px;position:relative;}
 /* SPEAK TO MARK */
 .contact-section{padding:80px 40px;text-align:center;background:var(--paper);border-top:1px solid var(--rule);}
 .contact-section h2{
-  font-family:'Fraunces',serif;font-weight:500;font-size:clamp(32px,4.5vw,52px);
+  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:clamp(32px,4.5vw,52px);
   color:var(--ink);margin-bottom:18px;letter-spacing:-0.018em;
 }
 .contact-section h2 em{font-style:italic;font-weight:400;color:var(--accent);}
@@ -567,16 +581,11 @@ footer{
 }
 .footer-logo{
   display:inline-flex;align-items:center;gap:8px;
-  font-family:'Fraunces',serif;font-weight:600;font-size:18px;color:var(--ink);
+  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:18px;color:var(--ink);
   font-variation-settings:"opsz" 144;letter-spacing:0.02em;text-transform:uppercase;
 }
 .footer-logo svg.mark{width:22px;height:22px;flex-shrink:0;}
-.footer-logo .wm-m{font-style:italic;font-weight:600;}
-.footer-logo .wm-dot{
-  display:inline-block;width:6px;height:6px;border-radius:50%;
-  background:var(--accent);margin:0 3px 3px 3px;vertical-align:middle;
-}
-.footer-logo .wm-ark{font-family:'Inter',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.08em;}
+.footer-logo .wm-mark{font-family:'Alegreya',Georgia,serif;font-weight:700;font-size:18px;letter-spacing:0.04em;}
 .footer-copy{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;}
 .footer-email a{font-size:12px;color:var(--ink-soft);text-decoration:none;font-family:'DM Mono',monospace;letter-spacing:0.06em;transition:color 0.2s;}
 .footer-email a:hover{color:var(--accent);}
@@ -621,7 +630,7 @@ footer{
 <body>
 
 <!-- ════════════════════════════════════════════════════════════════════
-     M·ARK BRAND MARK · reusable SVG defs
+     MARK BRAND MARK · reusable SVG defs
      The mark is a stylised film slate: a black body with a diagonal-stripe
      snap arm across the top, an italic Fraunces "M" set in cream paper
      centred in the body, and a small red tally light in the lower-right
@@ -650,7 +659,7 @@ footer{
       </g>
       <!-- Italic serif M in the slate body -->
       <text x="40" y="66" fill="#F5F1E8"
-            font-family="Fraunces, Georgia, serif"
+            font-family="Alegreya, Georgia, serif"
             font-style="italic"
             font-size="50"
             font-weight="600"
@@ -665,9 +674,9 @@ footer{
 <div class="slate-stripe" aria-hidden="true"></div>
 
 <nav id="nav">
-  <a href="./" class="nav-logo" aria-label="M·ARK — Production OS">
+  <a href="./" class="nav-logo" aria-label="MARK — Production OS">
     <svg class="mark" aria-hidden="true"><use href="#mark-icon"/></svg>
-    <span class="wm-m">M</span><span class="wm-dot" aria-hidden="true"></span><span class="wm-ark">ARK</span>
+    <span class="wm-mark">MARK</span>
   </a>
   <div class="nav-links">
     <a href="#humans">The humans</a>
@@ -681,10 +690,12 @@ footer{
 <!-- HERO -->
 <section class="hero">
   <div class="hero-content">
-    <div class="hero-eyebrow">M·ARK / A new production house · Half humans, half agentic AI</div>
-    <h1 class="hero-title">Ask <em>Mark.</em></h1>
-    <p class="hero-subtitle">Production support made by the creatives who&rsquo;ve been on the set of YSL&thinsp;&times;&thinsp;Dua Lipa, Dior AW25, BBC, Royal Enfield. Multiplied by agentic AI trained on real production data. Not a SaaS &mdash; a new way to make ads, films, music videos. Tastefully. With humans in the room.</p>
-    <div class="typewriter" id="typewriter">to <span id="tw-text"></span><span id="tw-cursor">|</span></div>
+    <div class="hero-eyebrow">MARK / A new production house · Half humans, half agentic AI</div>
+    <h1 class="hero-title"><span class="lead">Every production runs on paperwork. Why handle it yourself when you just</span> <em>Ask Mark.</em></h1>
+    <div class="hero-ask" id="typewriter">
+      <span class="ask-mark">Ask Mark</span><span class="ask-to">to</span><span id="tw-text"></span><span id="tw-cursor">|</span>
+    </div>
+    <p class="hero-subtitle">Mark&rsquo;s brain isn&rsquo;t random artificial intelligence. It carries the experience of crew across films, TV, commercials and music videos &mdash; people who&rsquo;ve worked with the likes of BBC, YSL, Dior and Royal Enfield.</p>
     <div class="hero-ctas">
       <a href="callsheet.html" class="btn-primary"><span>Call Sheet Builder &rarr;</span></a>
       <a href="budget.html" class="btn-primary"><span>Budget Builder &rarr;</span></a>
@@ -694,73 +705,6 @@ footer{
       <div class="hero-meta-dot"></div>
       <span>Indian Cinema live · UK commercial in beta · A creative reviews everything · No card</span>
     </div>
-  </div>
-
-  <!-- SLATE / CLAPPERBOARD — the universally-recognised piece of film
-       paperwork. Top "snap" arm starts angled open, then closes once on
-       load. Body carries real slate fields (PROD / DIR / DOP / SC. / TAKE
-       / ROLL / DATE / SOUND) so anyone who's stood behind a camera
-       clocks it in a beat. -->
-  <div class="hero-art">
-    <svg viewBox="0 0 520 380" xmlns="http://www.w3.org/2000/svg">
-      <!-- Slate body -->
-      <g transform="translate(40, 90)">
-        <!-- Hinge dot (origin for the snap arm) -->
-        <circle class="ink-fill-static" cx="4" cy="14" r="4"/>
-
-        <!-- SNAP ARM — diagonal stripes, rotates from open to closed -->
-        <g class="snap-arm" style="transform-origin:4px 14px;">
-          <rect x="0" y="0" width="430" height="28" fill="var(--ink)"/>
-          <g>
-            <rect x="14"  y="0" width="28" height="28" fill="var(--paper)"/>
-            <rect x="70"  y="0" width="28" height="28" fill="var(--paper)"/>
-            <rect x="126" y="0" width="28" height="28" fill="var(--paper)"/>
-            <rect x="182" y="0" width="28" height="28" fill="var(--paper)"/>
-            <rect x="238" y="0" width="28" height="28" fill="var(--paper)"/>
-            <rect x="294" y="0" width="28" height="28" fill="var(--paper)"/>
-            <rect x="350" y="0" width="28" height="28" fill="var(--paper)"/>
-            <rect x="406" y="0" width="28" height="28" fill="var(--paper)"/>
-          </g>
-          <!-- diagonal seam between snap and body -->
-          <line x1="0" y1="28" x2="430" y2="28" stroke="var(--ink)" stroke-width="1.4"/>
-        </g>
-
-        <!-- Body card -->
-        <g transform="translate(0, 40)">
-          <rect x="0" y="0" width="430" height="200" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.6"/>
-
-          <!-- Row 1: PRODUCTION title -->
-          <text class="slate-key" x="14" y="22">PRODUCTION</text>
-          <text class="slate-val" x="14" y="44">M.ARK · DEMO</text>
-          <line x1="14" y1="56" x2="200" y2="56" stroke="var(--ink)" stroke-width="0.8" opacity="0.35"/>
-
-          <!-- Row 2: DIRECTOR / DOP -->
-          <text class="slate-key" x="14" y="78">DIRECTOR</text>
-          <text class="slate-val" x="14" y="100">—</text>
-
-          <text class="slate-key" x="220" y="78">DOP</text>
-          <text class="slate-val" x="220" y="100">—</text>
-
-          <line x1="14" y1="112" x2="416" y2="112" stroke="var(--ink)" stroke-width="0.8" opacity="0.35"/>
-
-          <!-- Row 3: SC / TAKE / ROLL -->
-          <text class="slate-key" x="14" y="134">SC.</text>
-          <text class="slate-val slate-num accent-fill-static" x="14" y="160">7</text>
-
-          <text class="slate-key" x="140" y="134">TAKE</text>
-          <text class="slate-val slate-num" x="140" y="160">3</text>
-
-          <text class="slate-key" x="260" y="134">ROLL</text>
-          <text class="slate-val slate-num" x="260" y="160">A · 002</text>
-
-          <text class="slate-key" x="14" y="184">DATE</text>
-          <text class="slate-val" x="14" y="200">DAY 14 OF 28</text>
-
-          <text class="slate-key" x="260" y="184">SOUND</text>
-          <text class="slate-val" x="260" y="200">SYNC</text>
-        </g>
-      </g>
-    </svg>
   </div>
 </section>
 
@@ -819,32 +763,17 @@ footer{
   </div>
 </section>
 
-<!-- WISHES -->
-<section class="wishes">
-  <div class="section-label">Sc. 02 / What you actually ask</div>
-  <div class="section-title">Three voice notes<br/>across a <em>shoot day.</em></div>
-  <div class="wishes-grid">
-    <div class="wish"><div class="wish-label">06:14 AM</div><div class="wish-text">"Sc. 41 moved indoors — push the genny call to 8 and tell catering."</div></div>
-    <div class="wish"><div class="wish-label">12:50 PM</div><div class="wish-text">"What's left in 11300 camera? We've burned two days."</div></div>
-    <div class="wish"><div class="wish-label">02:30 PM</div><div class="wish-text">"Read this draft and tell me what Day 7 is going to cost."</div></div>
-    <div class="wish"><div class="wish-label">04:15 PM</div><div class="wish-text">"Who hasn't signed the NDA? WhatsApp the four who haven't."</div></div>
-    <div class="wish"><div class="wish-label">07:42 PM</div><div class="wish-text">"Wrap report for Day 14. Cc the producer and the LP."</div></div>
-    <div class="wish"><div class="wish-label">10:05 PM</div><div class="wish-text">"Tomorrow's call sheet — drop it on the group at 11."</div></div>
-  </div>
-</section>
-
 <!-- ════════════════════════════════════════════════════════════════════
-     SC. 03 · THE HUMANS — Who is actually behind M·ARK
+     SC. 02 · THE HUMANS — Who is actually behind MARK
      Positioning beat #1: this is built by creatives with real on-set
      credits. The proof is the credit roll. The AI is the multiplier.
      ════════════════════════════════════════════════════════════════════ -->
 <section id="humans" class="humans-section">
-  <div class="section-label">Sc. 03 / The humans</div>
+  <div class="section-label">Sc. 02 / The humans</div>
   <div class="section-title">Built by the people who&rsquo;ve been<br/>the runner, the AC, the <em>1st AD.</em></div>
-  <p class="section-body" style="margin-top:18px;max-width:680px;">The team behind M·ARK has held the slate on YSL&thinsp;&times;&thinsp;Dua Lipa. Run the camera car on Christian Dior. Kept the unit fed on Royal Enfield&rsquo;s Bullet 650. Sound-checked the Idris Elba BBC documentary. The AI is built around how they actually work &mdash; not how an outsider thinks production works.</p>
 
   <figure class="humans-photo">
-    <img src="assets/set-crew.jpg" alt="Black-and-white group photo of the M·ARK crew on set, with a boom mic overhead and a clapperboard held in the front row." loading="lazy" decoding="async"/>
+    <img src="assets/set-crew.jpg" alt="Black-and-white group photo of the MARK crew on set, with a boom mic overhead and a clapperboard held in the front row." loading="lazy" decoding="async"/>
     <figcaption>The unit, between setups.</figcaption>
   </figure>
 
@@ -895,14 +824,14 @@ footer{
       <div class="human-card-eyebrow">Open seat · Line producer</div>
       <div class="human-card-name">Looking for you.</div>
       <div class="human-card-meta">3+ years on commercial &amp; OTT. Indian Cinema or UK commercial. Knows the rate cards by heart. Embeds with our budget module.</div>
-      <a href="mailto:hello@askmark.co?subject=Joining M·ARK · Line producer" class="human-card-link">Get in touch &nbsp;&rarr;</a>
+      <a href="mailto:hello@askmark.co?subject=Joining MARK · Line producer" class="human-card-link">Get in touch &nbsp;&rarr;</a>
     </article>
 
     <article class="human-card human-card-open">
       <div class="human-card-eyebrow">Open seat · 1st AD</div>
       <div class="human-card-name">Looking for you.</div>
       <div class="human-card-meta">5+ years on the floor. Runs the call sheet module. Embeds with productions on day-1, builds the schedule on day-2, hands it back to the producer on day-3.</div>
-      <a href="mailto:hello@askmark.co?subject=Joining M·ARK · 1st AD" class="human-card-link">Get in touch &nbsp;&rarr;</a>
+      <a href="mailto:hello@askmark.co?subject=Joining MARK · 1st AD" class="human-card-link">Get in touch &nbsp;&rarr;</a>
     </article>
   </div>
 
@@ -931,9 +860,9 @@ footer{
      steering wheel.
      ════════════════════════════════════════════════════════════════════ -->
 <section id="model" class="model-section">
-  <div class="section-label">Sc. 04 / The model</div>
+  <div class="section-label">Sc. 03 / The model</div>
   <div class="section-title">Not an AI tool.<br/>A new <em>production house.</em></div>
-  <p class="section-body" style="margin-top:18px;max-width:680px;">Every M·ARK module ships with two layers &mdash; a domain-expert creative who has done the job, and an agentic AI built for that job. The creative makes the call. The AI does the work nobody wanted to do anyway. AI doesn&rsquo;t replace the producer&rsquo;s taste &mdash; it gives them more time to use it.</p>
+  <p class="section-body" style="margin-top:18px;max-width:680px;">Every MARK module ships with two layers &mdash; a domain-expert creative who has done the job, and an agentic AI built for that job. The creative makes the call. The AI does the work nobody wanted to do anyway. AI doesn&rsquo;t replace the producer&rsquo;s taste &mdash; it gives them more time to use it.</p>
 
   <div class="pillars">
     <article class="pillar">
@@ -957,19 +886,19 @@ footer{
     <article class="pillar">
       <div class="pillar-num">04</div>
       <div class="pillar-title">RL environments</div>
-      <p class="pillar-body">Every production that runs through M·ARK feeds back. What came in under budget. What overran. Which line items the producer cut. Which vendors delivered. The system trains on outcomes &mdash; not opinions &mdash; from the productions our creatives actually shipped.</p>
+      <p class="pillar-body">Every production that runs through MARK feeds back. What came in under budget. What overran. Which line items the producer cut. Which vendors delivered. The system trains on outcomes &mdash; not opinions &mdash; from the productions our creatives actually shipped.</p>
     </article>
   </div>
 
   <div class="model-closer">
     <div class="model-closer-quote">&ldquo;The most personal is the most creative. Humans don&rsquo;t scale; AI doesn&rsquo;t taste. Put them in the same room and you get production support that didn&rsquo;t exist before.&rdquo;</div>
-    <div class="model-closer-attr">&mdash; The M·ARK working principle</div>
+    <div class="model-closer-attr">&mdash; The MARK working principle</div>
   </div>
 </section>
 
 <!-- HOW IT WORKS -->
 <section id="how">
-  <div class="section-label">Sc. 05 / How it works</div>
+  <div class="section-label">Sc. 04 / How it works</div>
   <div class="section-title">Slate. Wire. Ship.<br/>With a human in the <em>cut.</em></div>
   <div class="how-steps">
     <div class="how-step reveal">
@@ -980,7 +909,7 @@ footer{
     <div class="how-step reveal">
       <div class="step-num">02</div>
       <div class="step-title">Wire the floor</div>
-      <div class="step-desc">Plug in Gmail, WhatsApp, Drive. Crew, vendors, location managers, NDAs &mdash; M·ARK holds the rolodex and the paper trail. Our 1st AD on the module makes sure the call sheet reads like a call sheet, not a SaaS export.</div>
+      <div class="step-desc">Plug in Gmail, WhatsApp, Drive. Crew, vendors, location managers, NDAs &mdash; MARK holds the rolodex and the paper trail. Our 1st AD on the module makes sure the call sheet reads like a call sheet, not a SaaS export.</div>
     </div>
     <div class="how-step reveal">
       <div class="step-num">03</div>
@@ -992,7 +921,7 @@ footer{
 
 <!-- INTEGRATIONS -->
 <section style="background:var(--paper-deep);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);">
-  <div class="section-label">Sc. 06 / Integrations</div>
+  <div class="section-label">Sc. 05 / Integrations</div>
   <div class="section-title">The whole floor<br/>routes through <em>Mark.</em></div>
   <div class="integrations-hub">
     <div class="integration-cards">
@@ -1019,7 +948,7 @@ footer{
     </div>
     <div class="hub-rail">
       <div class="hub-rail-line"></div>
-      <div class="hub-center" aria-label="M·ARK">
+      <div class="hub-center" aria-label="MARK">
         <svg style="width:54px;height:54px;border-radius:4px;" aria-hidden="true"><use href="#mark-icon"/></svg>
       </div>
       <div class="hub-rail-line"></div>
@@ -1051,7 +980,7 @@ footer{
 
 <!-- FEATURES -->
 <section id="features">
-  <div class="section-label">Sc. 07 / Modules</div>
+  <div class="section-label">Sc. 06 / Modules</div>
   <div class="section-title">Production, broken out<br/>by <em>department.</em></div>
   <div class="features-grid">
     <a href="budget.html" class="feature-card reveal">
@@ -1149,8 +1078,8 @@ footer{
 
 <!-- CTA -->
 <section class="final-cta">
-  <div class="cta-watermark">M·ARK</div>
-  <div class="section-label" style="justify-content:center;">Sc. 08 / Roll camera</div>
+  <div class="cta-watermark">MARK</div>
+  <div class="section-label" style="justify-content:center;">Sc. 07 / Roll camera</div>
   <div class="cta-title">The start of<br/>AI-native <em>film production.</em></div>
   <div class="cta-sub">Embedded creatives · Agentic infrastructure · Production-specific datasets · RL on outcomes</div>
   <a href="budget.html" class="btn-primary"><span>Start a production &rarr;</span></a>
@@ -1165,11 +1094,11 @@ footer{
 </section>
 
 <footer>
-  <div class="footer-logo" aria-label="M·ARK — Production OS">
+  <div class="footer-logo" aria-label="MARK — Production OS">
     <svg class="mark" aria-hidden="true"><use href="#mark-icon"/></svg>
-    <span class="wm-m">M</span><span class="wm-dot" aria-hidden="true"></span><span class="wm-ark">ARK</span>
+    <span class="wm-mark">MARK</span>
   </div>
-  <div class="footer-copy">© 2026 M·ARK · Production OS · Built by Agemo</div>
+  <div class="footer-copy">© 2026 MARK · Production OS · Built by Agemo</div>
   <div class="footer-email"><a href="mailto:hello@askmark.co">hello@askmark.co</a></div>
 </footer>
 

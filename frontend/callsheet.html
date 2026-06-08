@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>M·ARK — Call Sheet · Production OS</title>
+<title>MARK — Call Sheet · Production OS</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%2314110D'/&gt;&lt;g transform='rotate(-52 40 11)'&gt;&lt;rect x='-30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='-10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='50' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;text x='40' y='66' fill='%23F5F1E8' font-family='Georgia,serif' font-style='italic' font-size='50' font-weight='600' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='68' cy='68' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,700&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700&family=Gelasio:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -40,7 +40,7 @@
 html{scroll-behavior:smooth;overflow-x:clip;}
 body{
   background:var(--paper);color:var(--ink);
-  font-family:'Inter',-apple-system,sans-serif;font-size:16px;
+  font-family:'Gelasio',Georgia,serif;font-size:17px;
   font-feature-settings:"ss01","cv11";min-height:100vh;overflow-x:clip;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
@@ -82,7 +82,7 @@ body::after{
 }
 .brand-mark svg{width:100%;height:100%;}
 .hero-title{
-  font-family:'Fraunces',serif;font-weight:600;font-size:clamp(34px,5vw,54px);
+  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:clamp(34px,5vw,54px);
   color:var(--ink);line-height:1.05;letter-spacing:-0.015em;margin-bottom:10px;
   font-variation-settings:"opsz" 144;
 }
@@ -101,7 +101,7 @@ body::after{
 .si-item{display:flex;align-items:center;gap:10px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;}
 .si-num{
   width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:600;flex-shrink:0;font-family:'Fraunces',serif;font-style:italic;
+  font-size:10px;font-weight:600;flex-shrink:0;font-family:'Alegreya',Georgia,serif;font-style:italic;
   transition:background-color 0.3s var(--ease-out),border-color 0.3s var(--ease-out),color 0.3s var(--ease-out);
 }
 .si-item.active .si-num{background:var(--ink);color:var(--paper);}
@@ -119,7 +119,7 @@ body::after{
 
 textarea, input[type=text], input[type=email], input[type=tel], input[type=date], select{
   width:100%;background:var(--paper);border:1px solid var(--rule);color:var(--ink);
-  font-family:'Inter',sans-serif;font-size:14px;padding:12px 14px;outline:none;line-height:1.6;
+  font-family:'Gelasio',Georgia,serif;font-size:14px;padding:12px 14px;outline:none;line-height:1.6;
   transition:border-color 0.2s,background 0.2s;
 }
 textarea{resize:vertical;min-height:120px;}
@@ -132,7 +132,7 @@ label.field-label{
 
 .btn-red{
   background:var(--ink);border:none;color:var(--paper);
-  font-family:'Inter',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  font-family:'Gelasio',Georgia,serif;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
   padding:14px 28px;cursor:pointer;position:relative;overflow:hidden;
   transition:transform 0.25s var(--ease-out),background 0.2s;
 }
@@ -148,7 +148,7 @@ label.field-label{
 
 .btn-ghost{
   background:transparent;border:1px solid var(--rule-strong);color:var(--ink-soft);
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;
+  font-family:'Gelasio',Georgia,serif;font-size:12px;font-weight:500;letter-spacing:0.04em;
   padding:11px 18px;cursor:pointer;
   transition:border-color 0.2s,color 0.2s,background 0.2s;
 }
@@ -156,7 +156,7 @@ label.field-label{
 
 .btn-sm{
   padding:8px 14px;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
-  cursor:pointer;border:1px solid var(--rule-strong);font-family:'Inter',sans-serif;
+  cursor:pointer;border:1px solid var(--rule-strong);font-family:'Gelasio',Georgia,serif;
   background:transparent;color:var(--ink-soft);transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .btn-sm:hover{border-color:var(--ink);color:var(--ink);background:var(--paper);}
@@ -181,7 +181,7 @@ label.field-label{
 .demo-btn{
   display:flex;align-items:center;gap:14px;padding:14px 18px;
   background:var(--paper);border:1px solid var(--rule);color:var(--ink);
-  font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;
+  font-family:'Gelasio',Georgia,serif;font-size:13px;cursor:pointer;
   transition:border-color 0.2s,transform 0.3s var(--ease-out),box-shadow 0.3s;
   text-align:left;
 }
@@ -189,7 +189,7 @@ label.field-label{
 .demo-btn.sel{border-color:var(--ink);background:var(--paper-deep);box-shadow:0 2px 12px var(--paper-shadow);}
 .demo-btn.sel .demo-num{color:var(--accent-deep);}
 .demo-num{
-  font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:24px;
+  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:500;font-size:24px;
   color:var(--accent);line-height:1;flex-shrink:0;letter-spacing:-0.01em;
 }
 .demo-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.06em;margin-top:2px;}
@@ -200,16 +200,16 @@ label.field-label{
 .prod-type-btn{
   display:flex;align-items:center;gap:14px;padding:16px 18px;
   background:var(--paper);border:1px solid var(--rule);color:var(--ink);
-  font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;text-align:left;
+  font-family:'Gelasio',Georgia,serif;font-size:13px;cursor:pointer;text-align:left;
   transition:border-color 0.2s,transform 0.3s var(--ease-out),box-shadow 0.3s;
 }
 .prod-type-btn:hover{border-color:var(--ink);transform:translateY(-1px);box-shadow:0 2px 12px var(--paper-shadow);}
 .prod-type-btn.sel{border-color:var(--accent);background:var(--paper-deep);box-shadow:0 2px 12px var(--paper-shadow);}
 .prod-type-num{
-  font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:24px;
+  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:500;font-size:24px;
   color:var(--accent);line-height:1;flex-shrink:0;letter-spacing:-0.01em;
 }
-.prod-type-name{font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);}
+.prod-type-name{font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);}
 
 /* UPLOAD ZONE */
 .upload-zone{
@@ -285,7 +285,7 @@ input[type=file]{display:none;}
 
 /* PRODUCTION COMPANY WORDMARK — big bold ALL-CAPS on a black bar.
    The single biggest tell of a real call sheet vs a designed website.
-   Brand mark sits to the left when the producer is using M·ARK as their
+   Brand mark sits to the left when the producer is using MARK as their
    production company; for other names it disappears. */
 .cs-wordmark{
   background:#14110D;color:#fff;text-align:center;
@@ -550,7 +550,7 @@ input[type=file]{display:none;}
 }
 .refine-chat-title{
   padding:14px 18px;border-bottom:1px solid var(--rule);
-  font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);
+  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);
 }
 .refine-chat-title em{color:var(--accent);font-style:italic;}
 .chat-log{flex:1;padding:14px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
@@ -569,7 +569,7 @@ input[type=file]{display:none;}
 }
 .chat-chip{
   font-size:11px;padding:6px 12px;background:var(--paper);border:1px solid var(--rule-strong);
-  cursor:pointer;color:var(--ink-soft);font-family:'Inter',sans-serif;
+  cursor:pointer;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;
   transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .chat-chip:hover{border-color:var(--ink);color:var(--ink);}
@@ -597,7 +597,7 @@ input[type=file]{display:none;}
 .channel-toggle:hover{border-color:var(--rule-strong);}
 .channel-toggle.sel{border-color:var(--ink);background:var(--paper-deep);}
 .channel-info{flex:1;}
-.channel-name{font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);}
+.channel-name{font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);}
 .channel-desc{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-top:3px;}
 .channel-tag{
   font-size:9px;font-family:'DM Mono',monospace;padding:3px 8px;
@@ -629,7 +629,7 @@ input[type=file]{display:none;}
   display:none;
 }
 .next-day-banner.show{display:block;}
-.next-day-title{font-family:'Fraunces',serif;font-weight:500;font-size:17px;margin-bottom:4px;}
+.next-day-title{font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:17px;margin-bottom:4px;}
 .next-day-title em{color:var(--accent);font-style:italic;}
 .next-day-sub{font-size:12px;opacity:0.8;font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;}
 .next-day-actions{display:flex;gap:10px;flex-wrap:wrap;}
@@ -653,7 +653,7 @@ input[type=file]{display:none;}
   padding:30px 32px;box-shadow:0 20px 60px rgba(20,17,13,0.20);
 }
 .gate-eyebrow{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);font-family:'DM Mono',monospace;margin-bottom:8px;}
-.gate-title{font-family:'Fraunces',serif;font-weight:500;font-size:24px;color:var(--ink);letter-spacing:-0.01em;margin-bottom:8px;}
+.gate-title{font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:24px;color:var(--ink);letter-spacing:-0.01em;margin-bottom:8px;}
 .gate-title em{font-style:italic;color:var(--accent);font-weight:400;}
 .gate-sub{font-size:13px;color:var(--ink-soft);line-height:1.55;margin-bottom:18px;}
 .gate-form{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
@@ -707,7 +707,7 @@ input[type=file]{display:none;}
 </head>
 <body>
 
-<!-- M·ARK brand mark — reusable SVG defs -->
+<!-- MARK brand mark — reusable SVG defs -->
 <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
   <defs>
     <symbol id="mark-icon" viewBox="0 0 80 80">
@@ -723,7 +723,7 @@ input[type=file]{display:none;}
         </g>
         <line x1="0" y1="22" x2="80" y2="22" stroke="#F5F1E8" stroke-width="0.8" opacity="0.4"/>
       </g>
-      <text x="40" y="66" fill="#F5F1E8" font-family="Fraunces, Georgia, serif"
+      <text x="40" y="66" fill="#F5F1E8" font-family="Alegreya, Georgia, serif"
             font-style="italic" font-size="50" font-weight="600" text-anchor="middle"
             letter-spacing="-0.025em">M</text>
       <circle cx="68" cy="68" r="3.4" fill="#C8330A"/>
@@ -736,7 +736,7 @@ input[type=file]{display:none;}
   <button class="back-btn" id="back-btn" onclick="goBack()"><span class="arr">←</span> <span id="back-btn-label">Back to home</span></button>
 
   <div id="hero-block" style="text-align:center;padding:8px 0 36px;">
-    <div class="brand-mark" aria-label="M·ARK"><svg aria-hidden="true"><use href="#mark-icon"/></svg></div>
+    <div class="brand-mark" aria-label="MARK"><svg aria-hidden="true"><use href="#mark-icon"/></svg></div>
     <h1 class="hero-title">Brief to <em>Call Sheet.</em></h1>
     <p class="hero-sub">Mark builds your call sheet from a brief and a crew list, lets you refine it in plain English, then sends it to your whole team. Input once, never again.</p>
   </div>
@@ -781,7 +781,7 @@ input[type=file]{display:none;}
               <line x1="10" y1="36" x2="22" y2="36"/>
             </svg>
           </div>
-          <div id="template-upload-title" style="font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload your template</div>
+          <div id="template-upload-title" style="font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload your template</div>
           <div id="template-upload-sub" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — PDF, DOCX, XLSX, TXT, HTML</div>
         </div>
       </div>
@@ -855,7 +855,7 @@ input[type=file]{display:none;}
               <line x1="10" y1="36" x2="22" y2="36"/>
             </svg>
           </div>
-          <div id="brief-upload-title" style="font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload script</div>
+          <div id="brief-upload-title" style="font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload script</div>
           <div id="brief-upload-sub" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — PDF, FDX, TXT, Fountain</div>
         </div>
       </div>
@@ -1073,7 +1073,7 @@ input[type=file]{display:none;}
 
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
       <div>
-        <div style="font-family:'Fraunces',serif;font-weight:500;font-size:24px;color:var(--ink);">Your <em>call sheet.</em></div>
+        <div style="font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:24px;color:var(--ink);">Your <em>call sheet.</em></div>
         <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-top:4px;">Review it. If it needs edits, talk to Mark in the next step.</div>
       </div>
       <div class="action-btns" style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1351,7 +1351,7 @@ const callsheet = {
     // refine ("director is Tarun Achpal", "client is Royal Enfield",
     // "studio is Sky Studios Elstree"). The HTML preview shows a slot
     // for every field, populated with — when blank.
-    production_company: 'M·ARK',
+    production_company: 'MARK',
     director: '', dop: '',
     client: '', client_address: '',
     studio: '', studio_address: '',
@@ -2021,12 +2021,12 @@ function buildCallSheetHtml(cs){
       ${cs.shoot.shoot_name ? `<div class="cs-shoot-name">${escHtml(cs.shoot.shoot_name)}</div>` : ''}
 
       <!-- Production company wordmark — big, bold, all-caps on a black bar.
-           Brand mark sits left when the company is M·ARK (default); for
-           non-M·ARK production companies the mark gives way to the name only. -->
+           Brand mark sits left when the company is MARK (default); for
+           non-MARK production companies the mark gives way to the name only. -->
       <div class="cs-wordmark">
-        ${(cs.shoot.production_company || 'M·ARK').toUpperCase().includes('M·ARK') || (cs.shoot.production_company || '').toUpperCase().includes('MARK')
+        ${(cs.shoot.production_company || 'MARK').toUpperCase().includes('MARK') || (cs.shoot.production_company || '').toUpperCase().includes('MARK')
           ? `<svg class="cs-mark" aria-hidden="true"><use href="#mark-icon"/></svg>` : ''}
-        <span class="cs-wm-text">${escHtml(cs.shoot.production_company || 'M·ARK')}</span>
+        <span class="cs-wm-text">${escHtml(cs.shoot.production_company || 'MARK')}</span>
       </div>
 
       <!-- Logo row — Director · Client · Studio · Production Contacts -->
@@ -2132,7 +2132,7 @@ function buildCallSheetHtml(cs){
       <div class="cs-footer-grid">
         <div>
           <div class="cs-footer-label">Invoice Information</div>
-          <div>${escHtml(cs.shoot.invoice_address || 'Please address invoices to ' + (cs.shoot.production_company || 'M·ARK'))}</div>
+          <div>${escHtml(cs.shoot.invoice_address || 'Please address invoices to ' + (cs.shoot.production_company || 'MARK'))}</div>
         </div>
         <div>
           <div class="cs-footer-label">Job Ref</div>
@@ -2141,7 +2141,7 @@ function buildCallSheetHtml(cs){
         </div>
       </div>
       <div class="cs-confidentiality">
-        This call sheet contains confidential information · Not for circulation · Generated by M·ARK
+        This call sheet contains confidential information · Not for circulation · Generated by MARK
       </div>
     </div>
   `;

@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AskMark — App</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700&family=Gelasio:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -12,7 +12,7 @@
   --cream:#F2EDE3;--cream2:#C8C2B8;--muted:#6B6459;--red:#C8330A;
   --red-dim:rgba(200,51,10,0.12);--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
 }
-body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;overflow:hidden;height:100vh;}
+body{background:var(--bg);color:var(--cream);font-family:'Gelasio',Georgia,serif;overflow:hidden;height:100vh;}
 
 /* ROOT LAYOUT */
 #app{display:flex;height:100vh;overflow:hidden;}
@@ -20,13 +20,13 @@ body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;overf
 /* SIDEBAR */
 #sidebar{width:240px;min-width:240px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;}
 #sb-top{padding:16px 14px 12px;border-bottom:1px solid var(--border);}
-#logo{font-family:'Playfair Display',serif;font-size:18px;color:var(--cream);margin-bottom:14px;}
+#logo{font-family:'Alegreya',Georgia,serif;font-size:18px;color:var(--cream);margin-bottom:14px;}
 #logo span{color:var(--red);font-style:italic;}
-#new-btn{width:100%;background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.15s;}
+#new-btn{width:100%;background:var(--red);border:none;color:white;font-family:'Gelasio',Georgia,serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.15s;}
 #new-btn:hover{background:#a82808;}
 #new-btn .plus{width:16px;height:16px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:14px;}
 #sb-search{padding:10px 14px;border-bottom:1px solid var(--border);}
-#sb-search input{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:12px;padding:7px 10px;outline:none;}
+#sb-search input{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Gelasio',Georgia,serif;font-size:12px;padding:7px 10px;outline:none;}
 #sb-search input::placeholder{color:var(--muted);}
 #proj-label{padding:12px 14px 6px;font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;}
 #proj-list{flex:1;overflow-y:auto;padding:0 8px 8px;}
@@ -49,7 +49,7 @@ body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;overf
 
 /* TOPNAV */
 #topnav{background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;height:48px;gap:4px;flex-shrink:0;}
-#proj-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--cream);margin-right:14px;white-space:nowrap;}
+#proj-title{font-family:'Alegreya',Georgia,serif;font-size:15px;color:var(--cream);margin-right:14px;white-space:nowrap;}
 #proj-title em{color:var(--red);font-style:italic;}
 .ntab{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;height:48px;display:flex;align-items:center;gap:6px;transition:background-color 0.15s,border-color 0.15s,color 0.15s;white-space:nowrap;user-select:none;}
 .ntab:hover{color:var(--cream2);}
@@ -60,7 +60,7 @@ body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;overf
 #status-badge{font-size:9px;font-family:'DM Mono',monospace;padding:3px 8px;background:rgba(52,168,83,0.15);color:#4CAF50;letter-spacing:0.06em;}
 /* SHARE */
 #share-wrap{position:relative;margin-left:10px;}
-#share-btn{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border2);color:var(--cream2);font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:6px 12px;cursor:pointer;transition:background-color 0.2s,border-color 0.2s,color 0.2s;}
+#share-btn{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border2);color:var(--cream2);font-family:'Gelasio',Georgia,serif;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:6px 12px;cursor:pointer;transition:background-color 0.2s,border-color 0.2s,color 0.2s;}
 #share-btn:hover{border-color:rgba(200,51,10,0.5);color:var(--cream);}
 #share-dd{position:absolute;top:calc(100% + 8px);right:0;width:220px;background:var(--s1);border:1px solid var(--border2);z-index:500;display:none;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
 #share-dd.open{display:flex;}
@@ -78,7 +78,7 @@ body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;overf
 .page{display:none;}
 .page.active{display:block;}
 .eyebrow{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--red);font-family:'DM Mono',monospace;margin-bottom:6px;}
-.pg-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--cream);line-height:1.1;}
+.pg-title{font-family:'Alegreya',Georgia,serif;font-size:26px;color:var(--cream);line-height:1.1;}
 .pg-sub{font-size:11px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;margin-bottom:22px;}
 
 /* STATS */
@@ -87,7 +87,7 @@ body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;overf
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);opacity:0;transition:opacity 0.2s;}
 .stat-card:hover::before{opacity:1;}
 .stat-label{font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:8px;}
-.stat-value{font-family:'Playfair Display',serif;font-size:28px;color:var(--cream);line-height:1;margin-bottom:3px;}
+.stat-value{font-family:'Alegreya',Georgia,serif;font-size:28px;color:var(--cream);line-height:1;margin-bottom:3px;}
 .stat-sub{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;}
 .stat-bar{height:3px;background:var(--s3);margin-top:10px;}
 .stat-bar-fill{height:100%;background:var(--red);}
@@ -123,10 +123,10 @@ body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;overf
 
 /* CREW PAGE */
 .crew-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
-.crew-toolbar input{flex:1;background:var(--s1);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:12px;padding:8px 12px;outline:none;}
+.crew-toolbar input{flex:1;background:var(--s1);border:1px solid var(--border);color:var(--cream);font-family:'Gelasio',Georgia,serif;font-size:12px;padding:8px 12px;outline:none;}
 .crew-toolbar input::placeholder{color:var(--muted);}
 .crew-toolbar select{background:var(--s1);border:1px solid var(--border);color:var(--cream2);font-family:'DM Mono',monospace;font-size:11px;padding:8px 10px;outline:none;cursor:pointer;}
-.add-crew{background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:8px 14px;cursor:pointer;white-space:nowrap;}
+.add-crew{background:var(--red);border:none;color:white;font-family:'Gelasio',Georgia,serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:8px 14px;cursor:pointer;white-space:nowrap;}
 .crew-table{width:100%;border-collapse:collapse;}
 .crew-table th{text-align:left;padding:8px 12px;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);background:var(--s1);font-weight:400;}
 .crew-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--cream2);vertical-align:middle;font-size:11px;}
@@ -154,14 +154,14 @@ body{background:var(--bg);color:var(--cream);font-family:'Syne',sans-serif;overf
 textarea{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream2);font-family:'DM Mono',monospace;font-size:11px;padding:12px;resize:vertical;min-height:100px;outline:none;line-height:1.6;}
 textarea:focus{border-color:rgba(200,51,10,0.4);}
 textarea::placeholder{color:var(--muted);}
-.btn-red{background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 18px;cursor:pointer;transition:background 0.15s;}
+.btn-red{background:var(--red);border:none;color:white;font-family:'Gelasio',Georgia,serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 18px;cursor:pointer;transition:background 0.15s;}
 .btn-red:hover{background:#a82808;}
-.btn-ghost{background:var(--s2);border:1px solid var(--border2);color:var(--cream2);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:10px 16px;cursor:pointer;transition:background-color 0.15s,border-color 0.15s,color 0.15s;}
+.btn-ghost{background:var(--s2);border:1px solid var(--border2);color:var(--cream2);font-family:'Gelasio',Georgia,serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:10px 16px;cursor:pointer;transition:background-color 0.15s,border-color 0.15s,color 0.15s;}
 .btn-ghost:hover{border-color:var(--red);color:var(--cream);}
 
 /* MARK BAR */
 #mark-bar{background:var(--s1);border-top:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
-#mark-av-bar{width:36px;height:36px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-size:16px;color:white;flex-shrink:0;}
+#mark-av-bar{width:36px;height:36px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Alegreya',Georgia,serif;font-style:italic;font-size:16px;color:white;flex-shrink:0;}
 #mark-plus{width:32px;height:32px;background:var(--s2);border:1px solid var(--border2);color:var(--cream2);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background-color 0.15s,border-color 0.15s,color 0.15s;position:relative;}
 #mark-plus:hover{border-color:var(--red);color:var(--cream);}
 #plus-menu{position:absolute;bottom:calc(100% + 8px);left:0;width:180px;background:var(--s1);border:1px solid var(--border2);display:none;flex-direction:column;box-shadow:0 -8px 24px rgba(0,0,0,0.5);}
@@ -171,8 +171,8 @@ textarea::placeholder{color:var(--muted);}
 .pm-item:hover{background:var(--s2);color:var(--cream);}
 #mark-input-wrap{flex:1;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;}
 #mark-input-wrap:focus-within{border-color:rgba(200,51,10,0.5);box-shadow:0 0 0 3px rgba(200,51,10,0.06);}
-#mark-m-label{font-family:'Playfair Display',serif;font-size:13px;font-style:italic;color:var(--red);flex-shrink:0;border-right:1px solid var(--border);padding-right:10px;}
-#mark-input{flex:1;background:transparent;border:none;color:var(--cream);font-family:'Syne',sans-serif;font-size:13px;padding:12px 0;outline:none;}
+#mark-m-label{font-family:'Alegreya',Georgia,serif;font-size:13px;font-style:italic;color:var(--red);flex-shrink:0;border-right:1px solid var(--border);padding-right:10px;}
+#mark-input{flex:1;background:transparent;border:none;color:var(--cream);font-family:'Gelasio',Georgia,serif;font-size:13px;padding:12px 0;outline:none;}
 #mark-input::placeholder{color:var(--muted);}
 #mark-send{width:38px;height:38px;background:var(--red);border:none;color:white;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s;border-radius:2px;}
 #mark-send:hover{background:#a82808;}
@@ -240,7 +240,7 @@ textarea::placeholder{color:var(--muted);}
   <!-- SIDEBAR -->
   <div id="sidebar">
     <div id="sb-top">
-      <div id="logo">M<span>.</span>ARK</div>
+      <div id="logo">MARK</div>
       <button id="new-btn" onclick="newProject()"><div class="plus">+</div>New Production</button>
     </div>
     <div id="sb-search"><input type="text" placeholder="Search productions..." oninput="filterProjects(this.value)"/></div>
@@ -353,7 +353,7 @@ textarea::placeholder{color:var(--muted);}
             <div style="font-size:13px;font-weight:700;color:var(--cream);margin-bottom:3px;">Generate a Budget</div>
             <div style="font-size:11px;color:var(--muted);line-height:1.5;">Upload your script and get a full itemised production budget in under a minute.</div>
           </div>
-          <button onclick="window.location.href='budget.html'" style="background:var(--red);border:none;color:white;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:10px 18px;cursor:pointer;white-space:nowrap;">Open Tool →</button>
+          <button onclick="window.location.href='budget.html'" style="background:var(--red);border:none;color:white;font-family:'Gelasio',Georgia,serif;font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:10px 18px;cursor:pointer;white-space:nowrap;">Open Tool →</button>
         </div>
 
         <div class="panel">
@@ -393,7 +393,7 @@ textarea::placeholder{color:var(--muted);}
         <div class="panel" style="display:flex;align-items:center;gap:16px;">
           <div style="width:44px;height:44px;background:var(--red-dim);border:1px solid rgba(200,51,10,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📄</div>
           <div style="flex:1;">
-            <div style="font-family:'Playfair Display',serif;font-size:16px;color:var(--cream);margin-bottom:4px;">AI Budget Generator</div>
+            <div style="font-family:'Alegreya',Georgia,serif;font-size:16px;color:var(--cream);margin-bottom:4px;">AI Budget Generator</div>
             <div style="font-size:11px;color:var(--muted);line-height:1.5;">Upload a script or paste your brief. Mark analyses scenes, locations and crew needs — then maps everything to market rates with real budget codes (10000–14000).</div>
           </div>
           <button class="btn-red" onclick="openBudgetTool()">Generate Budget →</button>
@@ -471,11 +471,11 @@ textarea::placeholder{color:var(--muted);}
 <!-- NEW PROJECT MODAL -->
 <div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,9,8,0.9);z-index:500;align-items:center;justify-content:center;">
   <div style="background:var(--s1);border:1px solid var(--border2);width:480px;max-width:90vw;padding:28px;">
-    <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--cream);margin-bottom:4px;">New Production</div>
+    <div style="font-family:'Alegreya',Georgia,serif;font-size:20px;color:var(--cream);margin-bottom:4px;">New Production</div>
     <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:24px;">Fill in the details to set up your project</div>
     <div style="display:flex;flex-direction:column;gap:14px;">
-      <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Project Name *</label><input id="new-proj-name" type="text" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;outline:none;" placeholder="Nike — Spirit of India"/></div>
-      <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Project Type</label><select id="new-proj-type" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;outline:none;"><option>TVC / Brand Film</option><option>Music Video</option><option>Feature Film</option><option>OTT Series</option><option>Documentary</option></select></div>
+      <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Project Name *</label><input id="new-proj-name" type="text" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Gelasio',Georgia,serif;font-size:13px;padding:9px 12px;outline:none;" placeholder="Nike — Spirit of India"/></div>
+      <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Project Type</label><select id="new-proj-type" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Gelasio',Georgia,serif;font-size:13px;padding:9px 12px;outline:none;"><option>TVC / Brand Film</option><option>Music Video</option><option>Feature Film</option><option>OTT Series</option><option>Documentary</option></select></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Shoot Start</label><input id="new-proj-start" type="date" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'DM Mono',monospace;font-size:12px;padding:9px 12px;outline:none;"/></div>
         <div><label style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">Shoot End</label><input id="new-proj-end" type="date" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'DM Mono',monospace;font-size:12px;padding:9px 12px;outline:none;"/></div>
