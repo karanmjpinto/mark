@@ -112,6 +112,81 @@ body::after{
 .si-item.inactive .si-label{color:var(--muted);}
 .si-line{flex:1;height:1px;background:var(--rule-strong);margin:0 14px;min-width:16px;}
 
+/* GLOBAL STEP INDICATOR — one bar for the whole 12-step workflow.
+   The per-step inline indicators are hidden; this single bar tracks progress. */
+.step > .step-indicator{display:none !important;}
+#gstep{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+#gstep .si-item{flex-shrink:0;}
+#gstep .si-line{min-width:10px;margin:0 8px;}
+@media (max-width:760px){
+  #gstep{padding:10px 12px;gap:0;}
+  #gstep .si-label{display:none;}
+  #gstep .si-line{min-width:8px;margin:0 5px;}
+}
+
+/* WORKFLOW STEP HELPERS — shared by the new script-driven step pages */
+.step-help{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;line-height:1.7;margin-bottom:16px;}
+.flow-actions{display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;}
+.flow-progress{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.05em;}
+
+/* SCENE BREAKDOWN (3.1) + CAST (3.2) — selectable editable rows */
+.sel-grid{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);}
+.sel-grid > .sel-hdr, .sel-grid > #scene-list, .sel-grid > #cast-list{flex:0 0 auto;}
+.scene-grid{grid-template-columns:64px 92px minmax(0,1fr) 70px;}
+.cast-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 70px;}
+@media (max-width:520px){
+  .scene-grid{grid-template-columns:34px 58px minmax(0,1fr) 46px;}
+  .cast-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 46px;}
+  .sel-cell input{padding:10px 7px;font-size:12px;}
+  .sel-intext{padding:0 5px;}
+  .sel-intext select{font-size:10px;padding:8px 1px;}
+  .sel-row.sel-hdr>div{padding:8px 6px;font-size:8px;}
+}
+.sel-hdr{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;}
+.sel-row{display:grid;background:var(--paper);align-items:stretch;transition:background 0.18s var(--ease-out);}
+.sel-row.sel-hdr>div{padding:10px 12px;background:var(--paper-deep);}
+.sel-row:not(.sel-hdr){cursor:default;}
+.sel-row.on{background:color-mix(in srgb,var(--accent) 9%,var(--paper));}
+.sel-row.off{opacity:0.5;}
+.sel-cell{padding:0;display:flex;align-items:stretch;}
+.sel-cell input{border:none;background:transparent;padding:11px 12px;font-size:13px;}
+.sel-cell input:focus{background:var(--paper);box-shadow:inset 0 0 0 1px var(--ink);}
+.sel-toggle{display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.04em;color:var(--muted);user-select:none;}
+.sel-toggle .dot{width:18px;height:18px;border:1.5px solid var(--rule-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all 0.18s var(--ease-out);}
+.sel-row.on .sel-toggle .dot{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+.sel-intext{display:flex;align-items:center;padding:0 12px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.05em;}
+.sel-intext select{border:none;background:transparent;padding:8px 4px;font-family:'DM Mono',monospace;font-size:11px;}
+
+/* DEPARTMENTS NOT NEEDED (3.4) — chip toggles */
+.dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.dept-chip{display:flex;align-items:center;gap:10px;padding:13px 15px;border:1px solid var(--rule);background:var(--paper);cursor:pointer;font-family:'Gelasio',Georgia,serif;font-size:14px;color:var(--ink);transition:all 0.18s var(--ease-out);}
+.dept-chip .dchk{width:18px;height:18px;border:1.5px solid var(--rule-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
+.dept-chip.needed{border-color:var(--rule-strong);}
+.dept-chip.off{opacity:0.55;background:var(--paper-deep);text-decoration:line-through;text-decoration-color:var(--muted);}
+.dept-chip.off .dchk{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+
+/* HOSPITAL LOOKUP (3.5) */
+.hosp-find{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 4px;}
+.hosp-status{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;}
+
+/* MAPS / DRAWINGS (3.6) */
+.maps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px;}
+.map-thumb{position:relative;border:1px solid var(--rule);background:var(--paper);padding:8px;}
+.map-thumb img{width:100%;height:110px;object-fit:cover;display:block;background:var(--paper-deep);}
+.map-thumb .map-file{height:110px;display:flex;align-items:center;justify-content:center;background:var(--paper-deep);font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;padding:8px;}
+.map-name{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.map-remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border:none;background:var(--ink);color:var(--paper);cursor:pointer;font-size:14px;line-height:1;border-radius:50%;}
+
+/* GMAIL N/A WARNING (3.3) */
+.gmail-warn{display:none;margin-top:12px;padding:11px 14px;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--paper));font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.03em;line-height:1.6;color:var(--ink);}
+
+/* Generated call-sheet maps block */
+.cs-maps{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:8px;}
+.cs-map{margin:0;border:1px solid rgba(20,17,13,0.18);}
+.cs-map img{width:100%;display:block;}
+.cs-map figcaption{font-size:9px;font-family:'DM Mono',monospace;padding:4px 6px;color:#555;}
+.cs-map-file{border:1px solid rgba(20,17,13,0.18);padding:10px;font-family:'DM Mono',monospace;font-size:10px;}
+
 /* PANELS, INPUTS, BUTTONS */
 .panel{background:var(--paper-deep);border:1px solid var(--rule);padding:24px;margin-bottom:18px;}
 .panel-title{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px;}
@@ -741,6 +816,9 @@ input[type=file]{display:none;}
     <p class="hero-sub">Mark builds your call sheet from a brief and a crew list, lets you refine it in plain English, then sends it to your whole team. Input once, never again.</p>
   </div>
 
+  <!-- GLOBAL STEP INDICATOR — one bar drives the whole 12-step workflow -->
+  <div class="step-indicator" id="gstep"></div>
+
   <!-- STEP 0: TEMPLATE — upload your own, or use AskMark's standard format -->
   <div class="step active" id="step0">
     <div class="step-indicator">
@@ -881,15 +959,63 @@ input[type=file]{display:none;}
       </div>
     </div>
 
-    <!-- CREW -->
+    <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-red disabled" id="step1-next" onclick="finishSource()"><span>Continue →</span></button>
+      <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;" id="step1-progress">Add a brief or script to continue</span>
+    </div>
+  </div>
+
+  <!-- STEP 3.1: SCENE BREAKDOWN — parsed from the script, pick the day's scenes -->
+  <div class="step" id="stepScenes">
     <div class="panel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="panel-title" style="margin-bottom:0;">Crew &amp; <em>cast</em></div>
+      <div class="panel-title">Scene <em>breakdown</em> · 3.1</div>
+      <p class="step-help">Mark read your script and listed every scene from start to finish. <strong>Select which scenes are being filmed on this shoot day</strong> — tap a row to toggle it on or off. Edit any field, or add a scene Mark missed. When you confirm, the unselected scenes drop away and only the day's scenes remain (you can still edit them later).</p>
+      <div class="sel-grid scene-grid">
+        <div class="sel-row sel-hdr scene-grid">
+          <div class="sel-cell">Sc.</div><div class="sel-cell">Int/Ext</div><div class="sel-cell">Location — Main action</div><div class="sel-cell">On day</div>
+        </div>
+        <div id="scene-list" style="display:contents;"></div>
+      </div>
+      <button class="crew-add-btn" onclick="addSceneRow()">+ Add scene</button>
+    </div>
+    <div class="flow-actions">
+      <button class="btn-red" id="scenes-next" onclick="confirmScenes()"><span>Confirm scenes to be shot →</span></button>
+      <button class="btn-ghost" onclick="goBack()">← Back</button>
+      <span class="flow-progress" id="scenes-progress"></span>
+    </div>
+  </div>
+
+  <!-- STEP 3.2: CAST SELECTION — characters parsed from script, type real actors -->
+  <div class="step" id="stepCast">
+    <div class="panel">
+      <div class="panel-title">Cast <em>selection</em> · 3.2</div>
+      <p class="step-help">These are the characters Mark found in your script. <strong>Type the real name of the actor</strong> next to each, and select who is needed on the shoot day. Add or remove anyone — it's fully editable.</p>
+      <div class="sel-grid cast-grid">
+        <div class="sel-row sel-hdr cast-grid">
+          <div class="sel-cell">Character</div><div class="sel-cell">Actor — real name</div><div class="sel-cell">On day</div>
+        </div>
+        <div id="cast-list" style="display:contents;"></div>
+      </div>
+      <button class="crew-add-btn" onclick="addCastRow()">+ Add cast</button>
+    </div>
+    <div class="flow-actions">
+      <button class="btn-red" id="cast-next" onclick="confirmCast()"><span>Confirm cast for the day →</span></button>
+      <button class="btn-ghost" onclick="goBack()">← Back</button>
+      <span class="flow-progress" id="cast-progress"></span>
+    </div>
+  </div>
+
+  <!-- STEP 3.3: CREW DEPARTMENTS — upload or input crew; Gmail N/A indicator -->
+  <div class="step" id="stepCrew">
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;">
+        <div class="panel-title" style="margin-bottom:0;">Crew <em>departments</em> · 3.3</div>
         <div style="display:flex;gap:8px;">
           <button class="btn-sm" onclick="document.getElementById('crew-csv').click()">Upload CSV / Excel</button>
           <input type="file" id="crew-csv" accept=".csv,.xlsx,.xls,.docx,.doc" style="display:none;" onchange="handleCrewCsv(this.files[0])"/>
         </div>
       </div>
+      <p class="step-help" style="margin-bottom:8px;">Upload your crew list by XLS, DOCX or CSV — or input the details manually in the table below. Each crew member needs a name, role and email. Set the department so the call sheet groups them correctly.</p>
       <div id="crew-drop-hint" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-bottom:8px;">Or drag &amp; drop a CSV / Excel file anywhere on the table below.</div>
       <div class="crew-table" id="crew-table"
            ondragover="crewDragOver(event)" ondragleave="crewDragLeave(event)" ondrop="crewDrop(event)">
@@ -899,13 +1025,86 @@ input[type=file]{display:none;}
         <!-- crew rows injected by JS -->
       </div>
       <button class="crew-add-btn" onclick="addCrewRow()">+ Add row</button>
+      <div class="gmail-warn" id="crew-gmail-warning"></div>
     </div>
-
-    <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;">
-      <button class="btn-red disabled" id="step1-next" onclick="goTo('step2')"><span>Continue →</span></button>
-      <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;" id="step1-progress">Add a brief and at least one crew member</span>
+    <div class="flow-actions">
+      <button class="btn-red disabled" id="crew-next" onclick="finishCrew()"><span>Continue →</span></button>
+      <button class="btn-ghost" onclick="goBack()">← Back</button>
+      <span class="flow-progress" id="crew-progress">Add at least one crew member</span>
     </div>
     <div id="step1-error" style="display:none;margin-top:14px;" class="error-msg"></div>
+  </div>
+
+  <!-- STEP 3.4: DEPARTMENTS NOT NEEDED — toggle off the ones not on set today -->
+  <div class="step" id="stepDepts">
+    <div class="panel">
+      <div class="panel-title">Departments <em>not needed</em> · 3.4</div>
+      <p class="step-help">Tap any department that is <strong>not needed</strong> on set this day. The needed ones stay in; the ones you switch off won't appear on the call sheet. Everything is on by default.</p>
+      <div class="dept-grid" id="dept-grid"></div>
+    </div>
+    <div class="flow-actions">
+      <button class="btn-red" onclick="goTo('stepLocation')"><span>Continue →</span></button>
+      <button class="btn-ghost" onclick="goBack()">← Back</button>
+      <span class="flow-progress" id="dept-progress"></span>
+    </div>
+  </div>
+
+  <!-- STEP 3.5: LOCATION + AI HOSPITAL LOOKUP -->
+  <div class="step" id="stepLocation">
+    <div class="panel">
+      <div class="panel-title">Shoot <em>location</em> · 3.5</div>
+      <p class="step-help">Enter the shooting location(s). Mark can then find the nearest A&amp;E hospital automatically and format it for the call sheet — Name, Area, City, Postcode and phone.</p>
+      <div class="shoot-grid">
+        <div class="full">
+          <label class="field-label">Shooting location(s) *</label>
+          <textarea id="shoot-locations" placeholder="Full address. Multiple locations on separate lines." style="min-height:90px;"></textarea>
+        </div>
+        <div class="full">
+          <label class="field-label">Nearest A&amp;E hospital</label>
+          <div class="hosp-find">
+            <button class="btn-sm btn-sm-accent" id="hosp-find-btn" onclick="findHospital()">Find nearest hospital</button>
+            <span class="hosp-status" id="hosp-status">Mark finds it from your location — or type it in below.</span>
+          </div>
+          <textarea id="shoot-hospital" placeholder="Name, Area, City, Postcode. Phone number" style="min-height:70px;"></textarea>
+        </div>
+        <div class="full">
+          <label class="field-label">Nearest police station</label>
+          <textarea id="shoot-police" placeholder="Address + phone" style="min-height:70px;"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="flow-actions">
+      <button class="btn-red disabled" id="loc-next" onclick="finishLocation()"><span>Continue →</span></button>
+      <button class="btn-ghost" onclick="goBack()">← Back</button>
+      <span class="flow-progress" id="loc-progress">Add at least one shooting location</span>
+    </div>
+  </div>
+
+  <!-- STEP 3.6: MAPS / DRAWINGS UPLOAD -->
+  <div class="step" id="stepMaps">
+    <div class="panel">
+      <div class="panel-title">Maps &amp; <em>drawings</em> · 3.6</div>
+      <p class="step-help">Upload any maps, site plans or drawings — important for locations that are hard to reach. These appear on the call sheet. Optional.</p>
+      <div class="upload-zone" id="maps-zone"
+           onclick="document.getElementById('maps-file').click()"
+           ondragover="mapsDragOver(event)" ondragleave="mapsDragLeave(event)" ondrop="mapsDrop(event)">
+        <input type="file" id="maps-file" accept="image/*,.pdf" multiple style="display:none;" onchange="handleMapsFiles(this.files)"/>
+        <div style="margin-bottom:10px;">
+          <svg width="36" height="44" viewBox="0 0 40 48" fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4 L24 4 L36 16 L36 44 L4 44 Z"/><path d="M24 4 L24 16 L36 16"/>
+            <line x1="10" y1="26" x2="30" y2="26"/><line x1="10" y1="32" x2="30" y2="32"/>
+          </svg>
+        </div>
+        <div style="font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload maps or drawings</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — images or PDF</div>
+      </div>
+      <div class="maps-grid" id="maps-grid"></div>
+    </div>
+    <div class="flow-actions">
+      <button class="btn-red" onclick="goTo('step2')"><span>Continue →</span></button>
+      <button class="btn-ghost" onclick="goBack()">← Back</button>
+      <span class="flow-progress" id="maps-progress"></span>
+    </div>
   </div>
 
   <!-- STEP 2: SHOOT DETAILS -->
@@ -948,18 +1147,7 @@ input[type=file]{display:none;}
         <div class="full">
           <label class="field-label">Scenes being shot</label>
           <input type="text" id="shoot-scenes" placeholder="e.g. Scenes 1, 4, 7B — or short description"/>
-        </div>
-        <div class="full">
-          <label class="field-label">Shooting location(s) *</label>
-          <textarea id="shoot-locations" placeholder="Full address. Multiple locations on separate lines." style="min-height:90px;"></textarea>
-        </div>
-        <div>
-          <label class="field-label">Nearest A&amp;E hospital</label>
-          <textarea id="shoot-hospital" placeholder="Address + phone" style="min-height:70px;"></textarea>
-        </div>
-        <div>
-          <label class="field-label">Nearest police station</label>
-          <textarea id="shoot-police" placeholder="Address + phone" style="min-height:70px;"></textarea>
+          <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-top:4px;">Pre-filled from the scenes you confirmed in step 3.1 — edit freely.</div>
         </div>
         <div class="full">
           <label class="field-label">Weather</label>
@@ -1050,7 +1238,7 @@ input[type=file]{display:none;}
 
     <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;">
       <button class="btn-red disabled" id="step2-next" onclick="finishStep2()"><span>Generate call sheet →</span></button>
-      <button class="btn-ghost" onclick="goTo('step1')">← Back</button>
+      <button class="btn-ghost" onclick="goBack()">← Back</button>
       <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;" id="step2-progress">Fill the required fields</span>
     </div>
   </div>
@@ -1366,6 +1554,15 @@ const callsheet = {
   },
   send: { channels: [], status: 'draft' },
   revisions: [],                              // [{ instruction, notes, ts }]
+
+  // ── SCRIPT-DERIVED WORKFLOW (PDF spec 3.1–3.6) ────────────────────────
+  // Populated when the brief/script is parsed at the end of the Source step.
+  scenes: [],            // [{ id, no, intext, location, action, selected }]  — 3.1 Scene Breakdown
+  scenesConfirmed: false,
+  cast: [],              // [{ id, character, actor, dayPlayer, selected }]    — 3.2 Cast Selection
+  castConfirmed: false,
+  disabledDepts: [],     // department names the producer marked "not needed"  — 3.4
+  maps: [],              // [{ id, name, dataUrl }] maps / drawings            — 3.6
 };
 
 // ── PRODUCTION TYPE ───────────────────────────────────────────────────────────
@@ -1543,11 +1740,11 @@ function addCrewRow(prefill = {}) {
 function removeCrewRow(id){
   callsheet.crew = callsheet.crew.filter(c => c.id !== id);
   renderCrewTable();
-  refreshStep1Gate();
+  refreshCrewGate();
 }
 function updateCrewField(id, field, value){
   const row = callsheet.crew.find(c => c.id === id);
-  if (row){ row[field] = value; refreshStep1Gate(); }
+  if (row){ row[field] = value; refreshCrewGate(); }
 }
 function renderCrewTable(){
   const tbl = document.getElementById('crew-table');
@@ -1604,7 +1801,7 @@ function ingestCrewRows(rows, fileName){
   const added = callsheet.crew.length - before;
   if (added) showStep1Toast(`Imported ${added} crew member${added===1?'':'s'} from ${fileName}`);
   else showStep1Toast(`No rows found in ${fileName}. Use columns: Name, Role, Department, Email, Phone.`, true);
-  refreshStep1Gate();
+  refreshCrewGate();
 }
 function crewDragOver(e){ e.preventDefault(); document.getElementById('crew-table').classList.add('drag-active'); }
 function crewDragLeave(e){ if (e.target.id === 'crew-table') document.getElementById('crew-table').classList.remove('drag-active'); }
@@ -1678,6 +1875,8 @@ document.addEventListener('DOMContentLoaded', () => {
     schedEl.value = DEFAULT_SCHEDULE;
     callsheet.shoot.schedule = DEFAULT_SCHEDULE;
   }
+  // Paint the global step indicator for the starting step.
+  renderStepIndicator('step0');
 });
 
 function fillTimeOptions(id){
@@ -1712,8 +1911,8 @@ function wireShootInputs(){
   Object.entries(map).forEach(([elId, field]) => {
     const el = document.getElementById(elId);
     if (!el) return;
-    el.addEventListener('input', () => { callsheet.shoot[field] = el.value; refreshStep2Gate(); });
-    el.addEventListener('change', () => { callsheet.shoot[field] = el.value; refreshStep2Gate(); });
+    el.addEventListener('input', () => { callsheet.shoot[field] = el.value; refreshStep2Gate(); if (field==='locations') refreshLocationGate(); });
+    el.addEventListener('change', () => { callsheet.shoot[field] = el.value; refreshStep2Gate(); if (field==='locations') refreshLocationGate(); });
   });
   // Contact splitter — "Maria Domican / +44 7983 604708" → name + phone
   ['c1', 'c2'].forEach((tag, idx) => {
@@ -1741,19 +1940,16 @@ function wireShootInputs(){
 // ── GATING ────────────────────────────────────────────────────────────────────
 function crewIsValid(c){ return c.name.trim() && c.role.trim() && c.email.trim(); }
 function refreshStep1Gate(){
-  const validCrew = callsheet.crew.filter(crewIsValid).length;
+  // Source step now gates on the brief/script only; crew moved to its own step.
   const briefOk = (callsheet.brief || '').trim().length >= 10;
-  const ready = briefOk && validCrew >= 1;
   const btn = document.getElementById('step1-next');
-  btn.classList.toggle('disabled', !ready);
+  if (btn) btn.classList.toggle('disabled', !briefOk);
   const p = document.getElementById('step1-progress');
-  if (ready) p.textContent = `${validCrew} crew member${validCrew===1?'':'s'} ready · brief loaded`;
-  else if (!briefOk) p.textContent = 'Add a brief (at least 10 characters)';
-  else p.textContent = 'Add at least one crew member with name, role and email';
+  if (p) p.textContent = briefOk ? 'Brief ready — Mark will read it for scenes & cast' : 'Add a brief or script (at least 10 characters)';
 }
 function refreshStep2Gate(){
   const s = callsheet.shoot;
-  const required = ['shoot_name','date','day_number','unit_call','wrap_time','locations'];
+  const required = ['shoot_name','date','day_number','unit_call','wrap_time'];
   const missing = required.filter(f => !(s[f] || '').toString().trim());
   const btn = document.getElementById('step2-next');
   btn.classList.toggle('disabled', missing.length > 0);
@@ -1771,21 +1967,358 @@ function finishStep2(){
 }
 
 // ── FLOW ──────────────────────────────────────────────────────────────────────
-const _backMap = { step0:null, step1:'step0', step2:'step1', step3:'step2', step4:'step3', step5:'step4' };
+// The full PDF workflow — each step is one page. Order matches the spec:
+// Template → Source → 3.1 Scenes → 3.2 Cast → 3.3 Crew → 3.4 Departments →
+// 3.5 Location/Hospital → 3.6 Maps → Details → Preview → Refine → Send.
+const STEPS = [
+  { id:'step0',        label:'Template' },
+  { id:'step1',        label:'Source' },
+  { id:'stepScenes',   label:'Scenes' },
+  { id:'stepCast',     label:'Cast' },
+  { id:'stepCrew',     label:'Crew' },
+  { id:'stepDepts',    label:'Departments' },
+  { id:'stepLocation', label:'Location' },
+  { id:'stepMaps',     label:'Maps' },
+  { id:'step2',        label:'Details' },
+  { id:'step3',        label:'Preview' },
+  { id:'step4',        label:'Refine' },
+  { id:'step5',        label:'Send' },
+];
+function stepIndex(id){ return STEPS.findIndex(s => s.id === id); }
+
+function renderStepIndicator(activeId){
+  const bar = document.getElementById('gstep');
+  if (!bar) return;
+  const idx = stepIndex(activeId);
+  bar.innerHTML = STEPS.map((s, i) => {
+    const cls = i < idx ? 'done' : (i === idx ? 'active' : 'inactive');
+    const item = `<div class="si-item ${cls}"><div class="si-num">${i}</div><div class="si-label">${s.label}</div></div>`;
+    return item + (i < STEPS.length - 1 ? '<div class="si-line"></div>' : '');
+  }).join('');
+}
+
 function goTo(id){
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('active');
   window.scrollTo(0, 0);
+  renderStepIndicator(id);
   const lab = document.getElementById('back-btn-label');
-  lab.textContent = _backMap[id] ? 'Back' : 'Back to home';
+  if (lab) lab.textContent = stepIndex(id) > 0 ? 'Back' : 'Back to home';
+  // Per-step entry hooks.
+  if (id === 'stepScenes') renderScenes();
+  if (id === 'stepCast') renderCast();
+  if (id === 'stepCrew') { renderCrewTable(); refreshCrewGate(); }
+  if (id === 'stepDepts') renderDepts();
+  if (id === 'stepLocation') refreshLocationGate();
+  if (id === 'stepMaps') renderMaps();
   if (id === 'step3' || id === 'step4') renderCallSheet();
   if (id === 'step5') { renderSendSummary(); loadUnipileAccounts(); }
 }
 function goBack(){
   const cur = document.querySelector('.step.active');
-  const prev = cur ? _backMap[cur.id] : null;
-  if (prev) goTo(prev);
+  const idx = cur ? stepIndex(cur.id) : -1;
+  if (idx > 0) goTo(STEPS[idx - 1].id);
   else window.location.href = 'index.html';
+}
+
+// Source step → parse the script, then move into the scene breakdown.
+function finishSource(){
+  const btn = document.getElementById('step1-next');
+  if (btn && btn.classList.contains('disabled')) return;
+  parseScript(callsheet.brief || '');
+  goTo('stepScenes');
+}
+
+// ── SCRIPT PARSER (PDF spec 3 — "Ai parses through the script") ───────────────
+// Heuristic, fully client-side. Pulls scene sluglines and character cues out of
+// a screenplay. Typed briefs (not screenplays) yield few/no rows — that's fine,
+// every step lets the producer add and edit manually.
+function parseScript(text){
+  text = (text || '').replace(/\r/g, '');
+  const lines = text.split('\n');
+  const sceneHeadRe = /^\s*(\d+[A-Za-z]?)?[\).\s-]*\b(INT\.?\/EXT\.?|INT\.?|EXT\.?|I\/E)\b[\.\s:-]*(.*)$/i;
+  const transitionRe = /^(CUT TO:|FADE (IN|OUT)|DISSOLVE|SMASH CUT|MATCH CUT|FADE TO|THE END|INTERCUT|OMITTED)/i;
+  const scenes = [];
+  const castSet = new Map();
+  let n = 0;
+  for (let i = 0; i < lines.length; i++){
+    const line = lines[i].trim();
+    if (!line) continue;
+    const m = line.match(sceneHeadRe);
+    if (m){
+      n++;
+      const tag = m[2].toUpperCase();
+      const intext = (/INT\.?\/EXT|I\/E/.test(tag)) ? 'INT/EXT' : (/EXT/.test(tag) ? 'EXT' : 'INT');
+      let rest = (m[3] || '').trim();
+      let location = rest, action = '';
+      const parts = rest.split(/\s[-–—]\s|\s{2,}/);
+      if (parts.length > 1){ location = parts[0].trim(); action = parts.slice(1).join(' — ').trim(); }
+      if (!action){
+        for (let j = i + 1; j < lines.length && j < i + 5; j++){
+          const nx = lines[j].trim();
+          if (nx && !sceneHeadRe.test(nx)){ action = nx.slice(0, 140); break; }
+        }
+      }
+      scenes.push({ id:'sc-'+n, no:String(m[1] || n), intext, location: location || '—', action: action || '', selected:true });
+      continue;
+    }
+    if (!transitionRe.test(line) && isCharacterCue(line)){
+      const name = line.replace(/\(.*?\)/g,'').replace(/[:]+$/,'').replace(/[^A-Za-z .'\-]/g,'').trim();
+      if (name && name.length >= 2 && name.split(/\s+/).length <= 4){
+        const key = name.toUpperCase();
+        castSet.set(key, (castSet.get(key) || 0) + 1);
+      }
+    }
+  }
+  callsheet.scenes = scenes;
+  callsheet.scenesConfirmed = false;
+  callsheet.cast = [...castSet.entries()]
+    .filter(([, c]) => c >= 1)
+    .sort((a, b) => b[1] - a[1])
+    .map(([character], idx) => ({ id:'ca-'+idx, character, actor:'', dayPlayer:false, selected:true }));
+  callsheet.castConfirmed = false;
+}
+function isCharacterCue(line){
+  if (line.length > 38) return false;
+  const core = line.replace(/\(.*?\)/g,'').replace(/[:]+$/,'').trim();
+  if (!core || /[a-z]/.test(core)) return false;          // cues are all-caps
+  if (!/[A-Z]{2,}/.test(core)) return false;
+  if (/\b(INT|EXT|DAY|NIGHT|CONTINUOUS|MORNING|EVENING|LATER|MOMENTS|SAME|DAWN|DUSK|FLASHBACK)\b/.test(core)) return false;
+  return true;
+}
+
+// ── 3.1 SCENE BREAKDOWN ───────────────────────────────────────────────────────
+function renderScenes(){
+  const list = document.getElementById('scene-list');
+  if (!list) return;
+  if (!callsheet.scenes.length){
+    list.innerHTML = `<div class="sel-row" style="grid-column:1/-1;"><div class="sel-cell" style="padding:14px 12px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;">No scenes detected from the brief. Add the day's scenes manually below.</div></div>`;
+  } else {
+    list.innerHTML = callsheet.scenes.map(s => `
+      <div class="sel-row scene-grid ${s.selected ? 'on' : 'off'}" id="row-${s.id}">
+        <div class="sel-cell"><input type="text" value="${escAttr(s.no)}" oninput="updateScene('${s.id}','no',this.value)" placeholder="#"/></div>
+        <div class="sel-intext">
+          <select onchange="updateScene('${s.id}','intext',this.value)">
+            ${['INT','EXT','INT/EXT'].map(o => `<option ${s.intext===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="sel-cell"><input type="text" value="${escAttr(s.location + (s.action ? ' — ' + s.action : ''))}" oninput="updateSceneCombined('${s.id}',this.value)" placeholder="Location — main action"/></div>
+        <div class="sel-toggle" onclick="toggleScene('${s.id}')"><span class="dot">${s.selected ? '✓' : ''}</span></div>
+      </div>`).join('');
+  }
+  refreshScenesProgress();
+}
+function refreshScenesProgress(){
+  const p = document.getElementById('scenes-progress');
+  if (!p) return;
+  const sel = callsheet.scenes.filter(s => s.selected).length;
+  p.textContent = callsheet.scenes.length ? `${sel} of ${callsheet.scenes.length} scene${callsheet.scenes.length===1?'':'s'} selected for the day` : 'Add scenes, or continue without';
+}
+function updateScene(id, field, val){ const s = callsheet.scenes.find(x => x.id===id); if (s){ s[field]=val; } }
+function updateSceneCombined(id, val){
+  const s = callsheet.scenes.find(x => x.id===id); if (!s) return;
+  const parts = val.split(/\s[-–—]\s/);
+  s.location = (parts[0] || '').trim();
+  s.action = parts.slice(1).join(' — ').trim();
+}
+function toggleScene(id){
+  const s = callsheet.scenes.find(x => x.id===id); if (!s) return;
+  s.selected = !s.selected;
+  const row = document.getElementById('row-'+id);
+  if (row){ row.classList.toggle('on', s.selected); row.classList.toggle('off', !s.selected); row.querySelector('.dot').textContent = s.selected ? '✓' : ''; }
+  refreshScenesProgress();
+}
+function addSceneRow(){
+  const n = callsheet.scenes.length + 1;
+  callsheet.scenes.push({ id:'sc-new-'+Math.random().toString(36).slice(2,7), no:String(n), intext:'INT', location:'', action:'', selected:true });
+  renderScenes();
+}
+function confirmScenes(){
+  // Keep only the selected scenes — "non selected scenes are removed".
+  callsheet.scenes = callsheet.scenes.filter(s => s.selected);
+  callsheet.scenesConfirmed = true;
+  // Derive the call-sheet "scenes being shot" text from the confirmed list.
+  if (callsheet.scenes.length){
+    callsheet.shoot.scenes = callsheet.scenes.map(s => `${s.no} ${s.intext} ${s.location}`.trim()).join(' · ');
+    const el = document.getElementById('shoot-scenes'); if (el) el.value = callsheet.shoot.scenes;
+  }
+  goTo('stepCast');
+}
+
+// ── 3.2 CAST SELECTION ────────────────────────────────────────────────────────
+function renderCast(){
+  const list = document.getElementById('cast-list');
+  if (!list) return;
+  if (!callsheet.cast.length){
+    list.innerHTML = `<div class="sel-row" style="grid-column:1/-1;"><div class="sel-cell" style="padding:14px 12px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;">No characters detected from the script. Add cast manually below.</div></div>`;
+  } else {
+    list.innerHTML = callsheet.cast.map(c => `
+      <div class="sel-row cast-grid ${c.selected ? 'on' : 'off'}" id="row-${c.id}">
+        <div class="sel-cell"><input type="text" value="${escAttr(c.character)}" oninput="updateCast('${c.id}','character',this.value)" placeholder="Character"/></div>
+        <div class="sel-cell"><input type="text" value="${escAttr(c.actor)}" oninput="updateCast('${c.id}','actor',this.value)" placeholder="Actor — real name"/></div>
+        <div class="sel-toggle" onclick="toggleCast('${c.id}')"><span class="dot">${c.selected ? '✓' : ''}</span></div>
+      </div>`).join('');
+  }
+  refreshCastProgress();
+}
+function refreshCastProgress(){
+  const p = document.getElementById('cast-progress');
+  if (!p) return;
+  const sel = callsheet.cast.filter(c => c.selected).length;
+  p.textContent = callsheet.cast.length ? `${sel} cast member${sel===1?'':'s'} on the day` : 'Add cast, or continue without';
+}
+function updateCast(id, field, val){ const c = callsheet.cast.find(x => x.id===id); if (c){ c[field]=val; } }
+function toggleCast(id){
+  const c = callsheet.cast.find(x => x.id===id); if (!c) return;
+  c.selected = !c.selected;
+  const row = document.getElementById('row-'+id);
+  if (row){ row.classList.toggle('on', c.selected); row.classList.toggle('off', !c.selected); row.querySelector('.dot').textContent = c.selected ? '✓' : ''; }
+  refreshCastProgress();
+}
+function addCastRow(){
+  callsheet.cast.push({ id:'ca-new-'+Math.random().toString(36).slice(2,7), character:'', actor:'', dayPlayer:false, selected:true });
+  renderCast();
+}
+function confirmCast(){
+  callsheet.cast = callsheet.cast.filter(c => c.selected && (c.character.trim() || c.actor.trim()));
+  callsheet.castConfirmed = true;
+  goTo('stepCrew');
+}
+
+// ── 3.3 CREW — gating + Gmail N/A warning ─────────────────────────────────────
+function finishCrew(){
+  const btn = document.getElementById('crew-next');
+  if (btn && btn.classList.contains('disabled')) return;
+  goTo('stepDepts');
+}
+function refreshCrewGate(){
+  const valid = callsheet.crew.filter(crewIsValid).length;
+  const na = callsheet.crew.filter(c => c.name.trim() && !c.email.trim()).length;
+  const btn = document.getElementById('crew-next');
+  if (btn) btn.classList.toggle('disabled', valid < 1);
+  const p = document.getElementById('crew-progress');
+  if (p) p.textContent = valid >= 1 ? `${valid} crew member${valid===1?'':'s'} ready` : 'Add at least one crew member with name, role and email';
+  const warn = document.getElementById('crew-gmail-warning');
+  if (warn){
+    if (na > 0){
+      warn.style.display = 'block';
+      warn.textContent = `⚠ ${na} crew member${na===1?'':'s'} ${na===1?'has':'have'} no email — labelled N/A. They will NOT receive the call sheet through Ask Mark's Gmail integration. Add an email to make it mandatory.`;
+    } else { warn.style.display = 'none'; }
+  }
+}
+
+// ── 3.4 DEPARTMENTS NOT NEEDED ────────────────────────────────────────────────
+function renderDepts(){
+  const grid = document.getElementById('dept-grid');
+  if (!grid) return;
+  grid.innerHTML = DEPARTMENTS.map(d => {
+    const off = callsheet.disabledDepts.includes(d);
+    return `<div class="dept-chip ${off ? 'off' : 'needed'}" onclick="toggleDept('${escAttr(d)}')">
+      <span class="dchk">✕</span><span>${escHtml(d)}</span>
+    </div>`;
+  }).join('');
+  refreshDeptsProgress();
+}
+function toggleDept(d){
+  const i = callsheet.disabledDepts.indexOf(d);
+  if (i >= 0) callsheet.disabledDepts.splice(i, 1);
+  else callsheet.disabledDepts.push(d);
+  renderDepts();
+}
+function refreshDeptsProgress(){
+  const p = document.getElementById('dept-progress');
+  if (!p) return;
+  const off = callsheet.disabledDepts.length;
+  p.textContent = off ? `${off} department${off===1?'':'s'} marked not needed` : 'All departments needed';
+}
+
+// ── 3.5 LOCATION + AI HOSPITAL LOOKUP ─────────────────────────────────────────
+function finishLocation(){
+  const btn = document.getElementById('loc-next');
+  if (btn && btn.classList.contains('disabled')) return;
+  goTo('stepMaps');
+}
+function refreshLocationGate(){
+  const ok = (callsheet.shoot.locations || '').trim().length > 0;
+  const btn = document.getElementById('loc-next');
+  if (btn) btn.classList.toggle('disabled', !ok);
+  const p = document.getElementById('loc-progress');
+  if (p) p.textContent = ok ? 'Location set' : 'Add at least one shooting location';
+}
+async function findHospital(){
+  const btn = document.getElementById('hosp-find-btn');
+  const status = document.getElementById('hosp-status');
+  const loc = (callsheet.shoot.locations || '').split(/\n+/)[0].trim();
+  if (!loc){ status.textContent = 'Add a shooting location above first.'; return; }
+  btn.disabled = true; status.textContent = 'Finding nearest A&E hospital…';
+  try {
+    const gr = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(loc), { headers:{ 'Accept':'application/json' } });
+    const gj = await gr.json();
+    if (!gj || !gj.length){ status.textContent = 'Could not locate that address — enter the hospital manually.'; btn.disabled = false; return; }
+    const lat = parseFloat(gj[0].lat), lon = parseFloat(gj[0].lon);
+    const q = `[out:json][timeout:25];(node["amenity"="hospital"](around:9000,${lat},${lon});way["amenity"="hospital"](around:9000,${lat},${lon}););out center tags 30;`;
+    const orr = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body: q });
+    const oj = await orr.json();
+    const els = (oj.elements || []).map(e => {
+      const t = e.tags || {};
+      const elat = e.lat || (e.center && e.center.lat), elon = e.lon || (e.center && e.center.lon);
+      return { t, elat, elon, emergency: t.emergency === 'yes', dist: _haversine(lat, lon, elat, elon) };
+    }).filter(e => e.t.name && e.elat != null);
+    if (!els.length){ status.textContent = 'No hospital found nearby — enter it manually.'; btn.disabled = false; return; }
+    els.sort((a, b) => (b.emergency - a.emergency) || (a.dist - b.dist));
+    const h = els[0].t;
+    const area = h['addr:suburb'] || h['addr:neighbourhood'] || h['addr:district'] || '';
+    const city = h['addr:city'] || h['addr:town'] || '';
+    const postcode = h['addr:postcode'] || '';
+    const phone = h['phone'] || h['contact:phone'] || h['emergency:phone'] || '';
+    const formatted = [h.name, area, city, postcode].filter(Boolean).join(', ') + (phone ? '. ' + phone : '');
+    callsheet.shoot.hospital = formatted;
+    const el = document.getElementById('shoot-hospital'); if (el) el.value = formatted;
+    status.textContent = `Found · ${(els[0].dist).toFixed(1)} km away${els[0].emergency ? ' · A&E' : ''}`;
+  } catch (e) {
+    status.textContent = 'Lookup unavailable right now — enter the hospital manually.';
+  }
+  btn.disabled = false;
+}
+function _haversine(lat1, lon1, lat2, lon2){
+  const R = 6371, toR = x => x * Math.PI / 180;
+  const dLat = toR(lat2 - lat1), dLon = toR(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toR(lat1))*Math.cos(toR(lat2))*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ── 3.6 MAPS / DRAWINGS ───────────────────────────────────────────────────────
+function mapsDragOver(e){ e.preventDefault(); document.getElementById('maps-zone').classList.add('drag-active'); }
+function mapsDragLeave(e){ document.getElementById('maps-zone').classList.remove('drag-active'); }
+function mapsDrop(e){
+  e.preventDefault();
+  document.getElementById('maps-zone').classList.remove('drag-active');
+  if (e.dataTransfer && e.dataTransfer.files) handleMapsFiles(e.dataTransfer.files);
+}
+function handleMapsFiles(files){
+  [...files].forEach(f => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      callsheet.maps.push({ id:'mp-'+Math.random().toString(36).slice(2,8), name:f.name, dataUrl:ev.target.result });
+      renderMaps();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function removeMap(id){ callsheet.maps = callsheet.maps.filter(m => m.id !== id); renderMaps(); }
+function renderMaps(){
+  const g = document.getElementById('maps-grid');
+  if (!g) return;
+  g.innerHTML = callsheet.maps.length
+    ? callsheet.maps.map(m => `
+        <div class="map-thumb">
+          ${m.dataUrl.startsWith('data:image') ? `<img src="${m.dataUrl}" alt="${escAttr(m.name)}"/>` : `<div class="map-file">${escHtml(m.name)}</div>`}
+          <div class="map-name">${escHtml(m.name)}</div>
+          <button class="map-remove" onclick="removeMap('${m.id}')" title="Remove">×</button>
+        </div>`).join('')
+    : '';
 }
 
 // ── CALL SHEET RENDERING (Step 3 + Step 4 preview) ────────────────────────────
@@ -1965,7 +2498,9 @@ function buildCallSheetHtml(cs){
   }).filter(Boolean);
 
   // ─── Crew table — North Six column structure ────────────────────────
-  const groupedCrew = groupCrewByDept(cs.crew);
+  // Departments the producer marked "not needed" (3.4) are filtered out.
+  const disabled = cs.disabledDepts || [];
+  const groupedCrew = groupCrewByDept(cs.crew).filter(g => !disabled.includes(g.dept));
   const crewRowsHtml = groupedCrew.map(({ dept, members }) => `
     <tr class="cs-dept-row"><td colspan="7">${escHtml(dept).toUpperCase()}</td></tr>
     ${members.map(m => `
@@ -2005,6 +2540,36 @@ function buildCallSheetHtml(cs){
     <div class="cs-special-banner">${escHtml(cs.shoot.special_title || 'Special Cast & Crew')}</div>
     <div class="cs-special-rows">
       ${specialRows.map(r => `<div class="cs-special-row">${escHtml(r)}</div>`).join('')}
+    </div>` : '';
+
+  // ─── Cast section (3.2) — characters + the real artists cast for the day ──
+  const castSel = (cs.cast || []).filter(c => c.selected !== false && (String(c.character||'').trim() || String(c.actor||'').trim()));
+  const castBlock = castSel.length ? `
+    <div class="cs-crew-section">
+      <table class="cs-crew-table">
+        <thead><tr><th>Character</th><th>Artist</th><th>Telephone</th><th class="cs-th-pickup">Pick Up</th><th class="cs-th-call">Call</th></tr></thead>
+        <tbody>
+          <tr class="cs-dept-row"><td colspan="5">CAST</td></tr>
+          ${castSel.map(c => `<tr>
+            <td class="cs-td-role">${escHtml(c.character || '—')}</td>
+            <td class="cs-td-name">${escHtml(c.actor || '—')}</td>
+            <td>—</td><td>—</td>
+            <td class="cs-td-call">${escHtml(cs.shoot.unit_call || '—')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  // ─── Maps & drawings (3.6) — important for hard-to-reach locations ────────
+  const maps = cs.maps || [];
+  const mapsBlock = maps.length ? `
+    <div class="cs-section">
+      <div class="cs-section-title">Maps &amp; Site Drawings</div>
+      <div class="cs-maps">
+        ${maps.map(m => m.dataUrl && m.dataUrl.startsWith('data:image')
+          ? `<figure class="cs-map"><img src="${m.dataUrl}" alt="${escAttr(m.name)}"/><figcaption>${escHtml(m.name)}</figcaption></figure>`
+          : `<div class="cs-map-file">${escHtml(m.name)}</div>`).join('')}
+      </div>
     </div>` : '';
 
   return `
@@ -2099,6 +2664,8 @@ function buildCallSheetHtml(cs){
         <div class="cs-text" style="white-space:pre-wrap;">${escHtml(cs.shoot.production_notes)}</div>
       </div>` : ''}
 
+      ${castBlock}
+
       <!-- Crew table — North Six column structure -->
       <div class="cs-crew-section">
         <table class="cs-crew-table">
@@ -2116,6 +2683,8 @@ function buildCallSheetHtml(cs){
       </div>
 
       ${specialBlock}
+
+      ${mapsBlock}
 
       ${(cs.shoot.hospital || cs.shoot.police) ? `
       <div class="cs-section">
