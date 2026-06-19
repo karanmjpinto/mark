@@ -248,6 +248,26 @@ label.field-label{
 .btn-sm-accent{background:var(--ink);color:var(--paper);border-color:var(--ink);}
 .btn-sm-accent:hover{background:var(--accent);border-color:var(--accent);color:var(--paper);}
 
+/* BRIEF OPTION CARDS — three big selectable cards, clearly mutually exclusive */
+.brief-option-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.brief-opt-card{
+  display:flex;align-items:flex-start;gap:16px;padding:22px 20px;
+  background:var(--paper-edge);border:1.5px solid var(--rule-strong);
+  cursor:pointer;text-align:left;
+  transition:border-color 0.2s,background 0.2s,transform 0.25s var(--ease-out),box-shadow 0.2s;
+}
+.brief-opt-card:hover{background:var(--paper-deep);border-color:var(--ink-soft);transform:translateY(-2px);box-shadow:0 4px 16px var(--paper-shadow);}
+.brief-opt-card.active{background:var(--paper);border-color:var(--ink);border-left:4px solid var(--accent);box-shadow:0 4px 20px var(--paper-shadow);}
+.brief-opt-num{
+  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:500;font-size:32px;
+  color:var(--accent);line-height:1;flex-shrink:0;letter-spacing:-0.02em;
+  font-variation-settings:"opsz" 144;
+}
+.brief-opt-card.active .brief-opt-num{color:var(--accent-deep);}
+.brief-opt-name{font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:18px;color:var(--ink);margin-bottom:6px;letter-spacing:-0.005em;}
+.brief-opt-desc{font-size:13px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.55;}
+@media(max-width:680px){.brief-option-cards{grid-template-columns:1fr;}}
+
 /* MODE TABS (for brief input + crew input) */
 .mode-tabs{
   display:flex;gap:0;margin-bottom:0;
@@ -911,7 +931,7 @@ input[type=file]{display:none;}
     <!-- PRODUCTION TYPE — chosen first, before anything else -->
     <div class="panel">
       <div class="panel-title">Choose your <em>production type</em></div>
-      <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;">Pick one — Mark tailors the call sheet to the kind of production you're running.</p>
+      <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.65;margin-bottom:24px;">Pick one — Mark tailors the call sheet to the kind of production you're running.</p>
       <div class="prod-type-grid">
         <button class="prod-type-btn" data-ptype="film" onclick="setProductionType('film')">
           <span class="prod-type-num">01</span>
@@ -931,11 +951,29 @@ input[type=file]{display:none;}
     <!-- BRIEF -->
     <div class="panel">
       <div class="panel-title">Add your <em>brief</em></div>
-      <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;">Choose <strong>one</strong> of these three — you don't need all of them. Type your own brief, upload your script, or use a demo to explore.</p>
-      <div class="mode-tabs">
-        <button class="mode-tab active" data-mode="type" onclick="setBriefMode('type')">Option 1 · Type your brief</button>
-        <button class="mode-tab" data-mode="upload" onclick="setBriefMode('upload')">Option 2 · Upload your script</button>
-        <button class="mode-tab" data-mode="demo" onclick="setBriefMode('demo')">Option 3 · Use a demo</button>
+      <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.65;margin-bottom:24px;">Choose <strong>one</strong> of these three — you don't need all of them. Pick whichever suits you best.</p>
+      <div class="brief-option-cards">
+        <button class="brief-opt-card active" data-mode="type" onclick="setBriefMode('type')">
+          <div class="brief-opt-num">01</div>
+          <div class="brief-opt-body">
+            <div class="brief-opt-name">Type your brief</div>
+            <div class="brief-opt-desc">Describe your shoot in plain English — Mark reads it and builds the call sheet.</div>
+          </div>
+        </button>
+        <button class="brief-opt-card" data-mode="upload" onclick="setBriefMode('upload')">
+          <div class="brief-opt-num">02</div>
+          <div class="brief-opt-body">
+            <div class="brief-opt-name">Upload your script</div>
+            <div class="brief-opt-desc">Drop a PDF or FDX — Mark parses the scenes, cast and locations automatically.</div>
+          </div>
+        </button>
+        <button class="brief-opt-card" data-mode="demo" onclick="setBriefMode('demo')">
+          <div class="brief-opt-num">03</div>
+          <div class="brief-opt-body">
+            <div class="brief-opt-name">Use a demo</div>
+            <div class="brief-opt-desc">Not ready with your own brief? Try one of Mark's pre-built examples to explore.</div>
+          </div>
+        </button>
       </div>
       <div class="mode-pane active" id="brief-type">
         <textarea id="brief-text" placeholder="e.g. Luxury car commercial. Night shoot at a city centre location. Unit call 20:00, wrap 08:00. 2 lead actors, 15 crew."></textarea>
@@ -1190,11 +1228,11 @@ input[type=file]{display:none;}
          field left blank. -->
     <div class="panel">
       <div class="panel-title">Production <em>masthead</em> · the canonical call-sheet fields</div>
-      <p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;">These are the fields that make the export read as a real call sheet. All optional — fill what you have, refine the rest in chat ("director is the named director", "set the job ref").</p>
+      <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.65;margin-bottom:24px;">These fields make the export read as a real call sheet. All optional — fill what you have, refine the rest in the chat step.</p>
       <div class="shoot-grid">
         <div class="full">
           <label class="field-label">Shoot name / Project *</label>
-          <input type="text" id="shoot-name" placeholder="e.g. Spring Campaign · Bullet 650 · 'Lila' Music Video"/>
+          <input type="text" id="shoot-name" placeholder="e.g. Spring Campaign · Day 3 · Campaign Shoot"/>
         </div>
         <div>
           <label class="field-label">Production company</label>
@@ -1218,7 +1256,7 @@ input[type=file]{display:none;}
         </div>
         <div>
           <label class="field-label">Studio</label>
-          <input type="text" id="shoot-studio" placeholder="e.g. Sky Studios Elstree · Film City Stage 5"/>
+          <input type="text" id="shoot-studio" placeholder="e.g. studio name or stage number"/>
         </div>
         <div>
           <label class="field-label">Client address</label>
@@ -1606,16 +1644,18 @@ const DEFAULT_SCHEDULE = "06:00  Catering call\n07:00  Crew arrival\n07:30  Came
 // ── BRIEF MODES ───────────────────────────────────────────────────────────────
 function setBriefMode(mode) {
   callsheet.brief_source = mode;
-  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  // Highlight the selected card
+  document.querySelectorAll('.brief-opt-card').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  // Show the matching content pane
   document.querySelectorAll('.mode-pane').forEach(p => p.classList.remove('active'));
   document.getElementById('brief-' + mode).classList.add('active');
 }
 
 const briefDemos = {
-  music: "Music video for indie pop artist 'Lila'. 1-day shoot. Urban locations — graffiti alley, rooftop, neon-lit street. Night shoot, unit call 18:00, wrap 04:00. Lead artist + 4 backup dancers. High-energy, handheld + Steadicam. Director: Vivek Mehra. Production company: Tigerbalm Films.",
+  music: "Music video. 1-day shoot. Urban locations — graffiti alley, rooftop, neon-lit street. Night shoot, unit call 18:00, wrap 04:00. Lead artist + 4 backup dancers. High-energy, handheld + Steadicam.",
   commercial: "Luxury car commercial. Studio shoot, single day. Talent: 2 lead actors + 8 supporting. Luxury treatment, slow-mo product detail. Unit call 09:00, wrap 21:00.",
-  documentary: "Documentary feature on Mumbai street food. 3rd shoot day in Mohammed Ali Road. Small crew (8 people). Outdoor / handheld. Sunrise call 05:30, wrap 11:00 to avoid heat. Director: Anita Chopra. Producer: Riya Sen.",
-  film: "Feature film 'The Long Road' — Day 12 of 28. Outdoor practical location, rural Rajasthan. Large crew (45 people). 5am unit call, wrap 19:00. Cast: 3 leads + 12 supporting. Director: Karan D'Souza. Producer: Vikram Kapoor.",
+  documentary: "Documentary feature. 3rd shoot day. Small crew (8 people). Outdoor handheld. Sunrise call 05:30, wrap 11:00.",
+  film: "Feature film — Day 12 of 28. Outdoor practical location. Large crew (45 people). 5am unit call, wrap 19:00. Cast: 3 leads + 12 supporting.",
 };
 function loadDemoBrief(key) {
   document.getElementById('brief-text').value = briefDemos[key];
@@ -1900,16 +1940,29 @@ document.addEventListener('DOMContentLoaded', () => {
   renderStepIndicator('step0');
 });
 
-function fillTimeOptions(id){
+function fillTimeOptions(id, afterTime = null){
   const sel = document.getElementById(id);
+  const prev = sel.value;
   sel.innerHTML = '<option value="">Select time</option>';
-  for (let h = 0; h < 24; h++) {
+  for (let h = 0; h < 36; h++) { // up to 36h to allow overnight wraps
     for (const m of [0, 30]) {
+      const displayH = h % 24;
       const v = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-      sel.innerHTML += `<option value="${v}">${v}</option>`;
+      const label = String(displayH).padStart(2,'0') + ':' + String(m).padStart(2,'0') + (h >= 24 ? ' (+1)' : '');
+      if (afterTime && v <= afterTime) continue; // only show times after unit call
+      sel.innerHTML += `<option value="${v}">${label}</option>`;
     }
   }
+  if (prev) sel.value = prev;
 }
+
+// When unit call changes, re-filter wrap time options
+document.addEventListener('DOMContentLoaded', () => {
+  const callSel = document.getElementById('shoot-call-time');
+  if (callSel) callSel.addEventListener('change', () => {
+    fillTimeOptions('shoot-wrap-time', callSel.value || null);
+  });
+});
 function fillDayNumberOptions(){
   const sel = document.getElementById('shoot-day-num');
   for (let i = 1; i <= 200; i++) sel.innerHTML += `<option value="${i}">Day ${i}</option>`;
