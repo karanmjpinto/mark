@@ -2554,33 +2554,9 @@ function buildCallSheetHtml(cs){
 
   // ─── Cast section (3.2) — characters + the real artists cast for the day ──
   const castSel = (cs.cast || []).filter(c => c.selected !== false && (String(c.character||'').trim() || String(c.actor||'').trim()));
-  const castBlock = castSel.length ? `
-    <div class="cs-crew-section">
-      <table class="cs-crew-table">
-        <thead><tr><th>Character</th><th>Artist</th><th>Telephone</th><th class="cs-th-pickup">Pick Up</th><th class="cs-th-call">Call</th></tr></thead>
-        <tbody>
-          <tr class="cs-dept-row"><td colspan="5">CAST</td></tr>
-          ${castSel.map(c => `<tr>
-            <td class="cs-td-role">${escHtml(c.character || '—')}</td>
-            <td class="cs-td-name">${escHtml(c.actor || '—')}</td>
-            <td>—</td><td>—</td>
-            <td class="cs-td-call">${escHtml(cs.shoot.unit_call || '—')}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>` : '';
 
   // ─── Maps & drawings (3.6) — important for hard-to-reach locations ────────
   const maps = cs.maps || [];
-  const mapsBlock = maps.length ? `
-    <div class="cs-section">
-      <div class="cs-section-title">Maps &amp; Site Drawings</div>
-      <div class="cs-maps">
-        ${maps.map(m => m.dataUrl && m.dataUrl.startsWith('data:image')
-          ? `<figure class="cs-map"><img src="${m.dataUrl}" alt="${escAttr(m.name)}"/><figcaption>${escHtml(m.name)}</figcaption></figure>`
-          : `<div class="cs-map-file">${escHtml(m.name)}</div>`).join('')}
-      </div>
-    </div>` : '';
 
   return `
     <div class="callsheet-doc">
@@ -2650,33 +2626,51 @@ function buildCallSheetHtml(cs){
         </div>
       </div>
 
-      ${scheduleRows.length ? `
+      <!-- Schedule — always present; shows TBC rows when no schedule entered -->
       <div class="cs-schedule">
         <div class="cs-schedule-title">Schedule</div>
-        ${scheduleRows.map((r, i) => `
+        ${scheduleRows.length ? scheduleRows.map(r => `
           <div class="cs-sched-row">
             <div class="cs-sched-time">${escHtml(r.time || '—')}</div>
             <div class="cs-sched-event">${escHtml(r.event)}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
+          </div>`).join('') : `
+          <div class="cs-sched-row"><div class="cs-sched-time">TBC</div><div class="cs-sched-event">Unit call — to be confirmed by 1st AD</div></div>
+          <div class="cs-sched-row"><div class="cs-sched-time">TBC</div><div class="cs-sched-event">Makeup &amp; hair</div></div>
+          <div class="cs-sched-row"><div class="cs-sched-time">TBC</div><div class="cs-sched-event">First shot of the day</div></div>
+          <div class="cs-sched-row"><div class="cs-sched-time">TBC</div><div class="cs-sched-event">Lunch</div></div>
+          <div class="cs-sched-row"><div class="cs-sched-time">TBC</div><div class="cs-sched-event">Estimated wrap</div></div>`}
+      </div>
 
-      ${(cs.shoot.scenes || cs.shoot.locations) ? `
+      <!-- Scenes & Locations — always present -->
       <div class="cs-section">
-        ${cs.shoot.scenes ? `<div style="margin-bottom:8px;"><span class="cs-section-title" style="display:inline;">Sc. </span><span class="cs-text" style="display:inline;">${escHtml(cs.shoot.scenes)}</span></div>` : ''}
-        ${cs.shoot.locations ? `<div><span class="cs-section-title" style="display:inline;">Int / Ext / Location </span><span class="cs-text" style="display:inline;">${escHtml(cs.shoot.locations)}</span></div>` : ''}
-        ${cs.shoot.parking ? `<div style="margin-top:6px;"><span class="cs-section-title" style="display:inline;">Parking </span><span class="cs-text" style="display:inline;">${escHtml(cs.shoot.parking)}</span></div>` : ''}
-      </div>` : ''}
+        <div style="margin-bottom:8px;"><span class="cs-section-title" style="display:inline;">Sc. </span><span class="cs-text" style="display:inline;">${escHtml(cs.shoot.scenes || 'TBC')}</span></div>
+        <div><span class="cs-section-title" style="display:inline;">Int / Ext / Location </span><span class="cs-text" style="display:inline;">${escHtml(cs.shoot.locations || 'TBC')}</span></div>
+        <div style="margin-top:6px;"><span class="cs-section-title" style="display:inline;">Parking </span><span class="cs-text" style="display:inline;">${escHtml(cs.shoot.parking || 'TBC')}</span></div>
+      </div>
 
-      ${cs.shoot.production_notes ? `
+      <!-- Production Notes — always present -->
       <div class="cs-section">
         <div class="cs-section-title">Production Notes</div>
-        <div class="cs-text" style="white-space:pre-wrap;">${escHtml(cs.shoot.production_notes)}</div>
-      </div>` : ''}
+        <div class="cs-text" style="white-space:pre-wrap;">${escHtml(cs.shoot.production_notes || 'N/A')}</div>
+      </div>
 
-      ${castBlock}
+      <!-- Cast — always present; shows TBC row when no cast entered -->
+      <div class="cs-crew-section">
+        <table class="cs-crew-table">
+          <thead><tr><th>Character</th><th>Artist</th><th>Telephone</th><th class="cs-th-pickup">Pick Up</th><th class="cs-th-call">Call</th></tr></thead>
+          <tbody>
+            <tr class="cs-dept-row"><td colspan="5">CAST</td></tr>
+            ${castSel.length ? castSel.map(c => `<tr>
+              <td class="cs-td-role">${escHtml(c.character || '—')}</td>
+              <td class="cs-td-name">${escHtml(c.actor || 'TBC')}</td>
+              <td>—</td><td>—</td>
+              <td class="cs-td-call">${escHtml(cs.shoot.unit_call || 'TBC')}</td>
+            </tr>`).join('') : `<tr><td>TBC</td><td>TBC</td><td>—</td><td>—</td><td>${escHtml(cs.shoot.unit_call || 'TBC')}</td></tr>`}
+          </tbody>
+        </table>
+      </div>
 
-      <!-- Crew table — North Six column structure -->
+      <!-- Crew table — North Six column structure; always present -->
       <div class="cs-crew-section">
         <table class="cs-crew-table">
           <thead><tr>
@@ -2688,24 +2682,31 @@ function buildCallSheetHtml(cs){
             <th class="cs-th-call">Call</th>
             <th>Notes</th>
           </tr></thead>
-          <tbody>${crewRowsHtml}</tbody>
+          <tbody>${crewRowsHtml || `<tr><td class="cs-td-role">TBC</td><td class="cs-td-name">TBC</td><td>—</td><td>—</td><td>—</td><td>${escHtml(cs.shoot.unit_call || 'TBC')}</td><td>—</td></tr>`}</tbody>
         </table>
       </div>
 
       ${specialBlock}
 
-      ${mapsBlock}
-
-      ${(cs.shoot.hospital || cs.shoot.police) ? `
+      <!-- Maps & Drawings — always present -->
       <div class="cs-section">
-        <div class="cs-section-title">Emergency Numbers · Always call 999 in an emergency</div>
+        <div class="cs-section-title">Maps &amp; Site Drawings</div>
+        ${maps.length ? `<div class="cs-maps">${maps.map(m => m.dataUrl && m.dataUrl.startsWith('data:image')
+          ? `<figure class="cs-map"><img src="${m.dataUrl}" alt="${escAttr(m.name)}"/><figcaption>${escHtml(m.name)}</figcaption></figure>`
+          : `<div class="cs-map-file">${escHtml(m.name)}</div>`).join('')}</div>`
+          : '<div class="cs-text">N/A — no maps uploaded. Upload location maps or site drawings in the previous step.</div>'}
+      </div>
+
+      <!-- Emergency Numbers — always present; shows TBC when not yet confirmed -->
+      <div class="cs-section">
+        <div class="cs-section-title">Emergency Numbers · Always call 999 / 112 in an emergency</div>
         <table class="cs-info-table">
           <tbody>
-            ${cs.shoot.hospital ? `<tr><th style="width:160px;">Nearest A&amp;E</th><td>${escHtml(cs.shoot.hospital)}</td></tr>` : ''}
-            ${cs.shoot.police ? `<tr><th>Nearest Police</th><td>${escHtml(cs.shoot.police)}</td></tr>` : ''}
+            <tr><th style="width:160px;">Nearest A&amp;E</th><td>${escHtml(cs.shoot.hospital || 'TBC — to be confirmed before shoot day')}</td></tr>
+            <tr><th>Nearest Police</th><td>${escHtml(cs.shoot.police || 'TBC — to be confirmed before shoot day')}</td></tr>
           </tbody>
         </table>
-      </div>` : ''}
+      </div>
 
       <!-- Footer — Job ref + invoicing + confidentiality -->
       <div class="cs-footer-grid">

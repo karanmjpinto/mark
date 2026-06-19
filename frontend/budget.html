@@ -1600,6 +1600,11 @@ function selectRegion(r, sym, code, name) {
   if (customBox) customBox.style.display = 'none';
   const btn = document.getElementById('market-next-btn');
   if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+
+  // Auto-advance to Step 1 after a short pause so the producer sees
+  // the selection confirmed before the page transitions.
+  clearTimeout(window._autoAdvanceMarket);
+  window._autoAdvanceMarket = setTimeout(() => proceedFromMarket(), 700);
 }
 
 function updateCustomRegion() {
@@ -1653,6 +1658,11 @@ function loadDemo(type) {
   if (btn) btn.classList.add('sel');
   // Treat as paste so the textarea remains editable for inline tweaks.
   setActiveInput('paste');
+  // Auto-advance after a short pause — producer can still edit the text
+  // in the textarea before the transition fires. Clicking a different demo
+  // resets the timer.
+  clearTimeout(window._autoAdvanceDemo);
+  window._autoAdvanceDemo = setTimeout(() => startFlow(), 900);
 }
 
 // ── DRAG & DROP UPLOAD ────────────────────────────────────────────────────────
@@ -1722,6 +1732,10 @@ async function handleFile(input) {
       : 'Script uploaded';
     titleEl.style.color = 'var(--green)';
     subEl.textContent = file.name;
+    // Auto-advance to questions after a short pause so the producer sees
+    // the successful parse confirmation before the page transitions.
+    clearTimeout(window._autoAdvanceUpload);
+    window._autoAdvanceUpload = setTimeout(() => startFlow(), 1200);
   } catch (e) {
     iconEl.innerHTML = `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5 L37 35 L3 35 Z"/><line x1="20" y1="16" x2="20" y2="24"/><circle cx="20" cy="29" r="1" fill="var(--accent)"/></svg>`;
     titleEl.textContent = 'Could not parse PDF';
@@ -2108,7 +2122,7 @@ QUESTION DESIGN RULES
 - The 3 grounding questions must cover, in this order:
   1. Specific cities/locations within the ${m.label} market for the shoot. Provide 4–6 region-specific options (no generic "City A"). Affects 12400, 12300.
   2. Budget scale tier (low / mid / high) with explicit ${m.label} rate-band ranges in the option labels. Affects 10300, 10600, 11300, 11500 (i.e. drives rate band).
-  3. Exact shoot days as a number. Provide options like "1 day", "2 days", "3–5 days", "6–10 days", "10+ days" — whatever fits the script. Affects 10800, 11300, 11500, 12300, 12600 (any day-rate item).
+  3. Shoot day range. Producers rarely know the exact number at brief stage — offer ranges that match how they think: e.g. "1 day", "2–3 days", "4–5 days", "6–10 days", "11–20 days", "20+ days". Tailor the options to the scale implied by the script. Affects 10800, 11300, 11500, 12300, 12600 (any day-rate item).
 - Options must be discrete and exhaustive enough to be useful. Always include "Other" as an implicit fallback (the UI adds it).`;
 
   const user = `Read this script/brief and generate the 3 grounding questions:\n\n${script.substring(0, 4000)}`;
