@@ -38,7 +38,7 @@
   /* Ink — warm brown-black, never pure */
   --ink:#14110D;
   --ink-soft:#3A352D;
-  --muted:#8A8275;
+  --muted:#5C5650;
   --rule:rgba(20,17,13,0.10);
   --rule-strong:rgba(20,17,13,0.16);
 
@@ -242,7 +242,10 @@ nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);b
 .marquee-item{
   font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-soft);
   font-family:'DM Mono',monospace;display:flex;align-items:center;gap:48px;
+  text-decoration:none;cursor:pointer;
+  transition:color 0.2s var(--ease-out);
 }
+.marquee-item:hover{color:var(--ink);}
 .marquee-item::after{content:'·';color:var(--accent);}
 @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
@@ -711,30 +714,30 @@ footer{
 <!-- MARQUEE -->
 <div class="marquee-wrap">
   <div class="marquee-track" id="marquee">
-    <div class="marquee-item">Call sheet · 5.45A unit call</div>
-    <div class="marquee-item">Sc. 7-11 · INT. warehouse · NIGHT</div>
-    <div class="marquee-item">Day 14 of 28</div>
-    <div class="marquee-item">DOP package · ARRI Alexa 35</div>
-    <div class="marquee-item">Genny · 125 KVA</div>
-    <div class="marquee-item">Vanity van · lead talent</div>
-    <div class="marquee-item">Kraft + lunch · 65 pax</div>
-    <div class="marquee-item">Wrap report · 7:42P</div>
-    <div class="marquee-item">NDA · 4 outstanding</div>
-    <div class="marquee-item">Stunt safety brief 06:00</div>
-    <div class="marquee-item">Contingency · 10% applied</div>
-    <div class="marquee-item">Budget locked · v3 BLUE</div>
-    <div class="marquee-item">Call sheet · 5.45A unit call</div>
-    <div class="marquee-item">Sc. 7-11 · INT. warehouse · NIGHT</div>
-    <div class="marquee-item">Day 14 of 28</div>
-    <div class="marquee-item">DOP package · ARRI Alexa 35</div>
-    <div class="marquee-item">Genny · 125 KVA</div>
-    <div class="marquee-item">Vanity van · lead talent</div>
-    <div class="marquee-item">Kraft + lunch · 65 pax</div>
-    <div class="marquee-item">Wrap report · 7:42P</div>
-    <div class="marquee-item">NDA · 4 outstanding</div>
-    <div class="marquee-item">Stunt safety brief 06:00</div>
-    <div class="marquee-item">Contingency · 10% applied</div>
-    <div class="marquee-item">Budget locked · v3 BLUE</div>
+    <a href="callsheet.html" class="marquee-item">Call sheet · 5.45A unit call</a>
+    <a href="#features" class="marquee-item">Sc. 7-11 · INT. warehouse · NIGHT</a>
+    <a href="#features" class="marquee-item">Day 14 of 28</a>
+    <a href="callsheet.html" class="marquee-item">DOP package · ARRI Alexa 35</a>
+    <a href="#features" class="marquee-item">Genny · 125 KVA</a>
+    <a href="callsheet.html" class="marquee-item">Vanity van · lead talent</a>
+    <a href="budget.html" class="marquee-item">Kraft + lunch · 65 pax</a>
+    <a href="#features" class="marquee-item">Wrap report · 7:42P</a>
+    <a href="#features" class="marquee-item">NDA · 4 outstanding</a>
+    <a href="callsheet.html" class="marquee-item">Stunt safety brief 06:00</a>
+    <a href="budget.html" class="marquee-item">Contingency · 10% applied</a>
+    <a href="budget.html" class="marquee-item">Budget locked · v3 BLUE</a>
+    <a href="callsheet.html" class="marquee-item">Call sheet · 5.45A unit call</a>
+    <a href="#features" class="marquee-item">Sc. 7-11 · INT. warehouse · NIGHT</a>
+    <a href="#features" class="marquee-item">Day 14 of 28</a>
+    <a href="callsheet.html" class="marquee-item">DOP package · ARRI Alexa 35</a>
+    <a href="#features" class="marquee-item">Genny · 125 KVA</a>
+    <a href="callsheet.html" class="marquee-item">Vanity van · lead talent</a>
+    <a href="budget.html" class="marquee-item">Kraft + lunch · 65 pax</a>
+    <a href="#features" class="marquee-item">Wrap report · 7:42P</a>
+    <a href="#features" class="marquee-item">NDA · 4 outstanding</a>
+    <a href="callsheet.html" class="marquee-item">Stunt safety brief 06:00</a>
+    <a href="budget.html" class="marquee-item">Contingency · 10% applied</a>
+    <a href="budget.html" class="marquee-item">Budget locked · v3 BLUE</a>
   </div>
 </div>
 
