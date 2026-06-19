@@ -118,12 +118,48 @@ nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);b
 }
 .nav-cta:hover{background:var(--accent);color:var(--paper) !important;}
 
-/* HERO — editorial, generous, full-width single column */
+/* HERO — two-column: text left, module cards right */
 .hero{
-  min-height:auto;display:block;
+  min-height:auto;display:grid;
+  grid-template-columns:1fr 380px;
+  gap:60px;align-items:center;
   padding:170px 60px 100px;position:relative;
 }
-.hero-content{position:relative;z-index:2;max-width:1120px;}
+.hero-content{position:relative;z-index:2;}
+.hero-modules{position:relative;z-index:2;}
+.hero-modules-label{
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px;
+  display:flex;align-items:center;gap:12px;
+}
+.hero-modules-label::before{content:'';flex:1;height:1px;background:var(--rule);}
+.hero-module-card{
+  display:flex;align-items:center;gap:18px;padding:22px 24px;
+  background:var(--paper-deep);border:1px solid var(--rule);
+  text-decoration:none;color:inherit;margin-bottom:12px;
+  position:relative;overflow:hidden;
+  transition:transform 0.3s var(--ease-out),border-color 0.2s,box-shadow 0.3s;
+}
+.hero-module-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--accent);transform:scaleY(0);transform-origin:top;
+  transition:transform 0.4s var(--ease-out);
+}
+.hero-module-card:hover{border-color:var(--rule-strong);transform:translateY(-2px);box-shadow:0 6px 24px var(--paper-shadow);}
+.hero-module-card:hover::before{transform:scaleY(1);}
+.hero-module-icon{width:36px;height:36px;color:var(--ink);flex-shrink:0;transition:color 0.2s;}
+.hero-module-card:hover .hero-module-icon{color:var(--accent);}
+.hero-module-name{font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:18px;color:var(--ink);letter-spacing:-0.005em;}
+.hero-module-desc{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-top:3px;}
+.hero-module-arr{margin-left:auto;font-size:18px;color:var(--muted);transition:transform 0.3s var(--ease-out),color 0.2s;flex-shrink:0;}
+.hero-module-card:hover .hero-module-arr{transform:translateX(3px);color:var(--accent);}
+@media(max-width:960px){
+  .hero{grid-template-columns:1fr;gap:40px;padding:110px 32px 60px;}
+  .hero-modules{max-width:480px;}
+}
+@media(max-width:600px){
+  .hero{padding:90px 20px 60px;}
+}
 .hero-eyebrow{
   font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);
   font-family:'DM Mono',monospace;margin-bottom:24px;display:flex;align-items:center;gap:12px;
@@ -698,15 +734,42 @@ footer{
       <span class="ask-mark">Ask Mark</span><span class="ask-to">to</span><span id="tw-text"></span><span id="tw-cursor">|</span>
     </div>
     <p class="hero-subtitle">Mark&rsquo;s brain isn&rsquo;t random artificial intelligence. It carries the experience of crew across films, TV, commercials and music videos &mdash; people who&rsquo;ve worked with the likes of BBC, YSL, Dior and Royal Enfield.</p>
-    <div class="hero-ctas">
-      <a href="callsheet.html" class="btn-primary"><span>Call Sheet Builder &rarr;</span></a>
-      <a href="budget.html" class="btn-primary"><span>Budget Builder &rarr;</span></a>
-      <a href="#model" class="btn-secondary">See the model <span class="arr">&rarr;</span></a>
-    </div>
     <div class="hero-meta">
       <div class="hero-meta-dot"></div>
       <span>Indian Cinema live · UK commercial in beta · A creative reviews everything · No card</span>
     </div>
+  </div>
+
+  <div class="hero-modules">
+    <div class="hero-modules-label">Test the modules now</div>
+    <a href="callsheet.html" class="hero-module-card">
+      <svg class="hero-module-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="6" y="4" width="20" height="24"/>
+        <rect x="11" y="2" width="10" height="4"/>
+        <line x1="10" y1="13" x2="22" y2="13"/>
+        <line x1="10" y1="17" x2="22" y2="17"/>
+        <line x1="10" y1="21" x2="20" y2="21"/>
+      </svg>
+      <div>
+        <div class="hero-module-name">Call Sheet Builder</div>
+        <div class="hero-module-desc">Brief in · full call sheet out</div>
+      </div>
+      <span class="hero-module-arr">&rarr;</span>
+    </a>
+    <a href="budget.html" class="hero-module-card">
+      <svg class="hero-module-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="6" width="26" height="18" rx="1"/>
+        <line x1="3" y1="10" x2="29" y2="10"/>
+        <line x1="3" y1="20" x2="29" y2="20"/>
+        <circle cx="6.5" cy="8" r="0.8" fill="currentColor"/><circle cx="9" cy="8" r="0.8" fill="currentColor"/>
+        <path d="M14 14 L18 17 L14 20 Z" fill="currentColor"/>
+      </svg>
+      <div>
+        <div class="hero-module-name">Budget Builder</div>
+        <div class="hero-module-desc">Script in · itemised budget out</div>
+      </div>
+      <span class="hero-module-arr">&rarr;</span>
+    </a>
   </div>
 </section>
 
