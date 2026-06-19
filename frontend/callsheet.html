@@ -40,7 +40,7 @@
 html{scroll-behavior:smooth;overflow-x:clip;}
 body{
   background:var(--paper);color:var(--ink);
-  font-family:'Gelasio',Georgia,serif;font-size:17px;
+  font-family:'Gelasio',Georgia,serif;font-size:19px;
   font-feature-settings:"ss01","cv11";min-height:100vh;overflow-x:clip;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
@@ -49,7 +49,7 @@ body::after{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   opacity:0.05;mix-blend-mode:multiply;
 }
-#app{max-width:1100px;margin:0 auto;padding:62px 28px 80px;position:relative;z-index:1;}
+#app{max-width:1400px;margin:0 auto;padding:62px 60px 80px;position:relative;z-index:1;}
 
 /* SLATE STRIPE — diagonal black/white snap-band across the top of every
    AskMark page. Reads as the top of a clapperboard. */
@@ -125,7 +125,7 @@ body::after{
 }
 
 /* WORKFLOW STEP HELPERS — shared by the new script-driven step pages */
-.step-help{font-size:15px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.7;margin-bottom:18px;}
+.step-help{font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.7;margin-bottom:22px;}
 .flow-actions{display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;}
 .flow-progress{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.05em;}
 
@@ -198,8 +198,8 @@ body::after{
 .cs-map-file{border:1px solid rgba(20,17,13,0.18);padding:10px;font-family:'DM Mono',monospace;font-size:10px;}
 
 /* PANELS, INPUTS, BUTTONS */
-.panel{background:var(--paper-deep);border:1px solid var(--rule);padding:28px;margin-bottom:18px;}
-.panel-title{font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-family:'DM Mono',monospace;font-weight:600;margin-bottom:16px;}
+.panel{background:var(--paper-deep);border:1px solid var(--rule);padding:48px 52px;margin-bottom:24px;}
+.panel-title{font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-family:'DM Mono',monospace;font-weight:600;margin-bottom:20px;}
 .panel-title em{color:var(--accent);font-style:italic;}
 
 textarea, input[type=text], input[type=email], input[type=tel], input[type=date], select{
@@ -251,7 +251,7 @@ label.field-label{
 /* MODE TABS (for brief input + crew input) */
 .mode-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid var(--rule);}
 .mode-tab{
-  padding:12px 20px;font-size:13px;font-family:'DM Mono',monospace;letter-spacing:0.06em;
+  padding:14px 24px;font-size:14px;font-family:'DM Mono',monospace;letter-spacing:0.06em;
   text-transform:uppercase;color:var(--muted);background:transparent;border:none;cursor:pointer;
   border-bottom:2px solid transparent;transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
@@ -847,13 +847,13 @@ input[type=file]{display:none;}
 
     <div class="panel">
       <div class="panel-title">Start with your <em>template</em></div>
-      <p style="font-size:15px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.65;margin-bottom:18px;">Each production team has its own call-sheet style. Upload your own template and Mark builds every call sheet in <strong>your</strong> format. No template? Mark uses its standard format. This is optional — you can skip straight ahead.</p>
+      <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.7;margin-bottom:24px;">Each production team has its own call-sheet style. Upload your own template and Mark builds every call sheet in <strong>your</strong> format. No template? Mark uses its standard format. This is optional — you can skip straight ahead.</p>
       <div class="mode-tabs">
         <button class="mode-tab active" data-tmode="standard" onclick="setTemplateMode('standard')">Use AskMark's standard format</button>
         <button class="mode-tab" data-tmode="upload" onclick="setTemplateMode('upload')">Upload my own template</button>
       </div>
       <div class="mode-pane active" id="template-standard">
-        <p style="font-size:15px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.65;margin:10px 2px;">Mark's standard format is the North Six / Sarmad Varraich industry-standard call sheet — clean, complete, and ready to send.</p>
+        <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.7;margin:14px 2px;">Mark's standard format is the North Six / Sarmad Varraich industry-standard call sheet — clean, complete, and ready to send.</p>
       </div>
       <div class="mode-pane" id="template-upload">
         <div class="upload-zone" id="template-upload-zone"
