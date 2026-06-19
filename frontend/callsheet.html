@@ -1635,6 +1635,10 @@ function setProductionType(type) {
     titleEl.value = suggested;
     callsheet.shoot.special_title = suggested;
   }
+  // Rebuild the step indicator to show/hide scene & cast steps.
+  refreshStepsForType();
+  // Also enable the step1 continue button if a brief is already in.
+  refreshStep1Gate();
 }
 
 // Standard full-day schedule — pre-filled so the producer can just tweak the
@@ -2041,10 +2045,11 @@ function finishStep2(){
 }
 
 // ── FLOW ──────────────────────────────────────────────────────────────────────
-// The full PDF workflow — each step is one page. Order matches the spec:
-// Template → Source → 3.1 Scenes → 3.2 Cast → 3.3 Crew → 3.4 Departments →
-// 3.5 Location/Hospital → 3.6 Maps → Details → Preview → Refine → Send.
-const STEPS = [
+// Steps differ by production type:
+//   Film       → full flow including scene breakdown + cast selection
+//   Commercial / Music Video → streamlined: skip scenes & cast, go straight to crew
+
+const STEPS_FILM = [
   { id:'step0',        label:'Template' },
   { id:'step1',        label:'Source' },
   { id:'stepScenes',   label:'Scenes' },
@@ -2057,6 +2062,32 @@ const STEPS = [
   { id:'step3',        label:'Preview' },
   { id:'step4',        label:'Refine' },
   { id:'step5',        label:'Send' },
+];
+const STEPS_SHORT = [
+  { id:'step0',        label:'Template' },
+  { id:'step1',        label:'Source' },
+  { id:'stepCrew',     label:'Crew' },
+  { id:'stepDepts',    label:'Departments' },
+  { id:'stepLocation', label:'Location' },
+  { id:'stepMaps',     label:'Maps' },
+  { id:'step2',        label:'Details' },
+  { id:'step3',        label:'Preview' },
+  { id:'step4',        label:'Refine' },
+  { id:'step5',        label:'Send' },
+];
+
+function getSteps() {
+  return callsheet.production_type === 'film' ? STEPS_FILM : STEPS_SHORT;
+}
+// Keep STEPS as a live alias for legacy callers
+let STEPS = getSteps();
+
+// Call this whenever production type changes so the indicator updates.
+function refreshStepsForType() {
+  STEPS = getSteps();
+  const current = document.querySelector('.step.active');
+  renderStepIndicator(current ? current.id : 'step0');
+}
 ];
 function stepIndex(id){ return STEPS.findIndex(s => s.id === id); }
 
@@ -2101,8 +2132,14 @@ function goBack(){
 function finishSource(){
   const btn = document.getElementById('step1-next');
   if (btn && btn.classList.contains('disabled')) return;
-  parseScript(callsheet.brief || '');
-  goTo('stepScenes');
+  if (callsheet.production_type === 'film') {
+    // Film: parse the script/brief and go to scene breakdown first
+    parseScript(callsheet.brief || '');
+    goTo('stepScenes');
+  } else {
+    // Commercial / Music Video: skip scene & cast steps, go straight to crew
+    goTo('stepCrew');
+  }
 }
 
 // ── SCRIPT PARSER (PDF spec 3 — "Ai parses through the script") ───────────────
