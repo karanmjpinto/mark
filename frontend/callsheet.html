@@ -345,7 +345,7 @@ input[type=file]{display:none;}
 .shoot-grid > .full{grid-column:1/-1;}
 
 /* ════════════════════════════════════════════════════════════════════════
-   CALL SHEET PREVIEW — modelled on North Six / Sarmad Varraich / DUDU
+   CALL SHEET PREVIEW — industry-standard format
    real production call sheets. Pure Helvetica / Arial sans throughout
    (no serifs anywhere in the document). White paper, black bars,
    tight cell padding. The producer's eye should land on this and
@@ -524,7 +524,7 @@ input[type=file]{display:none;}
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   CREW TABLE — North Six column structure. The black bar above each dept
+   CREW TABLE — industry-standard column structure. The black bar above each dept
    acts as the section title; columns under it are Role | Name | Phone |
    Driver | Pick Up | Call | Notes. All Helvetica, no serifs anywhere.
    ════════════════════════════════════════════════════════════════════════ */
@@ -573,7 +573,7 @@ input[type=file]{display:none;}
 }
 .cs-text{font-size:11px;line-height:1.55;color:#14110D;}
 
-/* DEPT-WIDE LOCATION / EMERGENCY rows used in DUDU + Royal Enfield */
+/* DEPT-WIDE LOCATION / EMERGENCY rows */
 .cs-info-table{width:100%;border-collapse:collapse;margin-top:6px;}
 .cs-info-table th, .cs-info-table td{
   font-size:10px;padding:5px 8px;border:1px solid rgba(20,17,13,0.18);
@@ -853,7 +853,7 @@ input[type=file]{display:none;}
         <button class="mode-tab" data-tmode="upload" onclick="setTemplateMode('upload')">Upload my own template</button>
       </div>
       <div class="mode-pane active" id="template-standard">
-        <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.7;margin:14px 2px;">Mark's standard format is the North Six / Sarmad Varraich industry-standard call sheet — clean, complete, and ready to send.</p>
+        <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.7;margin:14px 2px;">Mark's standard format follows the industry-standard call sheet layout — clean, complete, and ready to send.</p>
       </div>
       <div class="mode-pane" id="template-upload">
         <div class="upload-zone" id="template-upload-zone"
@@ -927,7 +927,7 @@ input[type=file]{display:none;}
         <button class="mode-tab" data-mode="demo" onclick="setBriefMode('demo')">Option 3 · Use a demo</button>
       </div>
       <div class="mode-pane active" id="brief-type">
-        <textarea id="brief-text" placeholder="e.g. Bullet 650 commercial. Night shoot at Royal Albert Hall. Client: Royal Enfield India. Unit call 20:00, wrap 08:00."></textarea>
+        <textarea id="brief-text" placeholder="e.g. Luxury car commercial. Night shoot at a city centre location. Unit call 20:00, wrap 08:00. 2 lead actors, 15 crew."></textarea>
       </div>
       <div class="mode-pane" id="brief-upload">
         <div class="upload-zone" id="brief-upload-zone"
@@ -1174,8 +1174,8 @@ input[type=file]{display:none;}
       </div>
     </div>
 
-    <!-- CANONICAL CALL-SHEET FIELDS — match the North Six / Sarmad
-         Varraich / DUDU format. Optional; the preview shows — for any
+    <!-- CANONICAL CALL-SHEET FIELDS — industry-standard format.
+         Optional; the preview shows — for any
          field left blank. -->
     <div class="panel">
       <div class="panel-title">Production <em>masthead</em> · the canonical call-sheet fields</div>
@@ -1203,7 +1203,7 @@ input[type=file]{display:none;}
         </div>
         <div>
           <label class="field-label">Client</label>
-          <input type="text" id="shoot-client" placeholder="e.g. Royal Enfield · Yves Saint Laurent · Dior"/>
+          <input type="text" id="shoot-client" placeholder="e.g. Client name"/>
         </div>
         <div>
           <label class="field-label">Studio</label>
@@ -1544,9 +1544,9 @@ const callsheet = {
     scenes: '', locations: '', hospital: '', police: '',
     weather: '', production_notes: '', invoice_address: '',
     sunrise: '', sunset: '', temperature: '', conditions: '',
-    // Canonical-format fields — match North Six / Sarmad Varraich / DUDU
+    // Canonical-format fields — industry-standard call sheet
     // real call sheets. Producer can fill any of these via the chat
-    // refine ("director is Tarun Achpal", "client is Royal Enfield",
+    // refine ("director is [name]", "client is [name]",
     // "studio is Sky Studios Elstree"). The HTML preview shows a slot
     // for every field, populated with — when blank.
     production_company: 'MARK',
@@ -1602,7 +1602,7 @@ function setBriefMode(mode) {
 
 const briefDemos = {
   music: "Music video for indie pop artist 'Lila'. 1-day shoot. Urban locations — graffiti alley, rooftop, neon-lit street. Night shoot, unit call 18:00, wrap 04:00. Lead artist + 4 backup dancers. High-energy, handheld + Steadicam. Director: Vivek Mehra. Production company: Tigerbalm Films.",
-  commercial: "Royal Enfield Bullet 650 commercial. Studio shoot, single day. Client: Royal Enfield India. Director: Tarun Achpal. Production company: Incredible Maharaja Films. Talent: 2 lead actors + 8 supporting. Luxury treatment, slow-mo product detail. Unit call 09:00, wrap 21:00.",
+  commercial: "Luxury car commercial. Studio shoot, single day. Talent: 2 lead actors + 8 supporting. Luxury treatment, slow-mo product detail. Unit call 09:00, wrap 21:00.",
   documentary: "Documentary feature on Mumbai street food. 3rd shoot day in Mohammed Ali Road. Small crew (8 people). Outdoor / handheld. Sunrise call 05:30, wrap 11:00 to avoid heat. Director: Anita Chopra. Producer: Riya Sen.",
   film: "Feature film 'The Long Road' — Day 12 of 28. Outdoor practical location, rural Rajasthan. Large crew (45 people). 5am unit call, wrap 19:00. Cast: 3 leads + 12 supporting. Director: Karan D'Souza. Producer: Vikram Kapoor.",
 };
@@ -2507,7 +2507,7 @@ function buildCallSheetHtml(cs){
     return m ? { time: m[1], event: m[2] } : (l.trim() ? { time: '', event: l.trim() } : null);
   }).filter(Boolean);
 
-  // ─── Crew table — North Six column structure ────────────────────────
+  // ─── Crew table ──────────────────────────────────────────────────────
   // Departments the producer marked "not needed" (3.4) are filtered out.
   const disabled = cs.disabledDepts || [];
   const groupedCrew = groupCrewByDept(cs.crew).filter(g => !disabled.includes(g.dept));
@@ -2670,7 +2670,7 @@ function buildCallSheetHtml(cs){
         </table>
       </div>
 
-      <!-- Crew table — North Six column structure; always present -->
+      <!-- Crew table — always present -->
       <div class="cs-crew-section">
         <table class="cs-crew-table">
           <thead><tr>
@@ -2883,9 +2883,8 @@ function tryLocalCallsheetEdit(instruction) {
   }
 
   // ── Canonical-format fields ─────────────────────────────────────────
-  // The producer types things like "director is Tarun Achpal", "client
-  // is Royal Enfield", "studio is Sky Studios Elstree", "job ref RK150225",
-  // "production company is Sarmad Varraich", "DOP Tarun Achpal".
+  // The producer types things like "director is [name]", "client
+  // "studio is [name]", "job ref [ref]", "production company is [name]", "DOP [name]".
   const FIELD_PATTERNS = [
     [/(?:director|dir)\s+(?:is\s+)?([^,;.]+)/i, 'director'],
     [/(?:dop|director of photography|cinematograph(?:er)?)\s+(?:is\s+)?([^,;.]+)/i, 'dop'],
