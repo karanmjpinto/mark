@@ -156,11 +156,13 @@ nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);b
 .hero-module-arr{margin-left:auto;font-size:20px;color:var(--muted);transition:transform 0.3s var(--ease-out),color 0.2s;flex-shrink:0;}
 .hero-module-card:hover .hero-module-arr{transform:translateX(4px);color:var(--accent);}
 @media(max-width:960px){
-  .hero{grid-template-columns:1fr;gap:40px;padding:110px 32px 60px;}
-  .hero-modules{max-width:520px;margin:0 auto;width:100%;}
+  .hero{grid-template-columns:1fr;gap:32px;padding:110px 32px 60px;}
+  .hero-modules{max-width:520px;margin:0 auto;width:100%;order:-1;}
+  .hero-content{order:1;}
 }
 @media(max-width:600px){
-  .hero{padding:90px 20px 60px;}
+  .hero{padding:90px 20px 50px;gap:24px;}
+  .hero-modules{max-width:100%;}
 }
 .hero-eyebrow{
   font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);
