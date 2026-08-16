@@ -1,0 +1,84 @@
+{
+  "name": "nike_tvc_mumbai",
+  "description": "Mid-scale sports-apparel TVC, 3-day Mumbai shoot, DOP attached, no VFX.",
+  "input": {
+    "script": "30-second Nike TVC. Athlete trains at dawn across three Mumbai locations — a rooftop, a boxing gym, and a rain-soaked street. Hero product: running shoe. High-energy, cinematic.",
+    "region": "india",
+    "currency": { "code": "INR", "symbol": "₹" },
+    "qa": [
+      { "id": "q1", "question": "How many shoot days?", "answer": "3 days" },
+      { "id": "q2", "question": "What scale/tier is this production?", "answer": "Mid-tier national TVC" },
+      { "id": "q3", "question": "Is a DOP attached, and at what rate band?", "answer": "Yes, senior DOP" },
+      { "id": "q4", "question": "How many locations?", "answer": "3 (rooftop, gym, street)" },
+      { "id": "q5", "question": "Any stunts, VFX, or choreography?", "answer": "No VFX; light athletic movement only" },
+      { "id": "q6", "question": "Night work?", "answer": "One dawn call, no full nights" }
+    ],
+    "breakdown": {
+      "total_scenes": 12,
+      "int_count": 5,
+      "ext_count": 7,
+      "day_count": 9,
+      "night_count": 3,
+      "unique_locations": [
+        { "name": "Rooftop", "scene_count": 4 },
+        { "name": "Boxing Gym", "scene_count": 5 },
+        { "name": "Street", "scene_count": 3 }
+      ],
+      "characters": [{ "name": "ATHLETE", "scene_count": 12 }]
+    }
+  },
+  "expect": {
+    "require_sections": ["12900", "13100"],
+    "post_ratio_min": 0.12,
+    "post_ratio_max": 0.40,
+    "total_min": 12000000,
+    "total_max": 35000000,
+    "shoot_days": 3
+  },
+  "sample_output": {
+    "title": "Nike — Dawn Training TVC",
+    "production_type": "TVC",
+    "shoot_days": 3,
+    "scale_tier": "mid",
+    "locations": ["Rooftop", "Boxing Gym", "Street"],
+    "comparable_note": "Comparable mid-tier national TVCs at this scale run ₹1.8–₹2.5Cr all-in.",
+    "confidence_note": "Confirm final crew headcount and location permit fees before locking.",
+    "sections": [
+      { "code": "10300", "name": "DIRECTOR", "type": "above_the_line", "items": [
+        { "code": "10301", "desc": "Director fee", "sub": "3 shoot days + prep", "amount": 2000000, "gst_rate": 0.18, "conf": "green" }
+      ]},
+      { "code": "10800", "name": "PRODUCTION STAFF", "type": "below_the_line", "items": [
+        { "code": "10801", "desc": "Line producer", "sub": "prep + shoot", "amount": 1500000, "gst_rate": 0.18, "conf": "green" },
+        { "code": "10802", "desc": "Production coordinator", "sub": "full schedule", "amount": 500000, "gst_rate": 0.18, "conf": "green" }
+      ]},
+      { "code": "11300", "name": "CAMERA", "type": "below_the_line", "items": [
+        { "code": "11301", "desc": "RED Komodo body + 3 primes + 2 ND filters", "sub": "3 days", "amount": 1800000, "gst_rate": 0.18, "conf": "green" },
+        { "code": "11302", "desc": "Senior DOP fee", "sub": "3 days", "amount": 1200000, "gst_rate": 0.18, "conf": "green" },
+        { "code": "11303", "desc": "Camera crew (focus puller, loader)", "sub": "3 days", "amount": 600000, "gst_rate": 0.18, "conf": "amber", "note": "Confirm crew size" }
+      ]},
+      { "code": "11500", "name": "LIGHTING", "type": "below_the_line", "items": [
+        { "code": "11501", "desc": "Lighting package (HMI + LED)", "sub": "3 days", "amount": 1500000, "gst_rate": 0.18, "conf": "green" },
+        { "code": "11502", "desc": "Gaffer + spark crew", "sub": "3 days", "amount": 900000, "gst_rate": 0.18, "conf": "amber", "note": "Dawn call may add OT" }
+      ]},
+      { "code": "11800", "name": "WARDROBE", "type": "below_the_line", "items": [
+        { "code": "11801", "desc": "Stylist + wardrobe budget", "sub": "hero athletic wear", "amount": 1000000, "gst_rate": 0.18, "conf": "green" }
+      ]},
+      { "code": "12400", "name": "LOCATION HIRE", "type": "below_the_line", "items": [
+        { "code": "12401", "desc": "3 locations", "sub": "rooftop, gym, street — 3 days", "amount": 3000000, "gst_rate": 0.18, "conf": "amber", "note": "Street permit variable" },
+        { "code": "12402", "desc": "Permits + police coordination", "sub": "municipal", "amount": 500000, "gst_rate": 0.18, "conf": "red", "note": "Confirm municipal fees" }
+      ]},
+      { "code": "12600", "name": "CATERING", "type": "below_the_line", "items": [
+        { "code": "12601", "desc": "Crew + cast catering", "sub": "3 days, full unit", "amount": 1500000, "gst_rate": 0.05, "conf": "green" }
+      ]},
+      { "code": "12900", "name": "EDITORIAL", "type": "post", "items": [
+        { "code": "12901", "desc": "Offline + online edit", "sub": "30s cut + versions", "amount": 2000000, "gst_rate": 0.18, "conf": "green" },
+        { "code": "12902", "desc": "Colour grade", "sub": "DI suite", "amount": 600000, "gst_rate": 0.18, "conf": "green" }
+      ]},
+      { "code": "13100", "name": "POST SOUND", "type": "post", "items": [
+        { "code": "13101", "desc": "Mix + sound design", "sub": "music sync + SFX", "amount": 1000000, "gst_rate": 0.18, "conf": "green" }
+      ]}
+    ],
+    "excluded": ["Media buy", "Talent usage/licensing beyond shoot", "Agency fees"],
+    "flags": ["Street location permit fee is the largest single risk item — confirm before locking."]
+  }
+}

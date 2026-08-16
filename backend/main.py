@@ -7,10 +7,11 @@ from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import Optional
+import asyncio
 import uuid
 import json
 import os
@@ -23,6 +24,11 @@ import time
 import hashlib
 import collections
 from dotenv import load_dotenv
+
+import observability
+import tenancy
+import connections
+import metering
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
@@ -63,48 +69,84 @@ except Exception as e:
     print(f"⚠️  Redis not available: {e} — using in-memory fallback")
     r = None
 
+# Wire the shared Redis client into the tracing layer so agent-run spans land in
+# the `mark:traces` ring buffer (and Langfuse, if configured).
+observability.init(r)
+
 _mem = {}
 
+# ── TENANT-SCOPED STORAGE ─────────────────────────────────────────────────────
+# Every db_* key is namespaced by the active tenant (tenancy.tkey). With
+# AUTH_MODE=off the tenant is "public" and behaviour is identical to before.
+# Turning on apikey/jwt gives each tenant an isolated keyspace with no endpoint
+# changes. Intentionally-global data uses the _raw_* helpers below instead.
+
 def db_set(key, value):
+    key = tenancy.tkey(key)
     if r:
         r.set(key, json.dumps(value))
     else:
         _mem[key] = value
 
 def db_get(key):
+    key = tenancy.tkey(key)
     if r:
         raw = r.get(key)
         return json.loads(raw) if raw else None
     return _mem.get(key)
 
 def db_delete(key):
+    key = tenancy.tkey(key)
     if r: r.delete(key)
     elif key in _mem: del _mem[key]
 
 def db_sadd(key, val):
+    key = tenancy.tkey(key)
     if r: r.sadd(key, val)
     else: _mem.setdefault(key, set()).add(val)
 
 def db_srem(key, val):
+    key = tenancy.tkey(key)
     if r: r.srem(key, val)
     elif key in _mem: _mem[key].discard(val)
 
 def db_smembers(key):
+    key = tenancy.tkey(key)
     if r: return r.smembers(key)
     return _mem.get(key, set())
+
+# Global (tenant-immune) store — for ephemeral uuid-keyed jobs and send
+# proposals, and anything intentionally cross-tenant. No tkey prefixing.
+def _raw_set(key, value, ttl=None):
+    if r:
+        if ttl: r.setex(key, ttl, json.dumps(value))
+        else: r.set(key, json.dumps(value))
+    else:
+        _mem[key] = value
+
+def _raw_get(key):
+    if r:
+        raw = r.get(key)
+        return json.loads(raw) if raw else None
+    return _mem.get(key)
+
+# Wire the shared clients into the tenant-aware helper modules.
+connections.init(r)
+metering.init(r)
 
 def now():
     return datetime.now(timezone.utc).isoformat()
 
-# ── AUTH ──────────────────────────────────────────────────────────────────────
-# Set API_KEY env var to enforce a shared secret on all endpoints.
-# If unset, auth is disabled (open access — suitable for local dev only).
+# ── AUTH / TENANCY ────────────────────────────────────────────────────────────
+# require_api_key now resolves and activates the tenant for the request (see
+# tenancy.py). AUTH_MODE=off keeps the legacy single-tenant shared-secret
+# behaviour; apikey/jwt turn on real per-tenant isolation. All ~40 existing
+# `Depends(require_api_key)` call sites get tenancy for free — the returned value
+# is now the Tenant, and tenancy.current_tenant()/current_plan() read the context.
 _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
-async def require_api_key(key: Optional[str] = Depends(_api_key_header)):
-    server_key = os.getenv("API_KEY")
-    if server_key and key != server_key:
-        raise HTTPException(401, "Invalid or missing API key")
+async def require_api_key(request: Request, key: Optional[str] = Depends(_api_key_header)):
+    return await tenancy.require_tenant(request)
 
 # ── RATE LIMITING ─────────────────────────────────────────────────────────────
 # Limits /claude calls to CLAUDE_RATE_LIMIT requests per minute per IP (default 10).
@@ -203,6 +245,7 @@ class BudgetGenerate(BaseModel):
     qa: Optional[list] = None
     answers: Optional[dict] = None  # legacy flat map; auto-converted if `qa` is missing
     breakdown: Optional[dict] = None  # output of /script/parse summary, when available
+    model: Optional[str] = None  # optional model override (e.g. async path requests Sonnet)
     version: Optional[str] = "1.0"
 
 class CallSheetRefine(BaseModel):
@@ -432,6 +475,53 @@ async def admin_cache_clear(_=Depends(require_api_key)):
     invalidate previously-cached results. Requires API_KEY when set."""
     deleted = _budget_cache_clear()
     return {"success": True, "deleted_keys": deleted}
+
+@app.post("/admin/traces")
+async def admin_traces(data: dict = None, _=Depends(require_api_key)):
+    """Read back recent agent-run traces (newest first). Each span carries
+    name, model, latency_ms, token usage (Claude path), cache_hit, ok/error and
+    a truncated view of inputs/outputs. Requires API_KEY when set."""
+    limit = int((data or {}).get("limit", 50))
+    spans = observability.recent(limit)
+    return {"success": True, "traces": spans, "total": len(spans)}
+
+# ── CONNECTIONS (per-tenant credential broker) ────────────────────────────────
+# A tenant connects their own providers (Unipile, Anthropic) instead of sharing
+# the process env. Creds are encrypted at rest and never returned to the client —
+# status/list return a masked summary only.
+
+class ConnectionSet(BaseModel):
+    provider: str            # "unipile" | "anthropic" | ...
+    creds: dict              # e.g. {"dsn": "...", "api_key": "..."} or {"api_key": "..."}
+
+class ConnectionRef(BaseModel):
+    provider: str
+
+@app.post("/connections/set")
+async def connections_set(data: ConnectionSet, _=Depends(require_api_key)):
+    if not data.provider or not isinstance(data.creds, dict) or not data.creds:
+        raise HTTPException(400, "provider and non-empty creds are required")
+    return {"success": True, "connection": connections.set_connection(data.provider, data.creds)}
+
+@app.post("/connections/list")
+async def connections_list(_=Depends(require_api_key)):
+    return {"success": True, "connections": connections.list_connections()}
+
+@app.post("/connections/status")
+async def connections_status(data: ConnectionRef, _=Depends(require_api_key)):
+    return {"success": True, "connection": connections.status(data.provider)}
+
+@app.post("/connections/delete")
+async def connections_delete(data: ConnectionRef, _=Depends(require_api_key)):
+    return {"success": True, "deleted": connections.delete_connection(data.provider)}
+
+# ── USAGE (per-tenant metering) ───────────────────────────────────────────────
+
+@app.post("/usage")
+async def usage(_=Depends(require_api_key)):
+    """Return the active tenant's usage this period, plan limits, and whether
+    enforcement is on."""
+    return {"success": True, "usage": metering.usage()}
 
 @app.post("/budget/save")
 def save_budget(data: BudgetSave, _=Depends(require_api_key)):
@@ -752,16 +842,27 @@ _FLUE_BASE_URL = os.getenv("FLUE_BASE_URL", "http://localhost:3583")
 _UNIPILE_DSN = (os.getenv("UNIPILE_DSN") or "").rstrip("/")
 _UNIPILE_API_KEY = os.getenv("UNIPILE_API_KEY") or ""
 
+def _unipile_creds() -> tuple[str, str]:
+    """Resolve Unipile creds for the active tenant: their connected account
+    first (brokered, encrypted at rest), then the process env fallback so
+    single-tenant deploys keep working."""
+    conn = connections.get_connection("unipile") or {}
+    dsn = (conn.get("dsn") or _UNIPILE_DSN or "").rstrip("/")
+    api_key = conn.get("api_key") or _UNIPILE_API_KEY
+    return dsn, api_key
+
 def _unipile_configured() -> bool:
-    return bool(_UNIPILE_DSN and _UNIPILE_API_KEY)
+    dsn, api_key = _unipile_creds()
+    return bool(dsn and api_key)
 
 async def _unipile_request(method: str, path: str, *, json_body=None, data=None, files=None, timeout=30):
     """Thin httpx wrapper for Unipile. Raises HTTPException on transport failure;
     returns the raw response so callers can inspect status codes individually."""
-    if not _unipile_configured():
-        raise HTTPException(503, "Unipile integration is not configured on the server (set UNIPILE_DSN and UNIPILE_API_KEY)")
-    url = f"{_UNIPILE_DSN}{path}"
-    headers = {"X-API-KEY": _UNIPILE_API_KEY, "accept": "application/json"}
+    dsn, api_key = _unipile_creds()
+    if not (dsn and api_key):
+        raise HTTPException(503, "Unipile is not connected for this tenant (connect it via /connections/set or set UNIPILE_DSN/UNIPILE_API_KEY)")
+    url = f"{dsn}{path}"
+    headers = {"X-API-KEY": api_key, "accept": "application/json"}
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             return await client.request(method, url, headers=headers, json=json_body, data=data, files=files)
@@ -882,6 +983,9 @@ def _budget_cache_key(payload: dict) -> str:
         "currency": payload.get("currency"),
         "qa": payload.get("qa") or [],
         "breakdown": payload.get("breakdown"),
+        # Model is part of the key so a Haiku (sync) and Sonnet (async) result for
+        # the same inputs don't collide. Absent on the sync path → keys unchanged.
+        "model": payload.get("model"),
     }
     blob = json.dumps(canon, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(blob.encode("utf-8")).hexdigest()[:24]
@@ -948,20 +1052,32 @@ def _post_ratio_hint(budget: dict) -> Optional[str]:
 
 async def _flue_call(agent_name: str, run_id: str, payload: dict) -> dict:
     url = f"{_FLUE_BASE_URL}/agents/{agent_name}/{run_id}"
-    try:
-        async with httpx.AsyncClient(timeout=180) as client:
-            resp = await client.post(url, json=payload)
-    except httpx.TimeoutException:
-        raise HTTPException(504, f"flue/{agent_name}: agent timed out")
-    except httpx.RequestError as e:
-        raise HTTPException(503, f"flue/{agent_name}: agent unavailable ({type(e).__name__})")
-    if not resp.is_success:
+    # Trace every agent call — inputs (truncated), latency, ok/error land in the
+    # `mark:traces` ring buffer regardless of whether the call succeeds.
+    async with observability.trace(
+        f"flue:{agent_name}",
+        run_id=run_id,
+        model=payload.get("model"),
+        input={k: v for k, v in payload.items() if k not in ("project", "crew")},
+    ) as span:
         try:
-            detail = resp.json().get("error") or resp.text
-        except Exception:
-            detail = f"Flue agent error (HTTP {resp.status_code})"
-        raise HTTPException(resp.status_code, f"flue/{agent_name}: {detail}")
-    return resp.json()
+            async with httpx.AsyncClient(timeout=180) as client:
+                resp = await client.post(url, json=payload)
+        except httpx.TimeoutException:
+            raise HTTPException(504, f"flue/{agent_name}: agent timed out")
+        except httpx.RequestError as e:
+            raise HTTPException(503, f"flue/{agent_name}: agent unavailable ({type(e).__name__})")
+        if not resp.is_success:
+            try:
+                detail = resp.json().get("error") or resp.text
+            except Exception:
+                detail = f"Flue agent error (HTTP {resp.status_code})"
+            span["ok"] = False
+            span["error"] = f"HTTP {resp.status_code}: {str(detail)[:200]}"
+            raise HTTPException(resp.status_code, f"flue/{agent_name}: {detail}")
+        result = resp.json()
+        span["output"] = result
+        return result
 
 @app.post("/budget/generate")
 async def generate_budget(data: BudgetGenerate, _=Depends(require_api_key)):
@@ -997,6 +1113,8 @@ async def generate_budget(data: BudgetGenerate, _=Depends(require_api_key)):
     }
     if data.breakdown:
         payload["breakdown"] = data.breakdown
+    if data.model:
+        payload["model"] = data.model
 
     # Cache lookup — same canonical inputs always return the same budget.
     # Project context (project record + crew) doesn't go into the cache key
@@ -1013,8 +1131,18 @@ async def generate_budget(data: BudgetGenerate, _=Depends(require_api_key)):
     if cached is not None:
         agent_result = cached
         cache_hit = True
+        # Record cache hits too — otherwise the trace stream looks like the
+        # agent simply wasn't called, and you can't tell a cache serve from an
+        # outage.
+        async with observability.trace("budget:cache-hit", run_id=run_id) as span:
+            span["cache_hit"] = True
+            span["output"] = {"title": agent_result.get("title") if isinstance(agent_result, dict) else None}
     else:
+        # Real generation — gate on the tenant's plan quota, then count it.
+        # Cache hits above are free and don't consume quota.
+        metering.check_quota("budgets")
         agent_result = await _flue_call("generate-budget", run_id, payload)
+        metering.record("budgets")
         # Flue wraps `session.prompt({result: schema})` returns in `{result: ...}` on the wire.
         # Unwrap so callers see the flat budget object the schema describes.
         if isinstance(agent_result, dict) and set(agent_result.keys()) == {"result"}:
@@ -1061,6 +1189,112 @@ async def generate_budget(data: BudgetGenerate, _=Depends(require_api_key)):
     db_set(f"budget:{bid}", budget)
     db_sadd(f"project:{data.project_id}:budgets", bid)
     return {"success": True, "budget_id": bid, "budget": budget}
+
+# ── DURABLE ASYNC BUDGET JOBS ─────────────────────────────────────────────────
+# The synchronous /budget/generate is bound by the client-facing edge timeout
+# (~60s on Railway) — which is exactly why the agent is pinned to Haiku. The
+# async path decouples the client request from the agent run: enqueue → poll →
+# collect. Job state lives in Redis so it survives across requests.
+#
+# Durability caveat: execution here is an in-process asyncio task. If the web
+# process restarts mid-run, the job stays "running". The stored `request` is the
+# hook for the production upgrade — an external worker consuming a Redis queue
+# (RQ/Celery/Railway cron) — without changing this API. Interrupted jobs are
+# reaped to "error" on next startup (see _reap_stale_jobs).
+_JOB_TTL_SECONDS = int(os.getenv("JOB_TTL_SECONDS", str(24 * 3600)))
+
+def _job_key(jid: str) -> str:
+    return f"job:{jid}"
+
+def _job_set(job: dict) -> None:
+    job["updated_at"] = now()
+    if r:
+        r.setex(_job_key(job["id"]), _JOB_TTL_SECONDS, json.dumps(job))
+        r.sadd("jobs:all", job["id"])
+    else:
+        _mem[_job_key(job["id"])] = job
+
+def _job_get(jid: str) -> Optional[dict]:
+    return _raw_get(_job_key(jid))  # global: jobs are uuid-keyed, tenant-immune
+
+async def _run_budget_job(jid: str, data: "BudgetGenerate") -> None:
+    job = _job_get(jid) or {"id": jid}
+    job.update(status="running")
+    _job_set(job)
+    try:
+        # Reuse the exact sync pipeline (cache, guardrail retry, persistence).
+        # Depends() is inert on a direct call, so no auth double-check here.
+        result = await generate_budget(data)
+        job.update(status="done", result=result)
+    except HTTPException as e:
+        job.update(status="error", error=f"HTTP {e.status_code}: {e.detail}")
+    except Exception as e:  # never let a background task die silently
+        job.update(status="error", error=f"{type(e).__name__}: {e}")
+    _job_set(job)
+
+def _reap_stale_jobs() -> int:
+    """On startup, flip any job left 'running'/'queued' by a previous process to
+    'error' so pollers don't wait forever. Best-effort; Redis only."""
+    if not r:
+        return 0
+    reaped = 0
+    try:
+        for jid in list(r.smembers("jobs:all")):
+            job = _job_get(jid)
+            if not job:
+                r.srem("jobs:all", jid)
+                continue
+            if job.get("status") in ("queued", "running"):
+                job.update(status="error", error="interrupted by server restart")
+                _job_set(job)
+                reaped += 1
+    except Exception:
+        pass
+    return reaped
+
+@app.on_event("startup")
+async def _on_startup():
+    n = _reap_stale_jobs()
+    if n:
+        print(f"⚠️  reaped {n} stale budget job(s) from a previous process")
+
+@app.post("/budget/generate/async")
+async def generate_budget_async(data: BudgetGenerate, _=Depends(require_api_key)):
+    """Enqueue a budget generation and return immediately with a job_id. Poll
+    /jobs/get for status/result. Because the client no longer waits on the agent,
+    this path can request a stronger model than the sync path's Haiku."""
+    jid = str(uuid.uuid4())
+    if not data.model:
+        # Not bound by the client edge timeout here → default to Sonnet. (This
+        # still assumes the Flue service can hold the connection for a longer
+        # generation; raising its proxy timeout / streaming is the next step.)
+        data.model = os.getenv("ASYNC_BUDGET_MODEL", "anthropic/claude-sonnet-4-6")
+    job = {
+        "id": jid,
+        "kind": "budget_generate",
+        "status": "queued",
+        "model": data.model,
+        "project_id": data.project_id,
+        "created_at": now(),
+    }
+    _job_set(job)
+    asyncio.create_task(_run_budget_job(jid, data))
+    return JSONResponse(
+        status_code=202,
+        content={"success": True, "job_id": jid, "status": "queued", "poll_endpoint": "/jobs/get"},
+    )
+
+class JobGet(BaseModel):
+    job_id: str
+
+@app.post("/jobs/get")
+async def get_job(data: JobGet, _=Depends(require_api_key)):
+    """Poll a job. status ∈ queued|running|done|error. When done, `result` holds
+    the same body /budget/generate would have returned."""
+    job = _job_get(data.job_id)
+    if not job:
+        raise HTTPException(404, "Job not found or expired")
+    return {"success": True, "job": job}
 
 @app.post("/budget/refine")
 async def refine_budget(data: BudgetRefine, _=Depends(require_api_key)):
@@ -1201,18 +1435,64 @@ async def get_callsheet(data: dict = None, _=Depends(require_api_key)):
         raise HTTPException(404, "Call sheet not found")
     return {"success": True, "record": record}
 
-@app.post("/callsheet/send")
-async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
-    """Send the call sheet via Unipile (real Gmail / WhatsApp / LinkedIn /
-    Instagram / Telegram dispatch). Falls back to the legacy mock when the
-    Unipile env vars are unset, so local dev keeps working.
+# ── HUMAN-IN-THE-LOOP SEND APPROVAL ───────────────────────────────────────────
+# Sending a call sheet contacts real crew — it's irreversible. This turns "send"
+# into a propose → approve → execute flow. Legacy POST /callsheet/send still
+# works, but when REQUIRE_SEND_APPROVAL=1 it returns a proposal instead of firing.
+_REQUIRE_SEND_APPROVAL = os.getenv("REQUIRE_SEND_APPROVAL", "").strip().lower() in ("1", "true", "yes")
+_SEND_PROPOSAL_TTL_SECONDS = int(os.getenv("SEND_PROPOSAL_TTL_SECONDS", str(3600)))
+
+def _send_preview(cs: dict, channels: list) -> dict:
+    """Who would receive what, without sending anything — the thing a human
+    actually approves."""
+    crew = cs.get("crew") or []
+    field_for = {"email": "email", "whatsapp": "phone", "linkedin": "linkedin",
+                 "instagram": "instagram", "telegram": "telegram"}
+    by_channel = {}
+    for ch in channels:
+        field = field_for.get(ch, ch)
+        recips = [{"name": c.get("name"), "to": (c.get(field) or "").strip()}
+                  for c in crew if (c.get(field) or "").strip()]
+        by_channel[ch] = {"count": len(recips), "recipients": recips}
+    return {
+        "project_title": cs.get("project_title"),
+        "shoot": cs.get("shoot") or {},
+        "channels": channels,
+        "crew_total": len(crew),
+        "by_channel": by_channel,
+    }
+
+def _store_send_proposal(cs, channels, project_id, pdf_base64, pdf_filename) -> dict:
+    """Stash a full send payload under a short-TTL key and return the caller a
+    proposal_id + preview. The raw payload is never echoed back — only the
+    preview, which is what gets approved."""
+    pid = str(uuid.uuid4())
+    proposal = {
+        "id": pid,
+        "kind": "callsheet_send",
+        "status": "pending",
+        "payload": {
+            "callsheet": cs, "channels": channels, "project_id": project_id,
+            "pdf_base64": pdf_base64, "pdf_filename": pdf_filename,
+        },
+        "preview": _send_preview(cs, channels),
+        "created_at": now(),
+    }
+    _raw_set(f"send-proposal:{pid}", proposal, ttl=_SEND_PROPOSAL_TTL_SECONDS)
+    return {"proposal_id": pid, "status": "pending", "preview": proposal["preview"],
+            "expires_in_seconds": _SEND_PROPOSAL_TTL_SECONDS,
+            "confirm_endpoint": "/callsheet/send/confirm"}
+
+async def _execute_callsheet_send(cs: dict, channels: list, project_id, pdf_base64, pdf_filename) -> dict:
+    """Actually dispatch the call sheet via Unipile (real Gmail / WhatsApp /
+    LinkedIn / Instagram / Telegram). Falls back to the legacy mock when the
+    Unipile env vars are unset, so local dev keeps working. Shared by the legacy
+    endpoint and the approval-gated confirm path.
 
     Per-recipient errors do not fail the whole request — we collect them and
     return a `results` array so the producer can see which sends landed and
     which need retry."""
-    cs = data.callsheet or {}
     crew = cs.get("crew") or []
-    channels = data.channels or []
     if not crew:
         raise HTTPException(400, "callsheet has no crew to send to")
     if not channels:
@@ -1221,7 +1501,7 @@ async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
     sid = str(uuid.uuid4())
     base_record = {
         "id": sid,
-        "project_id": data.project_id,
+        "project_id": project_id,
         "channels": channels,
         "shoot_date": (cs.get("shoot") or {}).get("date"),
         "shoot_day": (cs.get("shoot") or {}).get("day_number"),
@@ -1258,6 +1538,8 @@ async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
         }
 
     # ── REAL SEND VIA UNIPILE ──────────────────────────────────────────────────
+    # Gate on the tenant's send quota before dispatching (cost = crew size).
+    metering.check_quota("sends", cost=len(crew))
     # Fetch the producer's connected accounts so we can choose the right
     # account_id per channel. One Unipile workspace can hold many accounts;
     # we pick the first OK one per provider type. If a producer needs to
@@ -1279,12 +1561,12 @@ async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
     # Decode the rendered call sheet PDF once (if the client sent one) so we can
     # attach it to every email without re-decoding per recipient.
     pdf_bytes = None
-    pdf_name = (data.pdf_filename or "call-sheet.pdf").strip() or "call-sheet.pdf"
+    pdf_name = (pdf_filename or "call-sheet.pdf").strip() or "call-sheet.pdf"
     if not pdf_name.lower().endswith(".pdf"):
         pdf_name += ".pdf"
-    if data.pdf_base64:
+    if pdf_base64:
         try:
-            b64 = data.pdf_base64.split(",", 1)[-1]  # tolerate a data-URI prefix
+            b64 = pdf_base64.split(",", 1)[-1]  # tolerate a data-URI prefix
             pdf_bytes = base64.b64decode(b64)
         except Exception:
             pdf_bytes = None
@@ -1377,6 +1659,8 @@ async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
 
     ok_count = sum(1 for r in results if r.get("ok"))
     fail_count = len(results) - ok_count
+    if ok_count:
+        metering.record("sends", ok_count)  # count only messages that actually landed
     record = {
         **base_record,
         "results": results,
@@ -1403,6 +1687,58 @@ async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
         "fail_count": fail_count,
         "results": results,
     }
+
+@app.post("/callsheet/send")
+async def send_callsheet(data: CallSheetSend, _=Depends(require_api_key)):
+    """Legacy one-shot send. When REQUIRE_SEND_APPROVAL=1 this returns a proposal
+    (requires_approval=True) instead of sending — the caller must then POST
+    /callsheet/send/confirm. With approval off, it sends immediately as before."""
+    cs = data.callsheet or {}
+    channels = data.channels or []
+    if not (cs.get("crew") or []):
+        raise HTTPException(400, "callsheet has no crew to send to")
+    if not channels:
+        raise HTTPException(400, "at least one send channel is required")
+    if _REQUIRE_SEND_APPROVAL:
+        return {"success": True, "requires_approval": True,
+                **_store_send_proposal(cs, channels, data.project_id, data.pdf_base64, data.pdf_filename)}
+    return await _execute_callsheet_send(cs, channels, data.project_id, data.pdf_base64, data.pdf_filename)
+
+@app.post("/callsheet/send/propose")
+async def propose_callsheet_send(data: CallSheetSend, _=Depends(require_api_key)):
+    """Stage a send for human approval. Returns a proposal_id and a preview of
+    exactly who would be contacted on which channel. Nothing is dispatched."""
+    cs = data.callsheet or {}
+    channels = data.channels or []
+    if not (cs.get("crew") or []):
+        raise HTTPException(400, "callsheet has no crew to send to")
+    if not channels:
+        raise HTTPException(400, "at least one send channel is required")
+    return {"success": True, **_store_send_proposal(cs, channels, data.project_id, data.pdf_base64, data.pdf_filename)}
+
+class SendConfirm(BaseModel):
+    proposal_id: str
+
+@app.post("/callsheet/send/confirm")
+async def confirm_callsheet_send(data: SendConfirm, _=Depends(require_api_key)):
+    """Execute a previously-proposed send. Idempotent — re-confirming a spent
+    proposal returns the original result rather than sending twice."""
+    key = f"send-proposal:{data.proposal_id}"
+    proposal = _raw_get(key)  # global: proposals are uuid-keyed, tenant-immune
+    if not proposal:
+        raise HTTPException(404, "Proposal not found or expired")
+    if proposal.get("status") == "executed":
+        return {"success": True, "already_executed": True, **(proposal.get("result") or {})}
+    p = proposal.get("payload") or {}
+    result = await _execute_callsheet_send(
+        p.get("callsheet") or {}, p.get("channels") or [],
+        p.get("project_id"), p.get("pdf_base64"), p.get("pdf_filename"),
+    )
+    proposal["status"] = "executed"
+    proposal["result"] = result
+    proposal["executed_at"] = now()
+    _raw_set(key, proposal, ttl=_SEND_PROPOSAL_TTL_SECONDS)
+    return {"success": True, **result}
 
 @app.post("/crew/enrich")
 async def enrich_crew_member(data: CrewEnrich, _=Depends(require_api_key)):
@@ -1432,31 +1768,43 @@ class ClaudeRequest(BaseModel):
 @app.post("/claude")
 async def claude_proxy(data: ClaudeRequest, request: Request, _=Depends(require_api_key)):
     check_rate_limit(request.client.host)
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    # Prefer the tenant's own Anthropic connection; fall back to the process env.
+    _anthropic_conn = connections.get_connection("anthropic") or {}
+    api_key = _anthropic_conn.get("api_key") or os.getenv("ANTHROPIC_API_KEY")
     if not api_key or api_key == "your-api-key-here":
-        raise HTTPException(500, "API key not configured on server")
-    async with httpx.AsyncClient(timeout=120) as client:
-        resp = await client.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": "claude-sonnet-4-6",
-                "max_tokens": data.max_tokens,
-                "system": data.system,
-                "messages": [{"role": "user", "content": data.user}],
-            },
-        )
-    if not resp.is_success:
-        try:
-            detail = resp.json().get("error", {}).get("message", "Claude API error")
-        except Exception:
-            detail = f"Claude API error (HTTP {resp.status_code})"
-        raise HTTPException(resp.status_code, detail)
-    return resp.json()
+        raise HTTPException(500, "No Anthropic key — connect one via /connections/set or set ANTHROPIC_API_KEY")
+    _model = "claude-sonnet-4-6"
+    async with observability.trace("claude:proxy", model=_model, input={"system": data.system, "user": data.user}) as span:
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": _model,
+                    "max_tokens": data.max_tokens,
+                    "system": data.system,
+                    "messages": [{"role": "user", "content": data.user}],
+                },
+            )
+        if not resp.is_success:
+            try:
+                detail = resp.json().get("error", {}).get("message", "Claude API error")
+            except Exception:
+                detail = f"Claude API error (HTTP {resp.status_code})"
+            span["ok"] = False
+            span["error"] = str(detail)[:200]
+            raise HTTPException(resp.status_code, detail)
+        body = resp.json()
+        # The Anthropic Messages API surfaces token counts — capture them so the
+        # trace carries real cost signal (the Flue path can't; usage isn't
+        # forwarded through session.prompt()).
+        span["usage"] = body.get("usage")
+        span["output"] = "".join(b.get("text", "") for b in body.get("content", []) if isinstance(b, dict))
+        return body
 
 # ── SERVE FRONTEND ────────────────────────────────────────────────────────────
 _frontend_dir = os.path.normpath(

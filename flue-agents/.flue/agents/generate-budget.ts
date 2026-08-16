@@ -63,6 +63,10 @@ const Payload = v.object({
   breakdown: v.optional(Breakdown),
   project: v.optional(v.looseObject({})),
   crew: v.optional(v.array(v.looseObject({})), []),
+  // Optional model override. The sync path leaves this unset (→ Haiku, to fit
+  // Railway's ~60s edge timeout). The async job path passes Sonnet, which it can
+  // afford because the client polls instead of holding the connection open.
+  model: v.optional(v.string()),
 });
 
 // Skill body inlined as a prompt template. Skill files in .agents/skills/ require
@@ -133,10 +137,11 @@ Aim for 8–12 sections, 3–6 items each. All amounts as plain numbers — no s
 
 export default async function ({ init, payload }: FlueContext) {
   const input = v.parse(Payload, payload);
-  // Haiku, not Sonnet: Railway's edge closes connections after ~60s without
-  // response headers. session.prompt() doesn't stream — it returns only after
-  // Claude finishes, so total latency must fit under that ceiling.
-  const agent = await init({ model: 'anthropic/claude-haiku-4-5-20251001' });
+  // Default Haiku, not Sonnet: Railway's edge closes connections after ~60s
+  // without response headers, and session.prompt() doesn't stream — it returns
+  // only after Claude finishes, so sync latency must fit under that ceiling. The
+  // async job path overrides this with Sonnet via `input.model`.
+  const agent = await init({ model: input.model ?? 'anthropic/claude-haiku-4-5-20251001' });
   const session = await agent.session();
 
   const args = {

@@ -1,0 +1,63 @@
+{
+  "name": "indie_music_video",
+  "description": "Low-budget indie music video, 2-day single-location shoot, no VFX.",
+  "input": {
+    "script": "Indie band performance music video. Single warehouse location, 2 days, moody practical lighting, performance + a few narrative inserts.",
+    "region": "india",
+    "currency": { "code": "INR", "symbol": "₹" },
+    "qa": [
+      { "id": "q1", "question": "How many shoot days?", "answer": "2 days" },
+      { "id": "q2", "question": "What scale/tier?", "answer": "Low-budget indie" },
+      { "id": "q3", "question": "Is a DOP attached?", "answer": "Yes, mid-tier DOP" },
+      { "id": "q4", "question": "How many locations?", "answer": "1 warehouse" },
+      { "id": "q5", "question": "Any stunts, VFX, or choreography?", "answer": "None" },
+      { "id": "q6", "question": "Night work?", "answer": "Interior only, controlled" }
+    ]
+  },
+  "expect": {
+    "require_sections": ["12900", "13100"],
+    "post_ratio_min": 0.12,
+    "post_ratio_max": 0.40,
+    "total_min": 2000000,
+    "total_max": 10000000,
+    "shoot_days": 2
+  },
+  "sample_output": {
+    "title": "Indie Band — Warehouse Sessions",
+    "production_type": "Music Video",
+    "shoot_days": 2,
+    "scale_tier": "low",
+    "locations": ["Warehouse"],
+    "comparable_note": "Comparable indie performance videos run ₹25–40L at this scale.",
+    "confidence_note": "Confirm DOP rate and warehouse hire terms before locking.",
+    "sections": [
+      { "code": "10300", "name": "DIRECTOR", "type": "above_the_line", "items": [
+        { "code": "10301", "desc": "Director fee", "sub": "2 days + prep", "amount": 400000, "gst_rate": 0.18, "conf": "green" }
+      ]},
+      { "code": "10800", "name": "PRODUCTION STAFF", "type": "below_the_line", "items": [
+        { "code": "10801", "desc": "Producer + coordinator", "sub": "2 days", "amount": 300000, "gst_rate": 0.18, "conf": "green" }
+      ]},
+      { "code": "11300", "name": "CAMERA", "type": "below_the_line", "items": [
+        { "code": "11301", "desc": "DOP + camera package", "sub": "2 days", "amount": 700000, "gst_rate": 0.18, "conf": "amber", "note": "Rate to confirm" }
+      ]},
+      { "code": "11500", "name": "LIGHTING", "type": "below_the_line", "items": [
+        { "code": "11501", "desc": "Practical + LED lighting", "sub": "2 days", "amount": 400000, "gst_rate": 0.18, "conf": "green" }
+      ]},
+      { "code": "12400", "name": "LOCATION HIRE", "type": "below_the_line", "items": [
+        { "code": "12401", "desc": "Warehouse hire", "sub": "2 days", "amount": 500000, "gst_rate": 0.18, "conf": "amber", "note": "Confirm hire terms" }
+      ]},
+      { "code": "12600", "name": "CATERING", "type": "below_the_line", "items": [
+        { "code": "12601", "desc": "Crew catering", "sub": "2 days", "amount": 300000, "gst_rate": 0.05, "conf": "green" }
+      ]},
+      { "code": "12900", "name": "EDITORIAL", "type": "post", "items": [
+        { "code": "12901", "desc": "Edit", "sub": "performance cut", "amount": 350000, "gst_rate": 0.18, "conf": "green" },
+        { "code": "12902", "desc": "Colour grade", "sub": "single grade pass", "amount": 150000, "gst_rate": 0.18, "conf": "green" }
+      ]},
+      { "code": "13100", "name": "POST SOUND", "type": "post", "items": [
+        { "code": "13101", "desc": "Audio sync + light mix", "sub": "track sync", "amount": 150000, "gst_rate": 0.18, "conf": "green" }
+      ]}
+    ],
+    "excluded": ["Music licensing", "Distribution"],
+    "flags": ["Single location keeps cost low; DOP rate is the main variable."]
+  }
+}

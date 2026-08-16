@@ -2620,6 +2620,40 @@ function buildQAPairs() {
     .filter(p => p.answer.length > 0);
 }
 
+// Poll a durable budget job until it resolves. Returns the budget_data object.
+// Used as the resilient fallback when the synchronous generate is cut short by
+// the edge timeout on long scripts.
+async function pollBudgetJob(jobId, { onTick } = {}) {
+  const started = Date.now();
+  const MAX_MS = 5 * 60 * 1000;   // give the durable path up to 5 minutes
+  let tick = 0;
+  while (Date.now() - started < MAX_MS) {
+    await new Promise(r => setTimeout(r, 2500));
+    const res = await markFetch('/jobs/get', { json: { job_id: jobId }, timeoutMs: 20000 });
+    const job = res.job || {};
+    if (onTick) onTick(++tick, job);
+    if (job.status === 'done') {
+      const bd = job.result && job.result.budget && job.result.budget.budget_data;
+      if (!bd) throw new Error('Job finished but returned no budget');
+      return bd;
+    }
+    if (job.status === 'error') throw new Error(job.error || 'Budget job failed');
+  }
+  throw new Error('Budget generation is taking longer than expected — please try again.');
+}
+
+// Durable async generation: enqueue the job, then poll. Won't hit the client
+// edge timeout, and runs the higher-quality Sonnet model server-side.
+async function generateBudgetViaJob(payload) {
+  const sub = document.getElementById('gen-subtitle');
+  if (sub) sub.textContent = 'Long script — switching to durable generation (higher-quality model)…';
+  const submit = await markFetch('/budget/generate/async', { json: payload, timeoutMs: 30000 });
+  if (!submit.job_id) throw new Error('Could not queue budget job');
+  return await pollBudgetJob(submit.job_id, {
+    onTick: (t) => { if (sub) sub.textContent = 'Durable generation in progress · this can take up to a minute' + '.'.repeat((t % 3) + 1); },
+  });
+}
+
 async function generateBudget() {
   const qa = buildQAPairs();
   // Free-text "Other information" — passed to the agent as a synthetic
@@ -2642,11 +2676,24 @@ async function generateBudget() {
   if (parsedBreakdown) payload.breakdown = parsedBreakdown;
 
   try {
-    const data = await markFetch('/budget/generate', { json: payload, timeoutMs: 180000 });
-    if (!data.budget || !data.budget.budget_data) {
-      throw new Error('Unexpected response shape from backend');
+    let bd;
+    try {
+      // Fast path — synchronous Haiku, served from the budget cache on repeats.
+      const data = await markFetch('/budget/generate', { json: payload, timeoutMs: 90000 });
+      if (!data.budget || !data.budget.budget_data) {
+        throw new Error('Unexpected response shape from backend');
+      }
+      bd = data.budget.budget_data;
+    } catch (e) {
+      // A timeout / edge-cut / transient failure on a long script isn't fatal:
+      // fall back to the durable async job, which survives the edge timeout.
+      if (_isTransientError(e, e._status) || /tim(ed|e) ?out/i.test(e.message || '')) {
+        bd = await generateBudgetViaJob(payload);
+      } else {
+        throw e;
+      }
     }
-    budgetData = data.budget.budget_data;
+    budgetData = bd;
     renderBudget(budgetData);
     goTo('step4');
   } catch (e) {

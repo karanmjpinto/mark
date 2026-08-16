@@ -1449,10 +1449,11 @@ input[type=file]{display:none;}
     </div>
 
     <div id="send-error" style="display:none;" class="error-msg"></div>
+    <div id="send-preview" style="display:none;" class="send-summary"></div>
     <div id="send-success" style="display:none;" class="success-msg"></div>
 
     <div style="display:flex;gap:12px;margin-top:6px;align-items:center;flex-wrap:wrap;">
-      <button class="btn-red disabled" id="send-btn" onclick="gateAction('send', sendCallSheet)"><span>Send call sheet →</span></button>
+      <button class="btn-red disabled" id="send-btn" onclick="gateAction('send', proposeSend)"><span>Send call sheet →</span></button>
       <button class="btn-ghost" onclick="goTo('step4')">← Back to refine</button>
     </div>
 
@@ -2088,7 +2089,6 @@ function refreshStepsForType() {
   const current = document.querySelector('.step.active');
   renderStepIndicator(current ? current.id : 'step0');
 }
-];
 function stepIndex(id){ return STEPS.findIndex(s => s.id === id); }
 
 function renderStepIndicator(activeId){
@@ -3215,23 +3215,36 @@ function renderSendSummary(){
   document.getElementById('send-btn').classList.toggle('disabled', ch.length === 0);
 }
 
-async function sendCallSheet(){
+// Send is a two-step, human-in-the-loop flow: propose (stage the send + preview
+// exactly who gets contacted — nothing leaves) → confirm (dispatch). The
+// producer approves the recipient list before anything is sent.
+let _pendingSendProposal = null;
+
+function _setSendBtnLabel(txt){
+  const btn = document.getElementById('send-btn');
+  const span = btn.querySelector('span');
+  if (span) span.textContent = txt; else btn.textContent = txt;
+}
+
+async function proposeSend(){
   if (document.getElementById('send-btn').classList.contains('disabled')) return;
   const errEl = document.getElementById('send-error');
   const okEl = document.getElementById('send-success');
-  errEl.style.display = okEl.style.display = 'none';
-  document.getElementById('send-btn').classList.add('disabled');
+  const prevEl = document.getElementById('send-preview');
+  errEl.style.display = okEl.style.display = prevEl.style.display = 'none';
+  const btn = document.getElementById('send-btn');
+  btn.classList.add('disabled');
+  const restore = 'Send call sheet →';
   try {
-    // Attach the final rendered call sheet as a PDF when email is a channel.
+    // Attach the final rendered call sheet as a PDF when email is a channel —
+    // it's stored with the proposal, so confirm only needs the proposal id.
     let pdf = null;
     if (callsheet.send.channels.includes('email')) {
-      const btn = document.getElementById('send-btn');
-      const prev = btn.textContent;
-      btn.textContent = 'Preparing PDF…';
+      _setSendBtnLabel('Preparing PDF…');
       pdf = await generateCallSheetPdfBase64();
-      btn.textContent = prev;
     }
-    const data = await markFetch('/callsheet/send', {
+    _setSendBtnLabel('Building preview…');
+    const data = await markFetch('/callsheet/send/propose', {
       json: {
         callsheet,
         channels: callsheet.send.channels,
@@ -3240,6 +3253,63 @@ async function sendCallSheet(){
       },
       timeoutMs: 120000,
     });
+    _pendingSendProposal = data.proposal_id;
+    prevEl.innerHTML = _renderSendPreview(data.preview || {}, data.proposal_id);
+    prevEl.style.display = 'block';
+  } catch (e) {
+    errEl.textContent = 'Could not build send preview: ' + e.message;
+    errEl.style.display = 'block';
+    btn.classList.remove('disabled');
+  } finally {
+    _setSendBtnLabel(restore);
+  }
+}
+
+function _renderSendPreview(preview, proposalId){
+  const byCh = preview.by_channel || {};
+  const channels = Object.keys(byCh);
+  const blocks = channels.map(ch => {
+    const info = byCh[ch] || {};
+    const rows = (info.recipients || []).map(r =>
+      `<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:13px;">`
+      + `<span>${escHtml(r.name || '—')}</span>`
+      + `<span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;">${escHtml(r.to || '')}</span></div>`
+    ).join('') || '<div style="font-size:12px;color:var(--muted);">No crew have this contact type on record.</div>';
+    return `<div style="margin-bottom:12px;"><div style="font-weight:600;margin-bottom:4px;">${CHANNEL_LABEL[ch] || ch} · ${info.count || 0}</div>${rows}</div>`;
+  }).join('');
+  const total = channels.reduce((n, ch) => n + (byCh[ch].count || 0), 0);
+  return `
+    <div style="font-weight:600;margin-bottom:10px;">Review before sending — ${total} message${total === 1 ? '' : 's'} across ${channels.length} channel${channels.length === 1 ? '' : 's'}</div>
+    <div style="max-height:260px;overflow:auto;margin-bottom:14px;">${blocks}</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="btn-red" onclick="confirmSend('${proposalId}')"><span>Confirm &amp; send →</span></button>
+      <button class="btn-ghost" onclick="cancelSend()">Cancel</button>
+    </div>`;
+}
+
+function cancelSend(){
+  _pendingSendProposal = null;
+  const prevEl = document.getElementById('send-preview');
+  prevEl.style.display = 'none';
+  prevEl.innerHTML = '';
+  document.getElementById('send-btn').classList.remove('disabled');
+}
+
+async function confirmSend(proposalId){
+  const errEl = document.getElementById('send-error');
+  const okEl = document.getElementById('send-success');
+  const prevEl = document.getElementById('send-preview');
+  errEl.style.display = okEl.style.display = 'none';
+  const confirmBtn = prevEl.querySelector('button');
+  if (confirmBtn) confirmBtn.classList.add('disabled');
+  try {
+    const data = await markFetch('/callsheet/send/confirm', {
+      json: { proposal_id: proposalId },
+      timeoutMs: 120000,
+    });
+    _pendingSendProposal = null;
+    prevEl.style.display = 'none';
+    prevEl.innerHTML = '';
     callsheet.send.status = data.status || 'mocked';
     okEl.innerHTML = _renderSendResults(data);
     okEl.style.display = 'block';
@@ -3248,7 +3318,7 @@ async function sendCallSheet(){
   } catch (e) {
     errEl.textContent = 'Send failed: ' + e.message;
     errEl.style.display = 'block';
-    document.getElementById('send-btn').classList.remove('disabled');
+    if (confirmBtn) confirmBtn.classList.remove('disabled');
   }
 }
 

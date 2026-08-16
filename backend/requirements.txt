@@ -6,3 +6,11 @@ python-dotenv
 httpx
 python-multipart
 screenplay-pdf-to-json
+# Optional: enable richer LLM tracing by setting LANGFUSE_PUBLIC_KEY +
+# LANGFUSE_SECRET_KEY. Without it, traces still go to Redis + stdout.
+# langfuse
+# Optional: encrypt per-tenant connection creds at rest (set CONNECTIONS_SECRET).
+# Without it, creds are stored unencrypted (dev only) with a startup warning.
+cryptography
+# Optional: AUTH_MODE=jwt (Clerk/Auth0/OIDC) verification. Only needed for jwt mode.
+# pyjwt[crypto]

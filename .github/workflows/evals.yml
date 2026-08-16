@@ -1,0 +1,57 @@
+name: budget-evals
+
+# Guards the budget agent against silent regressions. The offline job runs on
+# every push/PR with no secrets — it validates the golden sample_outputs and the
+# negative tests, so a bad invariant or a broken fixture fails the build.
+#
+# The live job is opt-in (manual dispatch): it points the same invariants at a
+# running backend so a prompt or rate-card change is caught against REAL agent
+# output before it reaches producers. It needs MARK_API_BASE + MARK_API_KEY
+# secrets and is skipped automatically when they're absent.
+
+on:
+  push:
+    paths:
+      - "mark/evals/**"
+      - "mark/flue-agents/**"
+      - "mark/backend/**"
+  pull_request:
+    paths:
+      - "mark/evals/**"
+      - "mark/flue-agents/**"
+      - "mark/backend/**"
+  workflow_dispatch:
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run invariant suite (offline)
+        working-directory: mark/evals
+        run: python run_evals.py
+      - name: Run negative tests
+        working-directory: mark/evals
+        run: python test_invariants.py
+
+  live:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run invariant suite (live) against deployed backend
+        working-directory: mark/evals
+        env:
+          MARK_API_BASE: ${{ secrets.MARK_API_BASE }}
+          MARK_API_KEY: ${{ secrets.MARK_API_KEY }}
+        run: |
+          if [ -z "$MARK_API_BASE" ]; then
+            echo "MARK_API_BASE not set — skipping live evals."; exit 0
+          fi
+          python run_evals.py --live
