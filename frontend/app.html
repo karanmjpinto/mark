@@ -662,5 +662,58 @@ document.addEventListener('click', e => {
   if(e.target === document.getElementById('modal-overlay')) closeModal();
 });
 </script>
+
+<!-- SITE FOOTER — UK company disclosure. Scoped so it cannot collide with
+     the page's own styles, and every colour has a literal fallback so it
+     renders correctly on pages that define no design tokens. -->
+<style>
+.mk-ft{
+  margin-top:64px;padding:34px 40px;
+  background:var(--paper-deep,#EBE5D2);border-top:1px solid var(--rule,rgba(20,17,13,0.10));
+  display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  font-family:'DM Mono',ui-monospace,monospace;
+}
+.mk-ft a{color:inherit;}
+.mk-ft-logo{
+  display:inline-flex;align-items:center;gap:8px;text-decoration:none;
+  color:var(--ink,#14110D);font-family:'Alegreya',Georgia,serif;font-weight:700;
+  font-size:17px;letter-spacing:0.04em;text-transform:uppercase;flex-shrink:0;
+}
+.mk-ft-logo svg{width:20px;height:20px;border-radius:2px;flex-shrink:0;}
+.mk-ft-copy{
+  flex:1 1 320px;text-align:center;font-size:11px;line-height:1.75;
+  letter-spacing:0.06em;color:var(--muted,#5C5650);
+}
+.mk-ft-office{display:inline-block;margin-top:4px;opacity:0.85;}
+.mk-ft-mail{font-size:12px;letter-spacing:0.06em;color:var(--ink-soft,#3A352D);text-decoration:none;flex-shrink:0;}
+.mk-ft-mail:hover{color:var(--accent,#C8330A);}
+@media(max-width:760px){
+  .mk-ft{flex-direction:column;gap:14px;text-align:center;padding:28px 20px;}
+  .mk-ft-copy{padding:0;}
+}
+</style>
+<footer class="mk-ft">
+  <a href="index.html" class="mk-ft-logo" aria-label="MARK — home">
+    <svg viewBox="0 0 80 80" aria-hidden="true">
+      <rect width="80" height="80" rx="3" fill="#14110D"/>
+      <g transform="rotate(-52 40 11)">
+        <rect x="-30" y="-6" width="10" height="40" fill="#F5F1E8"/>
+        <rect x="-10" y="-6" width="10" height="40" fill="#F5F1E8"/>
+        <rect x="10" y="-6" width="10" height="40" fill="#F5F1E8"/>
+        <rect x="30" y="-6" width="10" height="40" fill="#F5F1E8"/>
+        <rect x="50" y="-6" width="10" height="40" fill="#F5F1E8"/>
+      </g>
+      <text x="40" y="66" fill="#F5F1E8" font-family="Georgia,serif" font-style="italic"
+            font-size="50" font-weight="600" text-anchor="middle">M</text>
+      <circle cx="68" cy="68" r="3.4" fill="#C8330A"/>
+    </svg>
+    <span>MARK</span>
+  </a>
+  <div class="mk-ft-copy">
+    &copy; 2026 MARK &middot; Production OS &middot; The Mario Jude Ltd &middot; Registered in England &amp; Wales no. 15842207
+    <span class="mk-ft-office">Registered office: Flat 52, Niemann Court, Louis Close, London N7 0FQ</span>
+  </div>
+  <a href="mailto:krishmpinto@gmail.com" class="mk-ft-mail">krishmpinto@gmail.com</a>
+</footer>
 </body>
 </html>
