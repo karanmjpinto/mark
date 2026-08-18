@@ -1564,6 +1564,130 @@ async function markFetch(path, opts = {}) {
   }
 }
 
+// ── PREVIEW MODE ──────────────────────────────────────────────────────────────
+// The public build of this page is a walkthrough, not a live workspace.
+//
+// Everything that makes the call sheet is already client-side — the template
+// choice, the brief, the crew table, the schedule, the rendered sheet and the
+// PDF/Word exports all run in the browser. Those stay fully live here, so a
+// producer clicking through gets a real call sheet out of it.
+//
+// The three calls that spend model time or actually message a crew — the AI
+// refine, the uploaded-template render, and send — are answered locally with
+// prepared responses instead. Nothing is generated and nothing leaves the
+// browser. PDF parsing and the email capture still hit the backend; neither
+// costs anything to run.
+//
+// Turn the real product on for a client with ?live=1 (sticky per browser);
+// ?live=0 returns to the walkthrough.
+const PREVIEW_MODE = (() => {
+  const q = new URL(location.href).searchParams.get('live');
+  if (q !== null) localStorage.setItem('mark_live', q === '1' ? '1' : '0');
+  return localStorage.getItem('mark_live') !== '1';
+})();
+
+// Real work has latency, and a demo that answers in 0ms reads as fake. Hold
+// each canned response about as long as the live call takes.
+const _previewPause = ms => new Promise(r => setTimeout(r, ms));
+
+function _previewRecipients(channel) {
+  const field = channel === 'email' ? 'email' : 'phone';
+  return (callsheet.crew || [])
+    .filter(c => (c[field] || '').trim())
+    .map(c => ({ name: c.name || c.role || '—', to: (c[field] || '').trim() }));
+}
+
+// Paths answered locally in preview mode. Anything not listed here still goes
+// to the backend as normal.
+const PREVIEW_ROUTES = {
+  // The local editor in sendChat() already applies call times, wrap, day
+  // number, scenes and the canonical header fields before we ever get here,
+  // so this only catches the instructions that would need the model.
+  '/callsheet/refine': async (opts) => {
+    await _previewPause(900);
+    return {
+      callsheet: (opts.json && opts.json.callsheet) || callsheet,
+      revision_notes: [
+        'Walkthrough — Mark’s full rewrite runs on a connected workspace.',
+        'Direct edits work here now: unit call, wrap, day number, scenes, director, DOP, client, production company, location, hospital, weather and notes.',
+      ],
+    };
+  },
+
+  // Matching an uploaded template's layout is a model job. Show the standard
+  // format instead, and say so rather than failing.
+  '/callsheet/render-template': async () => {
+    await _previewPause(1100);
+    const note = `<div style="border:1px solid var(--rule);background:var(--paper-deep);padding:12px 14px;margin-bottom:14px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:0.04em;color:var(--muted);">
+      WALKTHROUGH · Mark rebuilds the sheet in <strong style="color:var(--ink);">${escHtml(callsheet.template.file_name || 'your uploaded template')}</strong>’s own layout on a live workspace. Below is the standard format, built from what you entered.
+    </div>`;
+    return { html: note + buildCallSheetHtml(callsheet) };
+  },
+
+  // Addressed from the crew table the producer actually filled in, so the
+  // preview shows their own people — it just never dispatches.
+  '/callsheet/send/propose': async (opts) => {
+    await _previewPause(800);
+    const channels = (opts.json && opts.json.channels) || [];
+    const by_channel = {};
+    channels.forEach(ch => {
+      const recipients = _previewRecipients(ch);
+      by_channel[ch] = { count: recipients.length, recipients };
+    });
+    return { proposal_id: 'walkthrough', preview: { by_channel } };
+  },
+
+  '/callsheet/send/confirm': async () => {
+    await _previewPause(1200);
+    const results = [];
+    (callsheet.send.channels || []).forEach(ch => {
+      _previewRecipients(ch).forEach(r => results.push({ channel: ch, name: r.name, to: r.to, ok: true }));
+    });
+    return {
+      status: 'preview',
+      message: `Walkthrough — ${results.length} message${results.length === 1 ? '' : 's'} addressed and queued. Nothing was actually sent.`,
+      results,
+      fail_count: 0,
+    };
+  },
+};
+
+const _liveMarkFetch = markFetch;
+markFetch = async function (path, opts = {}) {
+  if (PREVIEW_MODE && PREVIEW_ROUTES[path]) return PREVIEW_ROUTES[path](opts);
+  return _liveMarkFetch(path, opts);
+};
+
+// A standing marker, so nobody mistakes the walkthrough for the live product.
+// Click to fold it down to a dot.
+function _mountPreviewBadge() {
+  if (!PREVIEW_MODE || document.getElementById('preview-badge')) return;
+  const css = document.createElement('style');
+  css.textContent = `
+    #preview-badge{position:fixed;left:18px;bottom:18px;z-index:9000;display:flex;align-items:center;gap:10px;
+      max-width:min(360px,calc(100vw - 36px));padding:10px 14px;background:var(--paper,#F5F1E8);
+      border:1px solid var(--ink,#14110D);box-shadow:0 3px 0 rgba(20,17,13,0.16);cursor:pointer;
+      font-family:'DM Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.05em;color:var(--muted,#6B6459);}
+    #preview-badge strong{color:var(--ink,#14110D);letter-spacing:0.09em;text-transform:uppercase;}
+    #preview-badge .pv-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--accent,#C8330A);}
+    #preview-badge.folded{padding:9px;gap:0;}
+    #preview-badge.folded .pv-text{display:none;}
+    @media(max-width:700px){#preview-badge{left:12px;bottom:12px;font-size:10px;}}
+  `;
+  document.head.appendChild(css);
+  const el = document.createElement('div');
+  el.id = 'preview-badge';
+  el.title = 'Walkthrough mode';
+  el.innerHTML = `<span class="pv-dot"></span><span class="pv-text"><strong>Walkthrough</strong> — the sheet you build here is real. The AI rewrite and sending are shown, not run.</span>`;
+  el.onclick = () => el.classList.toggle('folded');
+  // Says its piece, then gets out of the way of the page it is labelling.
+  el.onmouseenter = () => el.classList.remove('folded');
+  setTimeout(() => el.classList.add('folded'), 9000);
+  document.body.appendChild(el);
+}
+if (document.body) _mountPreviewBadge();
+else window.addEventListener('DOMContentLoaded', _mountPreviewBadge);
+
 // ── STATE ─────────────────────────────────────────────────────────────────────
 const DEPARTMENTS = ['Direction','Production','Camera','Lighting & Grip','Sound','Art Department','Costume & Makeup','Locations','Post Production','Cast','Other'];
 

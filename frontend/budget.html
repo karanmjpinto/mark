@@ -1849,6 +1849,464 @@ async function markFetch(path, opts = {}) {
   }
 }
 
+// ── PREVIEW MODE ──────────────────────────────────────────────────────────────
+// The public build of this page is a walkthrough, not a live workspace.
+//
+// The whole flow is here and clickable — region, brief, questions, the full
+// itemised budget with its stripboard, flags, revision stack, refine box and
+// the XLSX export. What changes is where the numbers come from: instead of
+// calling the model, the budget is assembled in the browser from a prepared
+// rate card and shaped by the answers the producer actually gives (shoot days,
+// rate band, crew size, cast handling, stunts / VFX / choreography / travel).
+// So it moves when they move, and it costs nothing to run.
+//
+// PDF parsing, email capture and feedback still hit the backend; none of them
+// spend model time.
+//
+// Turn the real product on for a client with ?live=1 (sticky per browser);
+// ?live=0 returns to the walkthrough.
+const PREVIEW_MODE = (() => {
+  const q = new URL(location.href).searchParams.get('live');
+  if (q !== null) localStorage.setItem('mark_live', q === '1' ? '1' : '0');
+  return localStorage.getItem('mark_live') !== '1';
+})();
+
+// Real generation has latency, and a demo that answers instantly reads as fake.
+const _previewPause = ms => new Promise(r => setTimeout(r, ms));
+
+// ── The prepared rate card ────────────────────────────────────────────────────
+// Amounts are INR, the market Mark is live in. `day` bills per shoot day;
+// `flat` is a whole-production cost. `crew` marks the lines that move with
+// headcount rather than with days alone.
+const PREVIEW_RATE_CARD = [
+  { code:'10000', name:'DEVELOPMENT', type:'above_the_line', items:[
+    { code:'10001', desc:'Treatment, boards & pre-production', sub:'whole production', flat:250000, conf:'green' },
+  ]},
+  { code:'10300', name:'DIRECTOR', type:'above_the_line', items:[
+    { code:'10301', desc:'Director fee', sub:'prep + shoot + post attendance', flat:1800000, conf:'green' },
+  ]},
+  { code:'10700', name:'CAST', type:'above_the_line', cast:true, items:[
+    { code:'10701', desc:'Lead talent fee', sub:'inclusive of buyout', flat:1200000, conf:'amber', note:'Agent quote not yet received' },
+    { code:'10702', desc:'Supporting artists & extras', sub:'per shoot day', day:95000, conf:'amber', note:'Headcount to confirm' },
+  ]},
+  { code:'10600', name:'DIRECTOR TEAM', type:'below_the_line', items:[
+    { code:'10601', desc:'1st Assistant Director', sub:'per shoot day', day:45000, conf:'green' },
+    { code:'10602', desc:'2nd AD & floor runners', sub:'per shoot day', day:28000, conf:'green' },
+    { code:'10603', desc:'Script supervisor', sub:'per shoot day', day:18000, conf:'green' },
+  ]},
+  { code:'10800', name:'PRODUCTION STAFF', type:'below_the_line', items:[
+    { code:'10801', desc:'Line producer', sub:'prep + shoot + wrap', flat:450000, conf:'green' },
+    { code:'10802', desc:'Production manager', sub:'per shoot day', day:32000, conf:'green' },
+    { code:'10803', desc:'Coordinators, PAs & runners', sub:'per shoot day', day:38000, crew:true, conf:'green' },
+  ]},
+  { code:'11000', name:'ART DEPARTMENT', type:'below_the_line', items:[
+    { code:'11001', desc:'Production designer', sub:'prep + shoot', flat:320000, conf:'green' },
+    { code:'11002', desc:'Set dressing, props & consumables', sub:'per shoot day', day:145000, conf:'amber', note:'Driven by the final set list' },
+    { code:'11003', desc:'Art crew & standby', sub:'per shoot day', day:62000, crew:true, conf:'green' },
+  ]},
+  { code:'11300', name:'CAMERA', type:'below_the_line', items:[
+    { code:'11301', desc:'Director of Photography', sub:'per shoot day', day:150000, conf:'green' },
+    { code:'11302', desc:'Camera package — body, primes, filtration', sub:'per shoot day', day:185000, conf:'green' },
+    { code:'11303', desc:'Camera crew — focus puller, 2nd AC, DIT', sub:'per shoot day', day:78000, conf:'green' },
+  ]},
+  { code:'11400', name:'SOUND', type:'below_the_line', items:[
+    { code:'11401', desc:'Sound recordist + radio mic package', sub:'per shoot day', day:42000, conf:'green' },
+  ]},
+  { code:'11500', name:'LIGHTING & GRIP', type:'below_the_line', items:[
+    { code:'11501', desc:'Lighting package — HMI, LED, distro', sub:'per shoot day', day:215000, conf:'green' },
+    { code:'11502', desc:'Gaffer & sparks', sub:'per shoot day', day:92000, crew:true, conf:'green' },
+    { code:'11503', desc:'Grip, rigging & generator', sub:'per shoot day', day:74000, conf:'amber', note:'Rig and de-rig days not yet scheduled' },
+  ]},
+  { code:'11800', name:'WARDROBE', type:'below_the_line', items:[
+    { code:'11801', desc:'Costume designer & standby', sub:'prep + shoot', flat:180000, conf:'green' },
+    { code:'11802', desc:'Costume hire, purchase & alterations', sub:'per shoot day', day:85000, conf:'amber', note:'Confirm the number of changes per artist' },
+  ]},
+  { code:'12000', name:'HAIR & MAKE-UP', type:'below_the_line', items:[
+    { code:'12001', desc:'HMU team + kit', sub:'per shoot day', day:56000, crew:true, conf:'green' },
+  ]},
+  { code:'12300', name:'TRANSPORT', type:'below_the_line', items:[
+    { code:'12301', desc:'Unit transport, vanities & fuel', sub:'per shoot day', day:118000, crew:true, conf:'green' },
+  ]},
+  { code:'12400', name:'LOCATION HIRE', type:'below_the_line', items:[
+    { code:'12401', desc:'Location fees & permissions', sub:'per shoot day', day:175000, conf:'red', note:'Civic permit fees vary by ward — confirm the exact locations and I will reprice this line' },
+    { code:'12402', desc:'Location manager & scout', sub:'per shoot day', day:34000, conf:'green' },
+  ]},
+  { code:'12600', name:'CATERING', type:'below_the_line', items:[
+    { code:'12601', desc:'Crew catering — breakfast, lunch, dinner', sub:'per shoot day', day:62000, crew:true, conf:'green' },
+    { code:'12602', desc:'Craft, water & unit supplies', sub:'per shoot day', day:16000, crew:true, conf:'green' },
+  ]},
+  { code:'12900', name:'EDITORIAL', type:'post', items:[
+    { code:'12901', desc:'Offline edit + editor', sub:'per cut', flat:520000, conf:'green' },
+    { code:'12902', desc:'Online, conform & colour grade', sub:'per delivery', flat:340000, conf:'green' },
+  ]},
+  { code:'13100', name:'POST SOUND', type:'post', items:[
+    { code:'13101', desc:'Sound design, mix & master', sub:'per delivery', flat:225000, conf:'green' },
+    { code:'13102', desc:'Music — licence or original score', sub:'per delivery', flat:380000, conf:'red', note:'Licence and original score differ by roughly three times — tell me which and I will fix this line' },
+  ]},
+];
+
+// Only added when the brief or the answers call for them.
+const PREVIEW_OPTIONAL = {
+  stunts: { code:'11200', name:'STUNTS', type:'below_the_line', items:[
+    { code:'11201', desc:'Stunt coordinator', sub:'per action day', day:85000, conf:'green' },
+    { code:'11202', desc:'Stunt performers, rigging & safety', sub:'per action day', day:145000, conf:'amber', note:'Priced on action days, not the full schedule' },
+  ]},
+  choreography: { code:'11900', name:'CHOREOGRAPHY', type:'below_the_line', items:[
+    { code:'11901', desc:'Choreographer', sub:'rehearsal + shoot', flat:260000, conf:'green' },
+    { code:'11902', desc:'Dancers & rehearsal space', sub:'per shoot day', day:165000, conf:'amber', note:'Confirm dancer count' },
+  ]},
+  vfx: { code:'13300', name:'VFX', type:'post', items:[
+    { code:'13301', desc:'VFX shots — cleanup, extensions, comp', sub:'per shot count', flat:900000, conf:'red', note:'Needs a shot count before this line means anything' },
+  ]},
+  travel: { code:'12800', name:'TRAVEL & ACCOMMODATION', type:'below_the_line', items:[
+    { code:'12801', desc:'Outstation travel, hotel & per diems', sub:'per outstation day', day:225000, crew:true, conf:'amber', note:'Priced on outstation days only' },
+  ]},
+};
+
+// Non-INR markets are not live yet; if someone forces one, convert off the
+// INR card rather than showing rupee figures under a dollar sign.
+const PREVIEW_FX = { INR:1, USD:1/85, GBP:1/107, EUR:1/92, AED:1/23, CAD:1/62, AUD:1/56 };
+const PREVIEW_TAX = { INR:0.18, GBP:0.20, EUR:0.20, AED:0.05, USD:0, CAD:0.05, AUD:0.10 };
+
+const PREVIEW_BRIEFS = {
+  tvc: {
+    title: 'Sportswear TVC', production_type: 'TVC', days: 3,
+    logline: 'A 60-second brand film — athletes training across a promenade, street lanes and a sports court.',
+    scenes: 14, int: 4, ext: 10, day_: 11, night: 3,
+    locations: ['Seaside promenade', 'Street lanes', 'Sports court'],
+  },
+  music: {
+    title: 'Music Video', production_type: 'Music video', days: 2,
+    logline: 'A label music video — beach exterior by day, nightclub set build by night, full choreography.',
+    scenes: 10, int: 5, ext: 5, day_: 5, night: 5,
+    locations: ['Beach', 'Nightclub set'],
+  },
+  ott: {
+    title: 'OTT Drama — Episode 1', production_type: 'OTT series', days: 30,
+    logline: 'One episode of a streaming drama — suburban practicals, a police-station build and outdoor chase work.',
+    scenes: 62, int: 34, ext: 28, day_: 40, night: 22,
+    locations: ['Suburban practicals', 'Police station set', 'Highway', 'Outstation'],
+  },
+  film: {
+    title: 'Action Feature', production_type: 'Feature film', days: 60,
+    logline: 'An action feature — city locations, five outstation days, three song sequences and vehicle action.',
+    scenes: 118, int: 52, ext: 66, day_: 74, night: 44,
+    locations: ['City locations', 'Outstation', 'Song sets', 'Highway'],
+  },
+};
+
+// Which demo brief is on screen. Exact match first — producers usually click a
+// demo and go — then keyword sniffing, so an edited or pasted brief still lands
+// somewhere sensible instead of defaulting blindly.
+function _previewBriefKey() {
+  const text = (scriptText || '').trim();
+  for (const k in demos) if (demos[k] === text) return k;
+  const s = text.toLowerCase();
+  if (/music video|dancer|choreograph/.test(s)) return 'music';
+  if (/feature film|action feature|60 shoot/.test(s)) return 'film';
+  if (/ott|series|episode|streaming/.test(s)) return 'ott';
+  return 'tvc';
+}
+
+function _previewMoney(text) {
+  const m = String(text || '').replace(/,/g, '').match(/(\d+(?:\.\d+)?)\s*(cr|crore|lakh|lac|l|k)?/i);
+  if (!m) return null;
+  let n = Number(m[1]);
+  const unit = (m[2] || '').toLowerCase();
+  if (unit.startsWith('cr')) n *= 1e7;
+  else if (unit.startsWith('l')) n *= 1e5;
+  else if (unit === 'k') n *= 1e3;
+  return n > 0 ? Math.round(n) : null;
+}
+
+function _previewDays(answer, fallback) {
+  const nums = String(answer || '').match(/\d+/g);
+  if (!nums) return fallback;
+  const n = Math.max(...nums.map(Number));
+  return Math.min(120, Math.max(1, /\+/.test(String(answer)) ? Math.round(n * 1.2) : n));
+}
+
+// Read the producer's answers back out of the payload. Questions are generated,
+// so match on what the question is asking rather than on a fixed id.
+function _previewSignals(qa, brief) {
+  const find = re => (qa.find(p => re.test(p.question || '')) || {}).answer || '';
+  const tier = find(/rate band|scale|tier/i).toLowerCase();
+  const crew = find(/crew size|headcount/i).toLowerCase();
+  const cast = find(/cast fee|lead cast|talent fee/i).toLowerCase();
+  const special = find(/special element|stunt|vfx|choreograph|outstation/i).toLowerCase().trim();
+  // The producer's own answer wins outright — "None" means none, whatever the
+  // brief says. Only fall back to reading the brief when they weren't asked.
+  // Strip negations first so "no stunts" doesn't buy a stunt team.
+  const detectIn = special
+    ? (/^none/.test(special) ? '' : special)
+    : (scriptText || '').toLowerCase().replace(/\bno\s+(stunts?|vfx|visual effects|choreography|dancers?|travel)\b/g, ' ');
+  return {
+    days: _previewDays(find(/shoot day|how many day/i), brief.days),
+    city: find(/cit(y|ies)|where.*shoot|location/i),
+    tierMult: /premium|high/.test(tier) ? 2.4 : /low/.test(tier) ? 0.55 : 1,
+    tierLabel: /premium/.test(tier) ? 'premium' : /high/.test(tier) ? 'high' : /low/.test(tier) ? 'low' : 'mid',
+    crewMult: /xl|80\+/.test(crew) ? 1.9 : /large/.test(crew) ? 1.5 : /small/.test(crew) ? 0.7 : 1,
+    castMode: /exclude/.test(cast) ? 'exclude' : /premium/.test(cast) ? 'premium' : 'include',
+    stunts: /stunt|chase|action sequence/.test(detectIn),
+    choreography: /choreo|dancer|song sequence/.test(detectIn),
+    vfx: /vfx|visual effect|cleanup|digital/.test(detectIn),
+    travel: /outstation|travel|on location away|recce trip/.test(detectIn),
+  };
+}
+
+// Assemble the budget. Flat costs grow with schedule but sub-linearly — a
+// 60-day feature does not pay its director twenty times a 3-day TVC.
+function previewBudgetData(payload) {
+  const qa = (payload && payload.qa) || [];
+  const key = _previewBriefKey();
+  const brief = PREVIEW_BRIEFS[key];
+  const sig = _previewSignals(qa, brief);
+  const code = (payload && payload.currency && payload.currency.code) || currency.code || 'INR';
+  const fx = PREVIEW_FX[code] != null ? PREVIEW_FX[code] : 1 / 85;
+  const tax = PREVIEW_TAX[code] != null ? PREVIEW_TAX[code] : 0.1;
+  const grain = code === 'INR' ? 5000 : 100;
+
+  const days = sig.days;
+  const flatFactor = Math.pow(days / 3, 0.5);
+  // Action, dance and outstation work bill on their own days, not the whole
+  // schedule — roughly a third of it, and never more than the schedule itself.
+  const specialDays = Math.max(1, Math.round(days / 3));
+
+  const price = (it, sectionDays) => {
+    const base = it.flat != null ? it.flat * flatFactor : it.day * sectionDays;
+    const crewed = it.crew ? base * sig.crewMult : base;
+    const v = crewed * sig.tierMult * fx;
+    return Math.max(grain, Math.round(v / grain) * grain);
+  };
+
+  const build = (sec, sectionDays) => ({
+    code: sec.code,
+    name: sec.name,
+    type: sec.type,
+    items: sec.items.map(it => {
+      const li = {
+        code: it.code, desc: it.desc, sub: it.sub,
+        amount: price(it, sectionDays), gst_rate: tax, conf: it.conf,
+      };
+      if (it.note) li.note = it.note;
+      return li;
+    }),
+  });
+
+  const sections = [];
+  PREVIEW_RATE_CARD.forEach(sec => {
+    if (sec.cast && sig.castMode === 'exclude') return;
+    const built = build(sec, days);
+    if (sec.cast && sig.castMode === 'premium') {
+      built.items.forEach(li => { li.amount = Math.round(li.amount * 2.5); });
+    }
+    sections.push(built);
+  });
+  ['stunts', 'choreography', 'vfx', 'travel'].forEach(k => {
+    if (!sig[k]) return;
+    sections.push(build(PREVIEW_OPTIONAL[k], specialDays));
+  });
+  sections.sort((a, b) => Number(a.code) - Number(b.code));
+
+  const flags = [];
+  if (sig.castMode === 'exclude') flags.push('lead cast fees excluded on your instruction');
+  const conf = `Built on ${sig.tierLabel}-band ${currency.code === 'INR' ? 'Indian' : 'market'} rates over ${days} shoot day${days === 1 ? '' : 's'}`
+    + (sig.city ? ` in ${sig.city}` : '')
+    + `${flags.length ? ', ' + flags.join(', ') : ''}. The red lines are the ones that would move a real number — confirm them and every dependent line reprices.`;
+
+  return {
+    title: `${brief.title} — ${sig.city || 'Mumbai'}`,
+    production_type: brief.production_type,
+    shoot_days: days,
+    scale_tier: sig.tierLabel,
+    locations: brief.locations,
+    comparable_note: `Comparable ${sig.tierLabel}-band ${brief.production_type.toLowerCase()} work at this schedule sits in the same range.`,
+    confidence_note: conf,
+    breakdown: parsedBreakdown || {
+      total_scenes: brief.scenes,
+      int_count: brief.int, ext_count: brief.ext,
+      day_count: brief.day_, night_count: brief.night,
+      unique_locations: brief.locations.map((n, i) => ({
+        name: n,
+        scene_count: Math.max(1, Math.round(brief.scenes / brief.locations.length) - i),
+      })),
+      characters: [],
+    },
+    sections,
+    revision_notes: [],
+  };
+}
+
+// Refinement, done locally. Flag confirmations and percentage moves are real
+// edits to the numbers on screen; anything subtler says so rather than pretending.
+function previewRefine(budget, instruction) {
+  const b = JSON.parse(JSON.stringify(budget || {}));
+  b.sections = b.sections || [];
+  const raw = String(instruction || '');
+  const s = raw.toLowerCase();
+  const notes = [];
+  const fmt = n => (typeof fmtAmt === 'function' ? fmtAmt(n) : currency.symbol + Number(n));
+
+  // Flags arrive from resolveFlag() as: …flagged line item: "12401 Location fees…". Producer says: "…"
+  const flag = raw.match(/flagged line item:\s*"(\d{4,5})\s/i);
+  const says = raw.match(/Producer says:\s*"([^"]*)"/i);
+  if (flag) {
+    const target = flag[1];
+    b.sections.forEach(sec => sec.items.forEach(li => {
+      if (li.code !== target) return;
+      const said = says ? says[1] : '';
+      let val = _previewMoney(said);
+      // "₹1.2L a day" against a per-day line means the whole schedule, not one day.
+      const perDay = /per\s*day|\/\s*day|a day|each day|daily/i.test(said);
+      const days = Math.max(1, Number(b.shoot_days) || 1);
+      if (val && perDay && /day/i.test(li.sub || '')) val = val * days;
+      if (val) {
+        notes.push(`${li.code} ${li.desc} · ${fmt(li.amount)} → ${fmt(val)}`
+          + (perDay && days > 1 ? ` (${fmt(Math.round(val / days))} × ${days} days)` : ''));
+        li.amount = val;
+      } else {
+        notes.push(`${li.code} ${li.desc} confirmed — flag cleared, amount held`);
+      }
+      li.conf = 'green';
+      delete li.note;
+    }));
+    b.revision_notes = notes.length ? notes : ['Nothing on the sheet matched that flag.'];
+    return b;
+  }
+
+  // "cut lighting by 15%" / "increase catering 20%" / "trim everything by 10%"
+  const named = b.sections.find(sec => s.includes(sec.name.toLowerCase()))
+    || b.sections.find(sec => sec.name.toLowerCase().split(/[^a-z]+/).some(w => w.length > 3 && s.includes(w)));
+  const pct = s.match(/(\d+(?:\.\d+)?)\s*(?:%|per\s?cent|percent)/);
+  const down = /(cut|reduce|lower|drop|decrease|trim|shave|save|less)/.test(s);
+  const up = /(increase|raise|bump|more|higher|add)/.test(s);
+
+  if (pct && (down || up)) {
+    const factor = 1 + (down && !up ? -1 : 1) * Number(pct[1]) / 100;
+    const targets = named ? [named] : b.sections;
+    targets.forEach(sec => sec.items.forEach(li => { li.amount = Math.round((Number(li.amount) || 0) * factor); }));
+    notes.push(`${named ? named.name : 'Every section'} ${factor < 1 ? 'reduced' : 'increased'} by ${pct[1]}%`);
+  } else if (named && /(remove|delete|drop|take out|cut)\b/.test(s) && !pct) {
+    b.sections = b.sections.filter(sec => sec !== named);
+    notes.push(`${named.name} removed from the budget`);
+  }
+
+  b.revision_notes = notes.length ? notes : [
+    'Walkthrough — Mark reprices the affected lines on a connected workspace.',
+    'Working here now: confirming a red flag, "cut lighting by 15%", "increase catering by 20%", "remove wardrobe".',
+  ];
+  return b;
+}
+
+// Paths answered locally. PDF parsing, email capture and feedback still go to
+// the backend — none of them spend model time.
+const PREVIEW_ROUTES = {
+  '/budget/generate': async (opts) => {
+    await _previewPause(2400);
+    return { budget: { budget_data: previewBudgetData(opts.json || {}) } };
+  },
+  '/budget/generate/async': async () => {
+    await _previewPause(400);
+    return { job_id: 'walkthrough' };
+  },
+  '/jobs/get': async () => {
+    await _previewPause(600);
+    return { job: { status: 'done', result: { budget: { budget_data: previewBudgetData({ qa: buildQAPairs() }) } } } };
+  },
+  '/budget/refine': async (opts) => {
+    await _previewPause(1600);
+    const body = opts.json || {};
+    return { budget: { budget_data: previewRefine(body.budget || budgetData, body.instruction) } };
+  },
+};
+
+const _liveMarkFetch = markFetch;
+markFetch = async function (path, opts = {}) {
+  if (PREVIEW_MODE && PREVIEW_ROUTES[path]) return PREVIEW_ROUTES[path](opts);
+  return _liveMarkFetch(path, opts);
+};
+
+// Questions come from the model in the live product. In the walkthrough they
+// are the same three grounding questions the prompt asks for, region-worded,
+// plus the standing follow-up set — and the answers genuinely drive the budget.
+const PREVIEW_CITIES = {
+  india: ['Mumbai', 'Delhi NCR', 'Hyderabad', 'Chennai', 'Goa', 'Multiple cities'],
+  hollywood: ['Los Angeles', 'Atlanta', 'New York', 'New Mexico', 'Vancouver', 'Multiple states'],
+  uk: ['London', 'Manchester', 'Glasgow', 'Budapest', 'Prague', 'Multiple countries'],
+  other: ['Primary city', 'Secondary city', 'Two cities', 'Multiple countries'],
+};
+const PREVIEW_BANDS = {
+  india: ['Low — ₹25–60L all-in', 'Mid — ₹60L–2Cr all-in', 'High — ₹2–6Cr all-in', 'Premium — ₹6Cr+'],
+  hollywood: ['Low — $150–500K all-in', 'Mid — $500K–2M all-in', 'High — $2–8M all-in', 'Premium — $8M+'],
+  uk: ['Low — £120–400K all-in', 'Mid — £400K–1.5M all-in', 'High — £1.5–6M all-in', 'Premium — £6M+'],
+  other: ['Low band', 'Mid band', 'High band', 'Premium band'],
+};
+
+function previewGroundingQuestions() {
+  const brief = PREVIEW_BRIEFS[_previewBriefKey()];
+  const cities = PREVIEW_CITIES[region] || PREVIEW_CITIES.other;
+  const bands = PREVIEW_BANDS[region] || PREVIEW_BANDS.other;
+  return {
+    intro: `Logline: ${brief.logline}<br>`
+      + `Scenes: ${brief.scenes} total · ${brief.int} INT · ${brief.ext} EXT.<br>`
+      + `Shape: ${brief.locations.join(' · ')} — reading this as a ${brief.days}-day schedule until you tell me otherwise.`,
+    questions: [
+      { id:'q1', question:'Where are you shooting? This sets location fees, permits and how far the unit travels each day.',
+        options: cities, affects:['12400','12300'] },
+      { id:'q2', question:'What rate band should I build to?',
+        options: bands, affects:['10300','10600','11300','11500'] },
+      { id:'q3', question:'How many shoot days? A range is fine at this stage.',
+        options:['1 day','2–3 days','4–5 days','6–10 days','11–20 days','20+ days'], affects:['10800','11300','11500','12300','12600'] },
+    ],
+  };
+}
+
+if (PREVIEW_MODE) {
+  generateGroundingQuestions = async function () {
+    await _previewPause(1300);
+    return previewGroundingQuestions();
+  };
+  generateContextualQuestions = async function () {
+    await _previewPause(900);
+    return { questions: fallbackContextualQuestions() };
+  };
+  // Nothing else should reach the model; if a future call site does, fail loudly
+  // here rather than quietly spending tokens.
+  callMark = async function () {
+    throw new Error('Walkthrough mode — model calls are off on this build.');
+  };
+}
+
+// A standing marker, so nobody mistakes the walkthrough for the live product.
+// Click to fold it down to a dot.
+function _mountPreviewBadge() {
+  if (!PREVIEW_MODE || document.getElementById('preview-badge')) return;
+  const css = document.createElement('style');
+  css.textContent = `
+    #preview-badge{position:fixed;left:18px;bottom:18px;z-index:9000;display:flex;align-items:center;gap:10px;
+      max-width:min(360px,calc(100vw - 36px));padding:10px 14px;background:var(--paper,#F5F1E8);
+      border:1px solid var(--ink,#14110D);box-shadow:0 3px 0 rgba(20,17,13,0.16);cursor:pointer;
+      font-family:'DM Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.05em;color:var(--muted,#5C5650);}
+    #preview-badge strong{color:var(--ink,#14110D);letter-spacing:0.09em;text-transform:uppercase;}
+    #preview-badge .pv-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--accent,#C8330A);}
+    #preview-badge.folded{padding:9px;gap:0;}
+    #preview-badge.folded .pv-text{display:none;}
+    @media(max-width:700px){#preview-badge{left:12px;bottom:12px;font-size:10px;}}
+  `;
+  document.head.appendChild(css);
+  const el = document.createElement('div');
+  el.id = 'preview-badge';
+  el.title = 'Walkthrough mode';
+  el.innerHTML = `<span class="pv-dot"></span><span class="pv-text"><strong>Walkthrough</strong> — a prepared sample budget that moves with your answers. Live pricing runs on a connected workspace.</span>`;
+  el.onclick = () => el.classList.toggle('folded');
+  // Says its piece, then gets out of the way of the page it is labelling.
+  el.onmouseenter = () => el.classList.remove('folded');
+  setTimeout(() => el.classList.add('folded'), 9000);
+  document.body.appendChild(el);
+}
+if (document.body) _mountPreviewBadge();
+else window.addEventListener('DOMContentLoaded', _mountPreviewBadge);
+
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let scriptText = '';
 let questions = [];        // [{id, question, options}] — preserved so we can pair text with answers
