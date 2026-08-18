@@ -692,7 +692,12 @@ footer{
 }
 .footer-logo svg.mark{width:22px;height:22px;flex-shrink:0;}
 .footer-logo .wm-mark{font-family:'Alegreya',Georgia,serif;font-weight:700;font-size:18px;letter-spacing:0.04em;}
-.footer-copy{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;}
+.footer-copy{
+  font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;
+  /* middle column of a space-between flex row: give it the slack, or the
+     company-number line gets squeezed into a stack */
+  flex:1 1 auto;text-align:center;padding:0 28px;line-height:1.7;
+}
 .footer-email a{font-size:12px;color:var(--ink-soft);text-decoration:none;font-family:'DM Mono',monospace;letter-spacing:0.06em;transition:color 0.2s;}
 .footer-email a:hover{color:var(--accent);}
 
@@ -727,6 +732,7 @@ footer{
   .final-cta{padding:60px 20px;}
   .cta-watermark{font-size:clamp(70px,18vw,140px);margin-bottom:-30px;}
   footer{flex-direction:column;gap:14px;text-align:center;padding:32px 20px;}
+  .footer-copy{padding:0;}
   .section-title{font-size:clamp(30px,8vw,52px);}
 }
 </style>
@@ -1176,7 +1182,7 @@ footer{
     <svg class="mark" aria-hidden="true"><use href="#mark-icon"/></svg>
     <span class="wm-mark">MARK</span>
   </div>
-  <div class="footer-copy">© 2026 MARK · Production OS · Built by Agemo</div>
+  <div class="footer-copy">© 2026 MARK · Production OS · The Mario Jude Ltd · Registered in England &amp; Wales no. 15842207</div>
   <div class="footer-email"><a href="mailto:krishmpinto@gmail.com">krishmpinto@gmail.com</a></div>
 </footer>
 
