@@ -1,0 +1,218 @@
+<!-- Interior page. Design system lives in assets/mark.css -->
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>How MARK is built &mdash; architecture and decisions</title>
+<meta name="description" content="The MARK pipeline, the engineering decisions behind it, and the parts you can verify yourself: prompt regression evals, human-gated sends, traced agent runs and an MCP interface."/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%2314110D'/&gt;&lt;text x='40' y='62' fill='%23F5F1E8' font-family='Georgia,serif' font-style='italic' font-size='50' font-weight='600' text-anchor='middle'&gt;M&lt;/text&gt;&lt;/svg&gt;"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/mark.css"/>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="mark-icon" viewBox="0 0 80 80">
+      <rect width="80" height="80" rx="3" fill="#14110D"/>
+      <g><rect x="0" y="0" width="80" height="22" fill="#14110D"/>
+        <g transform="rotate(-52 40 11)">
+          <rect x="-30" y="-6" width="10" height="40" fill="#F5F1E8"/>
+          <rect x="-10" y="-6" width="10" height="40" fill="#F5F1E8"/>
+          <rect x="10" y="-6" width="10" height="40" fill="#F5F1E8"/>
+          <rect x="30" y="-6" width="10" height="40" fill="#F5F1E8"/>
+          <rect x="50" y="-6" width="10" height="40" fill="#F5F1E8"/>
+        </g></g>
+      <text x="40" y="66" fill="#F5F1E8" font-family="Georgia,serif" font-style="italic"
+            font-size="50" font-weight="600" text-anchor="middle">M</text>
+      <circle cx="68" cy="68" r="3.4" fill="#C8330A"/>
+    </symbol>
+  </defs>
+</svg>
+<div class="slate-stripe" aria-hidden="true"></div>
+<nav id="nav">
+  <a href="./" class="nav-logo" aria-label="MARK"><svg class="mark" aria-hidden="true"><use href="#mark-icon"/></svg><span>MARK</span></a>
+  <div class="nav-links">
+    <a href="./#humans">The humans</a>
+    <a href="how-it-works.html" style="color:var(--accent)">How it&rsquo;s built</a>
+    <a href="manifesto.html">What we believe</a>
+    <a href="./#engagement">Engagement</a>
+    <a href="mailto:krishmpinto@gmail.com?subject=Teardown%20booking%20request&amp;body=Which%20productions%20would%20you%20like%20torn%20down%3F%0A%0A1.%0A2.%0A3.%0A%0AApprox.%20budget%20of%20each%3A%0AShoot%20dates%3A%0AWho%20ran%20production%3A%0A" class="nav-cta">Book a teardown</a>
+  </div>
+</nav>
+
+<div class="page-head">
+  <div class="page-kicker">How it&rsquo;s built</div>
+  <div class="section-title">The parts you can<br/>check <em>yourself.</em></div>
+  <p class="lede">Most AI products ask you to trust the output. A production budget doesn&rsquo;t
+  work that way &mdash; an estimate you can&rsquo;t interrogate is a guess with a decimal point on it.
+  So this page is the architecture, the decisions behind it, and the parts of it you can go
+  and read.</p>
+</div>
+
+<section>
+  <div class="section-label">The pipeline</div>
+  <div class="section-title">Script in.<br/>Budget out. <em>Then the floor.</em></div>
+
+  <div class="pipeline">
+    <div class="pipe-step"><div class="pipe-n">01</div><div>
+      <div class="pipe-name">Parse the script</div>
+      <div class="pipe-desc">A PDF goes through <code>screenplay-pdf-to-json</code> and comes back as
+      a breakdown: scene counts, INT/EXT, day/night, the locations that recur, the cast that carry it.
+      No one retypes a slugline.</div></div></div>
+
+    <div class="pipe-step"><div class="pipe-n">02</div><div>
+      <div class="pipe-name">Six questions, generated not fixed</div>
+      <div class="pipe-desc">The questions come from your breakdown, so a three-location Mumbai TVC
+      and a single-set music video get asked different things. A fixed form would ask both the same
+      and be wrong for each.</div></div></div>
+
+    <div class="pipe-step"><div class="pipe-n">03</div><div>
+      <div class="pipe-name">Generate the budget</div>
+      <div class="pipe-desc">Section-coded the way a producer expects to read it, itemised to the
+      line, with tax handled properly, a confidence marker on every estimate and flags on the lines
+      that need a human eye.</div></div></div>
+
+    <div class="pipe-step"><div class="pipe-n">04</div><div>
+      <div class="pipe-name">Refine in plain English</div>
+      <div class="pipe-desc">&ldquo;Trim catering by two lakh.&rdquo; &ldquo;Add a second camera on
+      day three.&rdquo; The budget changes and stays internally consistent &mdash; totals reconcile,
+      the ratios stay sane.</div></div></div>
+
+    <div class="pipe-step"><div class="pipe-n">05</div><div>
+      <div class="pipe-name">Call sheets, in your layout</div>
+      <div class="pipe-desc">Upload the call sheet template your productions already use and it
+      renders into that, not into a SaaS export that makes your unit look like someone else&rsquo;s.
+      Approve it, then it goes out by email and WhatsApp.</div></div></div>
+
+    <div class="pipe-step"><div class="pipe-n">06</div><div>
+      <div class="pipe-name">Estimated against actual</div>
+      <div class="pipe-desc">Department by department, live through the shoot. The overrun you can
+      see on day four is a decision. The one you find at wrap is a post-mortem.</div></div></div>
+  </div>
+</section>
+
+<section style="background:var(--paper-deep);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);max-width:none;">
+ <div style="max-width:1180px;margin:0 auto;">
+  <div class="section-label">The decisions</div>
+  <div class="section-title">Six choices you&rsquo;d only find<br/>by <em>reading the code.</em></div>
+  <p class="section-body">Every AI product claims to be careful. These are the specific places we
+  spent effort, and what each one cost us.</p>
+
+  <div class="rows">
+    <div class="row"><div class="row-num">01</div><div>
+      <div class="row-title">Evals gate the prompt, not just the code</div>
+      <div class="row-body">
+        <p>A change to an agent&rsquo;s instructions can break it as surely as a change to its code,
+        and it breaks silently &mdash; the output still looks like a budget. So the prompt has a
+        regression suite.</p>
+        <p>The invariants are things true of <strong>any</strong> valid budget: tax is stored as a
+        decimal and not a percentage, the required post sections are present, the post-to-production
+        ratio sits in a sane band, the totals actually reconcile, confidence markers are valid.
+        Golden fixtures hold budgets we&rsquo;ve reviewed and trust. And there are negative tests
+        that deliberately corrupt a good budget to prove each check fails on the defect it targets
+        &mdash; because a test that never fails isn&rsquo;t a test.</p>
+        <p>It runs offline in CI on every change, with no API key. After a prompt or rate-card
+        change it runs live against real agent output.</p>
+      </div>
+      <span class="row-tag">evals/invariants.py &middot; CI gate</span>
+    </div></div>
+
+    <div class="row"><div class="row-num">02</div><div>
+      <div class="row-title">An irreversible action is two tools, never one</div>
+      <div class="row-body">
+        <p>Sending a call sheet messages forty real people. You cannot un-send it, and a wrong unit
+        call costs a shoot day.</p>
+        <p>So the send is split. <code>propose</code> stages it and returns a preview &mdash; it
+        sends nothing. A human approves. <code>confirm</code> executes, and is idempotent, so a
+        retry can&rsquo;t double-send. To any agent driving MARK these are two separate tools, which
+        means an unattended agent is <strong>structurally</strong> unable to message a crew in one
+        step. Not discouraged from it. Unable.</p>
+      </div>
+      <span class="row-tag">propose &rarr; approve &rarr; confirm</span>
+    </div></div>
+
+    <div class="row"><div class="row-num">03</div><div>
+      <div class="row-title">Model choice is a latency decision, not a quality one</div>
+      <div class="row-body">
+        <p>The synchronous budget path is bound by the browser&rsquo;s edge timeout, so it runs the
+        fast model and returns while the producer is still sitting there. The async path returns a
+        job you poll, isn&rsquo;t bound by that timeout, and so requests the stronger model.</p>
+        <p>Same prompt surface, different constraint. Most products pick one model and make the
+        product fit it. The constraint should pick the model.</p>
+      </div>
+      <span class="row-tag">/budget/generate/async &middot; job polling</span>
+    </div></div>
+
+    <div class="row"><div class="row-num">04</div><div>
+      <div class="row-title">Every agent run is a traced span</div>
+      <div class="row-body">
+        <p>Model, latency, tokens, whether the cache hit, and what errored. Sent to a proper
+        observability backend when one is configured, and kept in a local ring buffer plus stdout
+        when it isn&rsquo;t &mdash; so tracing degrades rather than disappears.</p>
+        <p>You cannot improve an estimate whose cost and shape you can&rsquo;t see. This is also how
+        we know which line items the agent gets wrong most often, which is what the next prompt
+        change is aimed at.</p>
+      </div>
+    </div></div>
+
+    <div class="row"><div class="row-num">05</div><div>
+      <div class="row-title">One source of truth, many surfaces</div>
+      <div class="row-body">
+        <p>The MCP server exposes MARK&rsquo;s capabilities as typed tools, and every one of them is
+        a thin wrapper over an existing endpoint. No logic is reimplemented at the edge.</p>
+        <p>The practical effect: a rate-card correction lands in one place, and the web app, the
+        agent harness and anyone driving MARK from their own tooling all get it at the same moment.
+        Duplicated logic is how two surfaces start quoting different numbers for the same shoot day.</p>
+      </div>
+    </div></div>
+
+    <div class="row"><div class="row-num">06</div><div>
+      <div class="row-title">Agent-native in both directions</div>
+      <div class="row-body">
+        <p>Most tools let AI act on your behalf inside their product. MARK does that, and also
+        works the other way: your own agent can drive it. Claude Desktop, Claude Code, Cursor or any
+        MCP client can generate a budget, refine it in plain English, render a call sheet into your
+        template and stage a send for approval.</p>
+        <p>If a production office already runs its own agent, MARK should be something that agent
+        can call &mdash; not another tab someone has to remember to open.</p>
+      </div>
+      <span class="row-tag">Model Context Protocol</span>
+    </div></div>
+  </div>
+ </div>
+</section>
+
+<section>
+  <div class="section-label">Check it</div>
+  <div class="section-title">Claims are cheap.<br/>The <em>repo isn&rsquo;t.</em></div>
+  <div class="prose">
+    <p>Everything above is in a public repository. If you want to know whether the eval suite is
+    real rather than a slide, the invariants, the golden fixtures and the negative tests are sitting
+    there to read, and so is the architecture diagram and the MCP tool definitions.</p>
+    <p>We would rather you checked.</p>
+    <p style="margin-top:26px;"><a href="https://github.com/karanmjpinto/mark" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.06em;color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent);">github.com/karanmjpinto/mark &nearr;</a></p>
+  </div>
+
+  <div class="callout">
+    <p>A creative reviews every output before it reaches a producer. The AI does the work nobody
+    wanted to do anyway; the judgement stays with the person whose name is on the call sheet.</p>
+    <cite>The working principle</cite>
+  </div>
+</section>
+
+<section class="page-cta">
+  <div class="section-label" style="color:var(--muted);">Roll camera</div>
+  <div class="section-title" style="margin-bottom:30px;">Start with <em>five days.</em></div>
+  <a href="mailto:krishmpinto@gmail.com?subject=Teardown%20booking%20request&amp;body=Which%20productions%20would%20you%20like%20torn%20down%3F%0A%0A1.%0A2.%0A3.%0A%0AApprox.%20budget%20of%20each%3A%0AShoot%20dates%3A%0AWho%20ran%20production%3A%0A" class="btn-primary">Book a teardown &rarr;</a>
+  <div style="margin-top:24px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.08em;">Five working days &middot; $4,500 fixed &middot; Credited in full against Stage 1</div>
+</section>
+
+<footer>
+  <a href="./" class="footer-logo"><svg class="mark" aria-hidden="true"><use href="#mark-icon"/></svg><span>MARK</span></a>
+  <div class="footer-copy">&copy; 2026 MARK &middot; Production OS &middot; The Mario Jude Ltd &middot; Registered in England &amp; Wales no. 15842207<br/><span class="footer-office">Registered office: Flat 52, Niemann Court, Louis Close, London N7 0FQ</span></div>
+  <div class="footer-email"><a href="mailto:krishmpinto@gmail.com">krishmpinto@gmail.com</a></div>
+</footer>
+
+<script>
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+});
+</script>
