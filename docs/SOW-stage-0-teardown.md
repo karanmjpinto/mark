@@ -4,17 +4,17 @@
 
 | | |
 |---|---|
-| **Supplier** | «LEGAL ENTITY NAME», «company no.» ("MARK") |
+| **Supplier** | THE MARIO JUDE LTD, a company registered in England and Wales, company number 15842207, registered office Flat 52, Niemann Court, Louis Close, London N7 0FQ, United Kingdom, trading as **MARK** ("MARK") |
 | **Client** | «CLIENT LEGAL NAME» ("the Client") |
 | **SOW reference** | MARK-T0-«NNN» |
 | **Date** | «DATE» |
 | **Engagement** | Stage 0 — Production Teardown |
 | **Duration** | 5 working days from Data Handover (cl. 4) |
-| **Fee** | «FEE» + applicable tax — see cl. 7 |
+| **Fee** | **USD $4,500** — see cl. 7 |
 
-> **Placeholders marked «…» must be completed before issue.** Fee anchors:
-> India ₹2,00,000–4,00,000 · UK/EU £2,500–5,000. Set against your own cost
-> to service, not against this range.
+> **Remaining placeholders marked «…» must be completed before issue.**
+> The fee is fixed and benchmarked — read `docs/pricing-basis.md` §1 before
+> agreeing to any reduction.
 
 ---
 
@@ -107,16 +107,26 @@ For the avoidance of doubt, this SOW does **not** include:
 
 ## 7. Fee and payment
 
-**Fee: «FEE», exclusive of applicable taxes.**
+**Fee: USD $4,500.**
 
-| Milestone | Share | Due |
-|---|---|---|
-| Signature of this SOW | 50% | On invoice, «7» days |
-| Delivery of D1–D4 | 50% | On invoice, «7» days |
+| Milestone | Share | Amount | Due |
+|---|---|---|---|
+| Signature of this SOW | 50% | $2,250 | On invoice, «7» days |
+| Delivery of D1–D4 | 50% | $2,250 | On invoice, «7» days |
 
-- Invoices are issued electronically. Payment by bank transfer or by the
-  payment link on the invoice.
-- Late payment accrues interest at «the statutory rate» from the due date.
+- **Tax.** The fee is exclusive of VAT. VAT is charged only where MARK is
+  VAT-registered and the supply falls within the scope of UK VAT. Where MARK
+  is not registered, no VAT is chargeable and none will be shown.
+- **Currency and settlement.** Invoices are issued in USD. Settlement is in
+  **GBP at the exchange rate stated on the invoice, fixed on the invoice
+  date** — so neither party carries FX movement between invoice and payment.
+  Where the Client requires settlement in USD, MARK will nominate a
+  USD-receiving account and the Client bears any correspondent bank charges.
+- **Method.** Payment by bank transfer to the account shown on the invoice, or
+  by the card payment link on the invoice. **Invoices above $5,000 are payable
+  by bank transfer only.**
+- Late payment accrues interest at the rate set by the Late Payment of
+  Commercial Debts (Interest) Act 1998 from the due date.
 - Reasonable pre-approved travel and subsistence is charged at cost. No other
   expense is chargeable.
 - **Credit:** the full fee is credited against the Stage 1 fee if the Client
@@ -173,7 +183,9 @@ party to proceed.
    MARK accepts no liability to any third party relying on it.
 4. **Termination.** Either party may terminate on «7» days' written notice.
    The Client pays for work performed to the date of termination.
-5. **Governing law.** «JURISDICTION».
+5. **Governing law.** This SOW is governed by the laws of **England and
+   Wales**, and the parties submit to the exclusive jurisdiction of the courts
+   of England and Wales.
 6. This SOW, with any master services agreement executed between the parties,
    is the entire agreement. Where they conflict, the MSA prevails except as to
    scope, fee and timeline.
@@ -184,7 +196,7 @@ party to proceed.
 
 Name «………» Title «………» Signature «………» Date «………»
 
-**Agreed for MARK**
+**Agreed for MARK** — THE MARIO JUDE LTD
 
 Name «………» Title «………» Signature «………» Date «………»
 
