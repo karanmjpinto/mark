@@ -370,15 +370,17 @@ section{padding:120px 60px;position:relative;}
 
 /* THE HUMANS — a quote and an attribution, set like a pull quote in print. */
 .humans-lead{
-  display:grid;grid-template-columns:1.5fr 1fr;gap:56px;align-items:start;margin-top:52px;
+  display:grid;grid-template-columns:320px 1fr;gap:56px;align-items:start;margin-top:52px;
 }
+.humans-portrait{margin:0;border:1px solid var(--rule);background:var(--paper-deep);overflow:hidden;}
+.humans-portrait img{width:100%;height:auto;display:block;aspect-ratio:3/4;object-fit:cover;}
 .humans-quote{
   font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:400;
   font-size:clamp(24px,2.6vw,34px);line-height:1.34;color:var(--ink);
-  letter-spacing:-0.012em;margin:0;text-indent:-0.4em;
+  letter-spacing:-0.012em;margin:0;
   font-variation-settings:"opsz" 144;
 }
-.humans-attrib{padding-top:10px;border-top:2px solid var(--ink);}
+.humans-attrib{margin-top:34px;padding-top:12px;border-top:2px solid var(--ink);max-width:46ch;}
 .humans-attrib-name{
   font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:21px;color:var(--ink);
   letter-spacing:-0.01em;
@@ -391,8 +393,8 @@ section{padding:120px 60px;position:relative;}
   font-size:15px;color:var(--ink-soft);line-height:1.6;margin-top:14px;
 }
 @media(max-width:900px){
-  .humans-lead{grid-template-columns:1fr;gap:28px;}
-  .humans-quote{text-indent:0;}
+  .humans-lead{grid-template-columns:1fr;gap:30px;}
+  .humans-portrait{max-width:250px;}
 }
 
 /* CREDIT ROLL — brands the team has shipped work for. A confident,
@@ -442,12 +444,6 @@ section{padding:120px 60px;position:relative;}
 }
 
 /* HUMANS featured photo — the crew itself, anchoring "The humans". */
-.humans-photo{margin:48px 0 0;border:1px solid var(--rule);background:var(--ink);overflow:hidden;}
-.humans-photo img{width:100%;height:auto;display:block;aspect-ratio:16/11;object-fit:cover;}
-.humans-photo figcaption{
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;
-  text-transform:uppercase;color:var(--muted);padding:12px 16px 14px;background:var(--paper-deep);
-}
 
 /* ════════════════════════════════════════════════════════════════════
    THE MODEL — four-pillar block explaining why MARK is not an AI tool.
@@ -725,9 +721,7 @@ footer{
   .integration-cards{gap:8px;}
   .int-card{padding:10px 14px;font-size:12px;}
   .set-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
-  .humans-photo{margin-top:32px;}
-  .humans-photo img{aspect-ratio:4/3;}
-  .wish{flex-direction:column;gap:8px;padding:24px 0;}
+      .wish{flex-direction:column;gap:8px;padding:24px 0;}
   .wish-label{padding-top:0;width:auto;}
   .wish-text{font-size:clamp(18px,5.5vw,28px);}
   .final-cta{padding:60px 20px;}
@@ -879,14 +873,16 @@ footer{
 <!-- ════════════════════════════════════════════════════════════════════
      THE HUMANS — proof, not assertion. A named person, a real quote, a
      credit list anyone can check, and an actual set photo.
-     PORTRAIT SLOT: swap assets/set-crew.jpg for a portrait of Krish when
-     one exists — a face outperforms a wide shot here.
      ════════════════════════════════════════════════════════════════════ -->
 <section id="humans" class="humans-section">
   <div class="section-label">The humans</div>
   <div class="section-title">Built by the people who&rsquo;ve<br/>been the runner, the AC,<br/>the <em>1st AD.</em></div>
 
   <div class="humans-lead">
+    <figure class="humans-portrait">
+      <img src="assets/krish-pinto.jpg" alt="Krish Pinto, founding creative at MARK." loading="lazy" decoding="async" width="900" height="1200"/>
+    </figure>
+    <div class="humans-lead-copy">
     <blockquote class="humans-quote">
       I&rsquo;ve marked up a call sheet at 1am with a torch in my teeth. MARK is
       the thing I wish I&rsquo;d had on every set &mdash; the paperwork handled, so
@@ -896,6 +892,7 @@ footer{
       <div class="humans-attrib-name">Krish Pinto</div>
       <div class="humans-attrib-role">Founding creative &middot; Cinematographer</div>
       <div class="humans-attrib-bio">London &middot; MetFilm School &middot; Straight 8 winner 2022 &amp; 2023 &middot; Author, &ldquo;Becoming a Filmmaker&rdquo;</div>
+    </div>
     </div>
   </div>
 
@@ -933,10 +930,6 @@ footer{
     </div>
   </div>
 
-  <figure class="humans-photo">
-    <img src="assets/set-crew.jpg" alt="Crew on a commercial unit between setups." loading="lazy" decoding="async"/>
-    <figcaption>The unit, between setups.</figcaption>
-  </figure>
 </section>
 
 <section id="model" class="model-section">
