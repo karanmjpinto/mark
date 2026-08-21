@@ -20,3 +20,7 @@ dist/
 # IDE
 .vscode/
 .idea/
+
+# Outreach — real people's names and verified email addresses.
+# This repo is public. Personal data does not go in it.
+outreach/

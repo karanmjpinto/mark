@@ -1963,9 +1963,13 @@ const PREVIEW_OPTIONAL = {
   ]},
 };
 
-// Non-INR markets are not live yet; if someone forces one, convert off the
-// INR card rather than showing rupee figures under a dollar sign.
-const PREVIEW_FX = { INR:1, USD:1/85, GBP:1/107, EUR:1/92, AED:1/23, CAD:1/62, AUD:1/56 };
+// NOT an FX rate. This is a market-rate index: what the same job costs in each
+// territory relative to the INR card above. It is deliberately tighter than the
+// currency conversion — London and LA crew and kit are expensive in absolute
+// terms, so dividing by the spot rate would under-price a London job by roughly
+// a third. Calibrated so a 3-day mid-band commercial lands at ~£55k/day in
+// London and ~$69k/day in Los Angeles, which is where those markets actually sit.
+const PREVIEW_MARKET_RATE = { INR:1, GBP:1/69, USD:1/55, EUR:1/59, AED:1/23, CAD:1/40, AUD:1/36 };
 const PREVIEW_TAX = { INR:0.18, GBP:0.20, EUR:0.20, AED:0.05, USD:0, CAD:0.05, AUD:0.10 };
 
 const PREVIEW_BRIEFS = {
@@ -2043,7 +2047,7 @@ function _previewSignals(qa, brief) {
   return {
     days: _previewDays(find(/shoot day|how many day/i), brief.days),
     city: find(/cit(y|ies)|where.*shoot|location/i),
-    tierMult: /premium|high/.test(tier) ? 2.4 : /low/.test(tier) ? 0.55 : 1,
+    tierMult: /premium/.test(tier) ? 4 : /high/.test(tier) ? 2.4 : /low/.test(tier) ? 0.55 : 1,
     tierLabel: /premium/.test(tier) ? 'premium' : /high/.test(tier) ? 'high' : /low/.test(tier) ? 'low' : 'mid',
     crewMult: /xl|80\+/.test(crew) ? 1.9 : /large/.test(crew) ? 1.5 : /small/.test(crew) ? 0.7 : 1,
     castMode: /exclude/.test(cast) ? 'exclude' : /premium/.test(cast) ? 'premium' : 'include',
@@ -2062,7 +2066,7 @@ function previewBudgetData(payload) {
   const brief = PREVIEW_BRIEFS[key];
   const sig = _previewSignals(qa, brief);
   const code = (payload && payload.currency && payload.currency.code) || currency.code || 'INR';
-  const fx = PREVIEW_FX[code] != null ? PREVIEW_FX[code] : 1 / 85;
+  const fx = PREVIEW_MARKET_RATE[code] != null ? PREVIEW_MARKET_RATE[code] : 1 / 55;
   const tax = PREVIEW_TAX[code] != null ? PREVIEW_TAX[code] : 0.1;
   const grain = code === 'INR' ? 5000 : 100;
 
@@ -2110,7 +2114,8 @@ function previewBudgetData(payload) {
 
   const flags = [];
   if (sig.castMode === 'exclude') flags.push('lead cast fees excluded on your instruction');
-  const conf = `Built on ${sig.tierLabel}-band ${currency.code === 'INR' ? 'Indian' : 'market'} rates over ${days} shoot day${days === 1 ? '' : 's'}`
+  const marketLabel = (regionMeta[region] && regionMeta[region].label) || 'local';
+  const conf = `Built on ${sig.tierLabel}-band ${marketLabel} rates over ${days} shoot day${days === 1 ? '' : 's'}`
     + (sig.city ? ` in ${sig.city}` : '')
     + `${flags.length ? ', ' + flags.join(', ') : ''}. The red lines are the ones that would move a real number — confirm them and every dependent line reprices.`;
 
@@ -2236,9 +2241,9 @@ const PREVIEW_CITIES = {
   other: ['Primary city', 'Secondary city', 'Two cities', 'Multiple countries'],
 };
 const PREVIEW_BANDS = {
-  india: ['Low — ₹25–60L all-in', 'Mid — ₹60L–2Cr all-in', 'High — ₹2–6Cr all-in', 'Premium — ₹6Cr+'],
-  hollywood: ['Low — $150–500K all-in', 'Mid — $500K–2M all-in', 'High — $2–8M all-in', 'Premium — $8M+'],
-  uk: ['Low — £120–400K all-in', 'Mid — £400K–1.5M all-in', 'High — £1.5–6M all-in', 'Premium — £6M+'],
+  india: ['Low — ₹15–25L/day', 'Mid — ₹25–50L/day', 'High — ₹50–120L/day', 'Premium — ₹120L+/day'],
+  hollywood: ['Low — $30–50K/day', 'Mid — $50–100K/day', 'High — $100–220K/day', 'Premium — $220K+/day'],
+  uk: ['Low — £25–40K/day', 'Mid — £40–80K/day', 'High — £80–180K/day', 'Premium — £180K+/day'],
   other: ['Low band', 'Mid band', 'High band', 'Premium band'],
 };
 
@@ -2304,8 +2309,24 @@ function _mountPreviewBadge() {
   setTimeout(() => el.classList.add('folded'), 9000);
   document.body.appendChild(el);
 }
-if (document.body) _mountPreviewBadge();
-else window.addEventListener('DOMContentLoaded', _mountPreviewBadge);
+// The live product is India-only, so the other markets are gated in the markup.
+// The walkthrough prices every territory off the same card, so open the two that
+// matter — London and North America — for the walkthrough only. The gate stays
+// exactly where it is on the live build.
+function _unlockPreviewMarkets() {
+  if (!PREVIEW_MODE) return;
+  [['rc-uk', () => selectRegion('uk', '£', 'GBP', 'British Pound')],
+   ['rc-hollywood', () => selectRegion('hollywood', '$', 'USD', 'US Dollar')]].forEach(([id, go]) => {
+    const card = document.getElementById(id);
+    if (!card) return;
+    card.classList.remove('region-soon');   // also drops the "Coming soon" tag
+    card.onclick = go;                      // replaces the inline comingSoon handler
+  });
+}
+
+function _mountPreview() { _mountPreviewBadge(); _unlockPreviewMarkets(); }
+if (document.body) _mountPreview();
+else window.addEventListener('DOMContentLoaded', _mountPreview);
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let scriptText = '';
