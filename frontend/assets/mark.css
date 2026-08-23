@@ -59,10 +59,10 @@ section{padding:120px 60px;max-width:1180px;margin:0 auto;}
   color:var(--muted);margin-bottom:20px;
 }
 .section-title{
-  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:clamp(36px,4.6vw,60px);
-  line-height:1.06;letter-spacing:-.022em;color:var(--ink);
+  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:clamp(40px,5.4vw,74px);
+  line-height:1.0;letter-spacing:-.032em;color:var(--ink);max-width:17ch;text-wrap:balance;
 }
-.section-title em{font-style:italic;font-weight:400;color:var(--accent);}
+.section-title em{font-style:italic;font-weight:400;color:var(--ink);}
 .section-body{
   font-size:19px;line-height:1.68;color:var(--ink-soft);max-width:62ch;margin-top:26px;
 }
@@ -73,7 +73,7 @@ section{padding:120px 60px;max-width:1180px;margin:0 auto;}
 .page-head .section-title{font-size:clamp(42px,6vw,78px);}
 .page-kicker{
   font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--accent);margin-bottom:26px;
+  color:var(--muted);margin-bottom:26px;
 }
 
 /* PROSE */
@@ -96,7 +96,7 @@ section{padding:120px 60px;max-width:1180px;margin:0 auto;}
 }
 .row-num{
   font-family:'Alegreya',Georgia,serif;font-style:italic;font-size:52px;line-height:.9;
-  color:var(--accent);opacity:.85;letter-spacing:-.04em;
+  color:var(--ink);opacity:.2;letter-spacing:-.04em;
 }
 .row-title{
   font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:25px;letter-spacing:-.01em;
@@ -118,7 +118,7 @@ section{padding:120px 60px;max-width:1180px;margin:0 auto;}
 }
 .pipe-step:first-child{border-top:1px solid var(--rule);}
 .pipe-n{
-  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--accent);padding-top:5px;
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--muted);padding-top:5px;
 }
 .pipe-name{font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:20px;color:var(--ink);}
 .pipe-desc{font-size:16px;line-height:1.62;color:var(--ink-soft);margin-top:5px;max-width:62ch;}
