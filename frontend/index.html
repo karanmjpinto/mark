@@ -8,7 +8,7 @@
 <!-- MARK favicon — the brand mark inlined as an SVG data URL. Slate body,
      striped snap arm, italic Fraunces "M" in paper, brand-red tally dot.
      Renders crisp at every browser size (favicons up to 64px). -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%2314110D'/&gt;&lt;g transform='rotate(-52 40 11)'&gt;&lt;rect x='-30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='-10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='50' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;text x='40' y='66' fill='%23F5F1E8' font-family='Georgia,serif' font-style='italic' font-size='50' font-weight='600' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='68' cy='68' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%23171714'/&gt;&lt;g transform='rotate(-52 40 11)'&gt;&lt;rect x='-30' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;rect x='-10' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;rect x='10' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;rect x='30' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;rect x='50' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;/g&gt;&lt;text x='40' y='68' fill='%23D5D6CE' font-family='Impact,sans-serif' font-size='52' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='69' cy='69' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
 <!-- Open Graph + Twitter share images use the same mark -->
 <meta property="og:title" content="MARK — A new production house · Half humans, half agentic AI"/>
 <meta property="og:description" content="AI-native production tools for film. Script in. Budget out. Brief in. Call sheet out."/>
@@ -19,473 +19,320 @@
 <meta name="twitter:description" content="AI-native production tools for film. Script in. Budget out. Brief in. Call sheet out."/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
 <style>
-/* Hallmark · pre-emit critique: P5 H4 E5 S5 R4 V5
- * macrostructure: Long-Document + Slate · tone: production-floor editorial
- * anchor hue: warm-red (accent #C8330A) on cream paper (#F5F1E8)
- * audience: film production professionals (1st AD, LP, UPM, DOP, on-set crew)
- * source: Hallmark audit + redesign 2026-05-27 (first run)
- */
+/* ═══════════════════════════════════════════════════════════════════════
+   MARK — warm-black / warm-white, condensed display.
+
+   Two type roles and no third: Anton for anything that shouts, Archivo
+   for anything that explains. One ground colour and one paper colour,
+   alternating in full-bleed bands. No accent hue anywhere on the page —
+   the only red left is the tally light inside the logo, which is the
+   mark, not decoration.
+   ═══════════════════════════════════════════════════════════════════════ */
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  /* Surfaces — warm cream paper, deep ink */
-  --paper:#F5F1E8;
-  --paper-deep:#EBE5D2;
-  --paper-edge:#E0D9C2;
-  --paper-shadow:rgba(20,17,13,0.04);
-
-  /* Ink — warm brown-black, never pure */
-  --ink:#14110D;
-  --ink-soft:#3A352D;
-  --muted:#5C5650;
-  --rule:rgba(20,17,13,0.10);
-  --rule-strong:rgba(20,17,13,0.16);
-
-  /* Accents */
-  --accent:#C8330A;
-  --accent-deep:#8A2306;
-  --accent-tint:rgba(200,51,10,0.08);
-  --gold:#B8842D;
-
-  /* Motion */
-  --ease-out:cubic-bezier(.16,1,.3,1);
-  --ease-soft:cubic-bezier(.4,0,.2,1);
+  --ink:#171714;          /* warm near-black — the default ground */
+  --ink-raise:#1D1D19;    /* one step up, for hovers and inset panels */
+  --ink-line:#2E2E29;     /* rules on dark */
+  --paper:#D5D6CE;        /* warm white — the light band */
+  --paper-line:#BDBEB5;   /* rules on light */
+  --dim:#B3B3B3;          /* muted text on dark */
+  --dim-ink:#6B6C65;      /* muted text on light */
+  --tally:#C8330A;        /* logo only. Never type, never a border. */
+  --ease:cubic-bezier(.16,1,.3,1);
+  --gutter:clamp(20px,4.4vw,90px);
 }
-
 html{scroll-behavior:smooth;overflow-x:clip;}
 body{
-  background:var(--paper);
-  color:var(--ink);
-  font-family:'Alegreya',Georgia,serif;
-  font-size:19px;
-  line-height:1.6;
-  font-feature-settings:"ss01","cv11";
-  overflow-x:clip;
-  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  background:var(--ink);color:var(--paper);
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;
+  font-size:17px;line-height:1.55;overflow-x:clip;
+  -webkit-font-smoothing:antialiased;
 }
+img{display:block;max-width:100%;}
 
-/* SLATE STRIPE — diagonal black/white snap-band, reads as the top of a
-   clapperboard. Pinned above the nav at full width. Production-set
-   iconography that anyone who's seen a slate clocks in under a second. */
+/* ── TYPE ROLES ────────────────────────────────────────────────────── */
+/* Anything that shouts. Uppercase, tight leading, no letter-spacing —
+   Anton is drawn tight already and tracking it out kills the density. */
+.display{
+  font-family:'Anton',Impact,'Arial Narrow Bold',sans-serif;
+  font-weight:400;text-transform:uppercase;line-height:.9;
+  letter-spacing:.004em;
+}
+/* Anything that explains. */
+.eyebrow{
+  font-family:'Archivo',sans-serif;font-weight:700;
+  font-size:clamp(10px,.78vw,13px);letter-spacing:.26em;text-transform:uppercase;
+  color:var(--dim);
+}
+.on-paper .eyebrow{color:var(--dim-ink);}
+.lede{font-size:clamp(15px,1.12vw,21px);line-height:1.55;color:var(--dim);max-width:40em;}
+.on-paper .lede{color:#3B3C36;}
+
+/* ── BANDS ─────────────────────────────────────────────────────────── */
+section{padding:clamp(80px,9vw,160px) var(--gutter);position:relative;}
+.on-paper{background:var(--paper);color:var(--ink);}
+.band-rule{border-top:1px solid var(--ink-line);}
+.wrap{max-width:1500px;margin:0 auto;}
+
+/* ── SLATE STRIPE + NAV ────────────────────────────────────────────── */
+/* The clapper snap-band is the one piece of ornament that survives. It is
+   an object from the job, not a flourish. Thinner than it was. */
 .slate-stripe{
-  position:fixed;top:0;left:0;right:0;height:14px;z-index:101;
-  background-image:repeating-linear-gradient(
-    -52deg,
-    var(--ink) 0 12px,
-    var(--paper) 12px 24px
-  );
-  border-bottom:1px solid var(--ink);
+  position:fixed;top:0;left:0;right:0;height:8px;z-index:101;
+  background-image:repeating-linear-gradient(-52deg,var(--ink) 0 9px,var(--paper) 9px 18px);
 }
-nav{top:14px !important;}
-
-/* NAV */
 nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 40px;
+  position:fixed;top:8px;left:0;right:0;z-index:100;height:70px;
+  padding:0 var(--gutter);background:var(--paper);
+  border-bottom:1px solid var(--paper-line);
   display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid transparent;transition:background-color 0.3s var(--ease-out),border-color 0.3s var(--ease-out),backdrop-filter 0.3s var(--ease-out);
 }
-nav.scrolled{background:rgba(245,241,232,0.92);border-bottom-color:var(--rule);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .nav-logo{
-  display:inline-flex;align-items:center;gap:10px;
-  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:22px;color:var(--ink);
-  text-decoration:none;letter-spacing:0.02em;font-variation-settings:"opsz" 144;
-  text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink);
+  --mk-body:#171714;--mk-stripe:#D5D6CE;
 }
-.nav-logo svg.mark{width:28px;height:28px;flex-shrink:0;}
-.nav-logo .wm-mark{
-  font-family:'Alegreya',Georgia,serif;font-weight:700;font-size:23px;
-  letter-spacing:0.04em;
+.nav-logo svg.mark{width:30px;height:30px;border-radius:3px;}
+.wm-mark{
+  font-family:'Anton',Impact,sans-serif;font-size:25px;letter-spacing:.05em;
+  text-transform:uppercase;line-height:1;padding-top:2px;
 }
-.nav-links{display:flex;align-items:center;gap:32px;}
+.nav-links{display:flex;align-items:center;gap:clamp(16px,2vw,34px);}
 .nav-links a{
-  color:var(--ink-soft);font-size:11px;text-decoration:none;
-  letter-spacing:0.12em;text-transform:uppercase;font-family:'DM Mono',monospace;
-  transition:color 0.2s var(--ease-out);
+  font-family:'Archivo',sans-serif;font-size:15px;font-weight:700;
+  color:var(--dim-ink);text-decoration:none;transition:color .18s;
 }
 .nav-links a:hover{color:var(--ink);}
-.nav-cta{
-  background:var(--ink);color:var(--paper) !important;font-family:'Alegreya',Georgia,serif;
-  font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
-  padding:10px 18px;text-decoration:none;position:relative;overflow:hidden;
-  transition:background 0.25s var(--ease-out);
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:'Archivo',sans-serif;font-weight:700;text-decoration:none;
+  text-transform:uppercase;letter-spacing:.16em;font-size:12px;
+  padding:18px 30px;border-radius:10px;
+  transition:background-color .2s var(--ease),color .2s var(--ease);
 }
-.nav-cta:hover{background:var(--accent);color:var(--paper) !important;}
+.btn-dark{background:var(--ink);color:var(--paper)!important;}
+.btn-dark:hover{background:var(--ink-raise);}
+.btn-light{background:var(--paper);color:var(--ink)!important;}
+.btn-light:hover{background:#E6E7DF;}
+.nav-links .btn{padding:13px 24px;font-size:11px;}
 
-/* HERO — one column. A statement, an answer, a way in. Nothing else.
-   The old layout put a 20-word sentence beside two bordered feature cards;
-   both halves competed and neither won. The cards are text links now, under
-   the copy, which is where a producer goes looking for them anyway. */
+/* ── HERO ──────────────────────────────────────────────────────────── */
+/* Full-bleed still, the product name at the size of a title card, and
+   the argument in small type underneath it. */
 .hero{
-  display:block;position:relative;
-  padding:210px max(60px, calc((100% - 1240px) / 2)) 130px;
+  min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:170px var(--gutter) clamp(56px,6vw,90px);
+  position:relative;overflow:hidden;
 }
-.hero-content{position:relative;z-index:2;}
+.hero-bg{position:absolute;inset:0;z-index:0;}
+.hero-bg img{width:100%;height:100%;object-fit:cover;opacity:.5;}
+.hero-bg::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to top,var(--ink) 4%,rgba(23,23,20,.55) 55%,rgba(23,23,20,.75) 100%);
+}
+.hero-inner{position:relative;z-index:1;max-width:1500px;margin:0 auto;width:100%;}
 .hero-title{
-  font-family:'Alegreya',Georgia,serif;font-weight:600;
-  font-size:clamp(58px,10vw,140px);
-  line-height:0.92;color:var(--ink);margin-bottom:30px;letter-spacing:-0.045em;
-  max-width:11ch;text-wrap:balance;
-  font-variation-settings:"opsz" 144;
+  font-size:clamp(78px,17.5vw,330px);line-height:.8;margin:18px 0 0;
+  color:var(--paper);
 }
-/* The setup line: small, ink, its own measure. The payoff below is the size. */
-.hero-title .lead{
-  display:block;font-weight:500;color:var(--ink);font-size:0.4em;
-  line-height:1.08;letter-spacing:-0.022em;margin-bottom:0.18em;max-width:19ch;
-}
-/* The one red thing above the fold, and very nearly the one on the page. */
-.hero-title em{color:var(--accent);font-style:italic;font-weight:600;}
-@media(max-width:960px){
-  .hero{padding:140px 32px 76px;}
-}
-@media(max-width:600px){
-  .hero{padding:112px 20px 60px;}
-  .hero-title{font-size:clamp(46px,14vw,78px);}
-}
-.hero-subtitle{
-  font-family:'Alegreya',Georgia,serif;font-weight:400;font-size:clamp(19px,1.6vw,22px);
-  color:var(--ink-soft);line-height:1.62;max-width:54ch;margin-bottom:0;
-  font-variation-settings:"opsz" 24;
-}
-.hero-ctas{display:flex;gap:36px;align-items:center;flex-wrap:wrap;margin-top:44px;}
-/* The two live modules: underlined text, not cards. They are things to open,
-   not features to be sold on. */
-.hero-try{display:flex;gap:28px;flex-wrap:wrap;}
+.hero-lede{margin-top:clamp(26px,2.6vw,42px);color:#C6C7BF;}
+.hero-ctas{display:flex;align-items:center;gap:clamp(14px,1.6vw,26px);flex-wrap:wrap;margin-top:clamp(30px,3vw,46px);}
+.hero-try{display:flex;gap:22px;flex-wrap:wrap;}
 .hero-try a{
-  font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.12em;
-  text-transform:uppercase;color:var(--ink-soft);text-decoration:none;
-  border-bottom:1px solid var(--rule-strong);padding-bottom:5px;
-  transition:color 0.2s var(--ease-out),border-color 0.2s var(--ease-out);
+  font-family:'Archivo',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+  text-decoration:none;border-bottom:1px solid #4A4A44;padding-bottom:6px;
+  transition:color .18s,border-color .18s;
 }
-.hero-try a:hover{color:var(--ink);border-bottom-color:var(--ink);}
-.btn-primary{
-  background:var(--ink);color:var(--paper);font-family:'Alegreya',Georgia,serif;
-  font-size:13px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
-  padding:16px 30px;text-decoration:none;display:inline-block;position:relative;overflow:hidden;
-  transition:transform 0.3s var(--ease-out);
-}
-.btn-primary::after{
-  content:'';position:absolute;inset:0;background:var(--accent);
-  transform:translateY(101%);transition:transform 0.4s var(--ease-out);z-index:0;
-}
-.btn-primary span{position:relative;z-index:1;}
-.btn-primary:hover{transform:translateY(-1px);}
-.btn-primary:hover::after{transform:translateY(0);}
-
+.hero-try a:hover{color:var(--paper);border-bottom-color:var(--paper);}
 .hero-meta{
-  margin-top:20px;font-size:11px;color:var(--muted);
-  font-family:'DM Mono',monospace;letter-spacing:0.06em;
-  display:flex;align-items:center;gap:14px;
-}
-.hero-meta-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
-
-/* SECTIONS */
-section{padding:132px max(60px, calc((100% - 1240px) / 2));position:relative;}
-.section-label{
-  font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);
-  font-family:'DM Mono',monospace;margin-bottom:20px;display:flex;align-items:center;gap:12px;
-}
-.section-title{
-  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:clamp(42px,6vw,86px);
-  color:var(--ink);line-height:0.99;margin-bottom:26px;letter-spacing:-0.034em;
-  max-width:17ch;text-wrap:balance;
-  font-variation-settings:"opsz" 144;
-}
-.section-title em{font-style:italic;font-weight:400;color:var(--ink);}
-.section-body{
-  font-family:'Alegreya',Georgia,serif;font-weight:400;font-size:20px;color:var(--ink-soft);
-  line-height:1.6;max-width:720px;font-variation-settings:"opsz" 24;
+  margin-top:clamp(30px,3vw,48px);padding-top:20px;border-top:1px solid var(--ink-line);
+  font-size:12px;letter-spacing:.05em;color:var(--dim);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   THE HUMANS — proof-of-credibility section. Big editorial header,
-   one featured human card with real credits, two "open seat" cards
-   for incoming creatives, and a credit-roll of brands the team has
-   shipped work for. This is the positioning beat: MARK is humans
-   first, AI second.
-   ════════════════════════════════════════════════════════════════════ */
-.humans-section{background:var(--paper);border-bottom:1px solid var(--rule);}
+/* ── CALLOUT BAND ──────────────────────────────────────────────────── */
+/* Four lines, two or three words each, centred and enormous. The whole
+   proposition legible from across a room. */
+.callout{padding:clamp(70px,8vw,140px) var(--gutter);text-align:center;}
+/* Anton has a tall cap height, so batch's 80% leading collides here.
+   .92 keeps the lines stacked tight without the caps touching. */
+.callout .display{
+  font-size:clamp(42px,12vw,215px);line-height:.92;display:block;
+}
+.callout .quiet{color:#8A8B83;}
 
-.credit-list{
-  display:flex;flex-direction:column;gap:0;margin-top:6px;
-  border-top:1px solid var(--rule);
+/* ── ON SET ────────────────────────────────────────────────────────── */
+.set-strip{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;
+  margin:clamp(28px,3vw,46px) calc(-1 * var(--gutter)) 0;background:var(--ink-line);
 }
-.credit-line{
-  display:grid;grid-template-columns:90px 1fr auto;gap:14px;align-items:baseline;
-  padding:11px 0;border-bottom:1px solid var(--rule);font-size:14px;
-}
-.credit-line:last-child{border-bottom:none;}
-.credit-role{
-  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;
-  text-transform:uppercase;color:var(--muted);
-}
-.credit-name{
-  font-family:'Alegreya',Georgia,serif;font-weight:500;color:var(--ink);line-height:1.4;
-}
-.credit-client{
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.06em;
-  text-transform:uppercase;color:var(--ink-soft);text-align:right;
-}
-
-/* THE HUMANS — a quote and an attribution, set like a pull quote in print. */
-.humans-lead{
-  display:grid;grid-template-columns:320px 1fr;gap:56px;align-items:start;margin-top:52px;
-}
-.humans-portrait{margin:0;border:1px solid var(--rule);background:var(--paper-deep);overflow:hidden;}
-.humans-portrait img{width:100%;height:auto;display:block;aspect-ratio:3/4;object-fit:cover;}
-.humans-quote{
-  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:400;
-  font-size:clamp(24px,2.6vw,34px);line-height:1.34;color:var(--ink);
-  letter-spacing:-0.012em;margin:0;
-  font-variation-settings:"opsz" 144;
-}
-.humans-attrib{margin-top:34px;padding-top:12px;border-top:2px solid var(--ink);max-width:46ch;}
-.humans-attrib-name{
-  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:21px;color:var(--ink);
-  letter-spacing:-0.01em;
-}
-.humans-attrib-role{
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;
-  color:var(--muted);margin-top:6px;
-}
-.humans-attrib-bio{
-  font-size:15px;color:var(--ink-soft);line-height:1.6;margin-top:14px;
-}
-@media(max-width:900px){
-  .humans-lead{grid-template-columns:1fr;gap:30px;}
-  .humans-portrait{max-width:250px;}
-}
-.credit-roll-label{
-  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);
-  font-family:'DM Mono',monospace;text-align:center;margin-bottom:18px;font-weight:500;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   ON-SET GALLERY — real production stills. An image-forward interstitial
-   between the marquee and the wishes, so the page earns its claims with
-   actual sets before it makes them in copy. Captions describe only what's
-   in frame — no invented clients.
-   ════════════════════════════════════════════════════════════════════ */
-.set-gallery{background:var(--paper-deep);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);}
-
-.set-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;
-  margin:34px calc(-1 * max(60px, (100vw - 1240px) / 2)) 0;background:var(--ink);}
 .set-figure{margin:0;background:var(--ink);display:flex;flex-direction:column;}
-.set-figure img{width:100%;height:auto;display:block;aspect-ratio:4/5;object-fit:cover;}
-/* Caption sits under the frame like a contact sheet, not scrimmed over it. */
+.set-figure img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;}
 .set-figure figcaption{
-  padding:14px 16px 16px;
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;
-  text-transform:uppercase;color:var(--paper);opacity:0.6;
+  padding:14px 16px 16px;font-size:11px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
 }
 
-/* HUMANS featured photo — the crew itself, anchoring "The humans". */
+/* ── SECTION HEADS ─────────────────────────────────────────────────── */
+/* Measure in px, not ch — a ch on a condensed face is barely half the
+   width of one on Archivo, and a ch-based cap folds these headings into
+   a one-word-per-line column. */
+.head{max-width:min(100%,1180px);}
+.head .display{
+  font-size:clamp(38px,6.4vw,124px);margin-top:16px;
+  max-width:min(100%,1120px);text-wrap:balance;
+}
+.head-lede{margin-top:clamp(20px,2vw,32px);max-width:44em;}
+.head-link{
+  display:inline-block;margin-top:26px;font-size:12px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;text-decoration:none;
+  color:var(--paper);border-bottom:1px solid #4A4A44;padding-bottom:6px;
+  transition:border-color .18s;
+}
+.head-link:hover{border-bottom-color:var(--paper);}
+.on-paper .head-link{color:var(--ink);border-bottom-color:var(--paper-line);}
+.on-paper .head-link:hover{border-bottom-color:var(--ink);}
 
-/* ════════════════════════════════════════════════════════════════════
-   THE MODEL — four-pillar block explaining why MARK is not an AI tool.
-   Each pillar is numbered, has a typewriter-monospace title, and a
-   short body. The closer quote anchors the manifesto.
-   ════════════════════════════════════════════════════════════════════ */
-.model-section{background:var(--paper-deep);border-bottom:1px solid var(--rule);}
+/* ── THE HUMANS ────────────────────────────────────────────────────── */
+.humans-lead{
+  display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);
+  gap:clamp(28px,4vw,70px);align-items:start;margin-top:clamp(40px,4.5vw,76px);
+}
+.humans-portrait{margin:0;overflow:hidden;background:var(--ink-raise);}
+.humans-portrait img{width:100%;aspect-ratio:3/4;object-fit:cover;}
+.humans-quote{
+  font-family:'Archivo',sans-serif;font-weight:500;
+  font-size:clamp(21px,2.5vw,42px);line-height:1.28;letter-spacing:-.015em;
+  color:var(--paper);max-width:26ch;
+}
+.humans-attrib{margin-top:clamp(26px,3vw,44px);padding-top:16px;border-top:1px solid var(--ink-line);}
+.attrib-name{font-family:'Anton',Impact,sans-serif;text-transform:uppercase;font-size:22px;letter-spacing:.03em;}
+.attrib-role{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-top:8px;}
+.attrib-bio{font-size:14px;color:var(--dim);margin-top:14px;max-width:40ch;}
+.credit-list{margin-top:clamp(46px,5vw,86px);border-top:1px solid var(--ink-line);}
+.credit-line{
+  display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:24px;align-items:baseline;
+  padding:16px 0;border-bottom:1px solid var(--ink-line);
+}
+.credit-role{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);}
+.credit-name{font-size:clamp(15px,1.2vw,20px);font-weight:500;color:var(--paper);}
+.credit-client{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-align:right;}
 
-@media (max-width:680px){
-  .credit-line{grid-template-columns:1fr;gap:4px;}
-  .credit-client{text-align:left;}
+/* ── SUITE ROWS (the model) ────────────────────────────────────────── */
+/* Name at display size, argument beneath it. Nothing boxed. */
+.suite{margin-top:clamp(44px,5vw,84px);border-top:1px solid var(--paper-line);}
+.suite-row{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:clamp(20px,3vw,60px);align-items:baseline;
+  padding:clamp(26px,3vw,50px) 0;border-bottom:1px solid var(--paper-line);
 }
+.suite-n{font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--dim-ink);margin-bottom:12px;}
+.suite-name{font-size:clamp(28px,4.4vw,84px);line-height:.92;}
+.suite-body{font-size:clamp(15px,1.1vw,20px);line-height:1.6;color:#3B3C36;max-width:44ch;}
 
-/* HOW IT WORKS */
-.how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:70px;
-  border-top:1px solid var(--rule);}
-.how-step{padding:38px 44px 38px 0;position:relative;}
-.how-step + .how-step{border-left:1px solid var(--rule);padding-left:44px;}
-.step-num{
-  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:400;font-size:76px;
-  color:var(--ink);line-height:1;margin-bottom:22px;letter-spacing:-0.04em;
-  font-variation-settings:"opsz" 144;opacity:0.2;
-}
-.step-title{
-  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:20px;color:var(--ink);
-  margin-bottom:10px;letter-spacing:-0.01em;
-}
-.step-desc{font-size:16px;color:var(--ink-soft);line-height:1.65;font-family:'Alegreya',Georgia,serif;}
+/* ── HOW IT WORKS ──────────────────────────────────────────────────── */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:clamp(44px,5vw,84px);border-top:1px solid var(--ink-line);}
+.step{padding:clamp(30px,3vw,52px) clamp(24px,3vw,56px) clamp(30px,3vw,52px) 0;}
+.step + .step{border-left:1px solid var(--ink-line);padding-left:clamp(24px,3vw,56px);}
+.step-n{font-size:clamp(52px,6vw,110px);line-height:.85;color:#3A3A34;}
+.step-title{font-family:'Anton',Impact,sans-serif;text-transform:uppercase;font-size:clamp(19px,1.7vw,30px);letter-spacing:.03em;margin:22px 0 12px;}
+.step-desc{font-size:clamp(14px,1.05vw,18px);line-height:1.6;color:var(--dim);}
 
-/* INTEGRATIONS — was ten bordered chips with hand-drawn icons around a
-   pulsing logo. It is a list of what goes in and what comes back; set it
-   as one. The icons were the single loudest "generated" tell on the page. */
-.io{
-  display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:70px;
-  border-top:1px solid var(--rule);
-}
-.io-col{padding:34px 48px 34px 0;}
-.io-col + .io-col{border-left:1px solid var(--rule);padding-left:48px;}
-.io-head{
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.2em;
-  text-transform:uppercase;color:var(--muted);margin-bottom:22px;
-}
+/* ── INTEGRATIONS ──────────────────────────────────────────────────── */
+.io{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:clamp(40px,4.5vw,76px);border-top:1px solid var(--ink-line);}
+.io-col{padding:clamp(26px,3vw,44px) clamp(24px,3vw,56px) clamp(26px,3vw,44px) 0;}
+.io-col + .io-col{border-left:1px solid var(--ink-line);padding-left:clamp(24px,3vw,56px);}
+.io-head{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:22px;}
 .io ul{list-style:none;}
 .io li{
-  font-family:'Alegreya',Georgia,serif;font-size:21px;color:var(--ink);
-  padding:13px 0;border-bottom:1px solid var(--rule);letter-spacing:-0.008em;
+  font-family:'Anton',Impact,sans-serif;text-transform:uppercase;letter-spacing:.03em;
+  font-size:clamp(20px,2.2vw,40px);line-height:1;padding:16px 0;
+  border-bottom:1px solid var(--ink-line);color:var(--paper);
 }
 .io li:last-child{border-bottom:0;}
 
-/* FEATURES */
-.features-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:70px;
-  border-top:1px solid var(--rule);}
-/* No frame, no lift, no shadow. A hairline grid is enough structure —
-   four identical bordered tiles were the loudest template tell on the page. */
-.feature-card{
-  background:none;border:0;border-bottom:1px solid var(--rule);
-  padding:34px 56px 34px 0;text-decoration:none;color:inherit;display:block;
-}
-.feature-card:nth-child(even){border-left:1px solid var(--rule);padding-left:56px;}
-.feature-title{
-  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:23px;color:var(--ink);
-  margin-bottom:10px;letter-spacing:-0.012em;
-}
-.feature-desc{font-size:16px;color:var(--ink-soft);line-height:1.62;font-family:'Alegreya',Georgia,serif;max-width:46ch;}
-.feature-badge{
-  display:block;margin-bottom:16px;color:var(--muted);
-  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.2em;
-}
-
-/* ENGAGEMENT LADDER — stage rows. Reads as a ladder, not a pricing table:
-   the eye should travel down 00 → 03, not compare four columns. */
-.stage-list{margin-top:64px;border-top:1px solid var(--rule);}
+/* ── ENGAGEMENT ────────────────────────────────────────────────────── */
+.stages{margin-top:clamp(44px,5vw,84px);border-top:1px solid var(--paper-line);}
 .stage{
-  display:grid;grid-template-columns:130px 1fr 210px;gap:36px;align-items:start;
-  padding:40px 24px 40px 0;border-bottom:1px solid var(--rule);
-  transition:background-color 0.3s var(--ease-out);
+  display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,230px);
+  gap:clamp(20px,3vw,54px);align-items:start;
+  padding:clamp(28px,3.2vw,54px) 0;border-bottom:1px solid var(--paper-line);
 }
-.stage:hover{background:var(--paper);}
-
-.stage-num{
-  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:400;font-size:66px;
-  color:var(--ink);line-height:0.9;letter-spacing:-0.04em;opacity:0.2;
-  font-variation-settings:"opsz" 144;
-}
-.stage-dur{
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;
-  color:var(--muted);margin-top:12px;line-height:1.5;
-}
-.stage-name{
-  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:27px;color:var(--ink);
-  margin-bottom:10px;letter-spacing:-0.01em;
-}
-.stage-desc{
-  font-size:16px;color:var(--ink-soft);line-height:1.65;margin-bottom:18px;max-width:56ch;
-  font-family:'Alegreya',Georgia,serif;
-}
-/* Deliverables as a run-on mono line, not sixteen little bordered chips. */
-.stage-gets{list-style:none;display:flex;flex-wrap:wrap;gap:0 6px;}
-.stage-gets li{
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
-  color:var(--muted);
-}
+.stage-name{font-size:clamp(34px,5.2vw,104px);line-height:.92;}
+.stage-dur{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim-ink);margin-top:14px;}
+.stage-desc{font-size:clamp(15px,1.08vw,19px);line-height:1.6;color:#3B3C36;}
+.stage-gets{list-style:none;display:flex;flex-wrap:wrap;gap:0 6px;margin-top:18px;}
+.stage-gets li{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--dim-ink);}
 .stage-gets li + li::before{content:'· ';}
-.stage-price{
-  font-family:'DM Mono',monospace;font-size:14px;color:var(--ink);letter-spacing:0.02em;
-  text-align:right;line-height:1.75;
-}
-.stage-price .price-label{
-  display:block;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;
-  color:var(--muted);margin-bottom:8px;
-}
-.stage-price .price-note{
-  display:block;font-size:10px;color:var(--muted);margin-top:10px;
-  letter-spacing:0.04em;line-height:1.5;
-}
-@media(max-width:900px){
-  .stage{grid-template-columns:1fr;gap:16px;padding:32px 0;}
-  .stage-num{font-size:52px;}
-  .stage-dur{margin-top:6px;}
-  .stage-price{text-align:left;}
-}
+.stage-price{text-align:right;}
+.price-label{display:block;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim-ink);margin-bottom:10px;}
+.price-fig{font-family:'Anton',Impact,sans-serif;text-transform:uppercase;font-size:clamp(22px,2.1vw,38px);letter-spacing:.02em;line-height:1;}
+.price-note{display:block;font-size:11px;color:var(--dim-ink);margin-top:12px;line-height:1.5;}
 
-/* CTA */
-.final-cta{text-align:center;background:var(--paper-deep);border-top:1px solid var(--rule);position:relative;overflow:hidden;}
-.cta-title{
-  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:clamp(42px,6vw,86px);
-  color:var(--ink);margin-bottom:24px;letter-spacing:-0.034em;line-height:0.99;
-  max-width:19ch;margin-inline:auto;text-wrap:balance;
-  font-variation-settings:"opsz" 144;
+/* ── CLOSER ────────────────────────────────────────────────────────── */
+.closer{text-align:center;}
+.closer .display{font-size:clamp(44px,9.4vw,180px);line-height:.92;margin-top:20px;max-width:min(100%,1400px);margin-inline:auto;text-wrap:balance;}
+.closer-sub{margin-top:clamp(22px,2.4vw,38px);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);}
+.closer .btn{margin-top:clamp(30px,3vw,48px);}
+.closer-terms{margin-top:24px;font-size:12px;color:var(--dim);}
+.closer-email{
+  display:inline-block;margin-top:26px;font-size:15px;font-weight:600;
+  color:var(--paper);text-decoration:none;border-bottom:1px solid #4A4A44;padding-bottom:4px;
+  transition:border-color .18s;
 }
-.cta-terms{
-  margin-top:26px;font-size:11px;color:var(--muted);
-  font-family:'DM Mono',monospace;letter-spacing:0.08em;
-}
-.final-cta .contact-email{display:inline-block;margin-top:30px;}
-.cta-title em{font-style:italic;font-weight:400;color:var(--ink);}
-.cta-sub{
-  font-size:13px;color:var(--muted);margin-bottom:40px;
-  font-family:'DM Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;
-}
-.contact-email{
-  font-size:18px;color:var(--accent);text-decoration:none;
-  font-family:'DM Mono',monospace;letter-spacing:0.06em;
-  border-bottom:1px solid transparent;transition:border-color 0.25s var(--ease-out);
-}
-.contact-email:hover{border-bottom-color:var(--accent);}
+.closer-email:hover{border-bottom-color:var(--paper);}
 
-/* FOOTER */
+/* ── FOOTER ────────────────────────────────────────────────────────── */
 footer{
-  padding:40px 60px;border-top:1px solid var(--rule);
-  display:flex;align-items:center;justify-content:space-between;background:var(--paper-deep);
+  padding:38px var(--gutter);border-top:1px solid var(--ink-line);
+  display:flex;align-items:center;justify-content:space-between;gap:22px;
 }
 .footer-logo{
-  display:inline-flex;align-items:center;gap:8px;
-  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:18px;color:var(--ink);
-  font-variation-settings:"opsz" 144;letter-spacing:0.02em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:9px;color:var(--paper);
+  --mk-body:#D5D6CE;--mk-stripe:#171714;
 }
-.footer-logo svg.mark{width:22px;height:22px;flex-shrink:0;}
-.footer-logo .wm-mark{font-family:'Alegreya',Georgia,serif;font-weight:700;font-size:18px;letter-spacing:0.04em;}
-.footer-office{display:inline-block;margin-top:5px;opacity:0.8;}
-.footer-copy{
-  font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;
-  /* middle column of a space-between flex row: give it the slack, or the
-     company-number line gets squeezed into a stack */
-  flex:1 1 auto;text-align:center;padding:0 28px;line-height:1.7;
+.footer-logo svg.mark{width:24px;height:24px;border-radius:3px;}
+.footer-logo .wm-mark{font-size:20px;}
+.footer-copy{flex:1 1 auto;text-align:center;font-size:11px;color:var(--dim);line-height:1.7;padding:0 24px;}
+.footer-office{display:inline-block;margin-top:4px;opacity:.85;}
+.footer-email a{font-size:12px;color:var(--dim);text-decoration:none;}
+.footer-email a:hover{color:var(--paper);}
+
+/* ── REVEAL ────────────────────────────────────────────────────────── */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .7s var(--ease),transform .7s var(--ease);}
+.reveal.in{opacity:1;transform:none;}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  .reveal{opacity:1;transform:none;transition:none;}
 }
-.footer-email a{font-size:12px;color:var(--ink-soft);text-decoration:none;font-family:'DM Mono',monospace;letter-spacing:0.06em;transition:color 0.2s;}
-.footer-email a:hover{color:var(--accent);}
 
-/* REVEAL ANIMATION baseline (JS observer toggles opacity to 1) */
-.reveal{opacity:0;transform:translateY(12px);transition:opacity 0.7s var(--ease-out),transform 0.7s var(--ease-out);}
-.reveal.in{opacity:1;transform:translateY(0);}
-
-@media(max-width:900px){
+/* ── RESPONSIVE ────────────────────────────────────────────────────── */
+@media(max-width:1000px){
+  .humans-lead{grid-template-columns:1fr;}
+  .humans-portrait{max-width:300px;}
+  .suite-row{grid-template-columns:1fr;gap:14px;}
+  .steps{grid-template-columns:1fr;}
+  .step{padding:28px 0;border-bottom:1px solid var(--ink-line);}
+  .step + .step{border-left:0;padding-left:0;}
   .io{grid-template-columns:1fr;}
-  .io-col{padding:28px 0;border-bottom:1px solid var(--rule);}
+  .io-col{padding:26px 0;border-bottom:1px solid var(--ink-line);}
   .io-col + .io-col{border-left:0;padding-left:0;}
   .io-col:last-child{border-bottom:0;}
-  .how-steps{grid-template-columns:1fr;}
-  .how-step{padding:32px 0;border-bottom:1px solid var(--rule);}
-  .how-step + .how-step{border-left:0;padding-left:0;}
-  .features-grid{grid-template-columns:1fr;}
-  .feature-card{padding:30px 0;}
-  .feature-card:nth-child(even){border-left:0;padding-left:0;}
+  .stage{grid-template-columns:1fr;gap:16px;}
+  .stage-price{text-align:left;}
+  .credit-line{grid-template-columns:1fr;gap:5px;}
+  .credit-client{text-align:left;}
 }
-@media(max-width:768px){
-  body{cursor:auto;}
-  #cursor,#cursor-ring{display:none;}
-  nav{padding:14px 20px;}
-  .nav-links a:not(.nav-cta){display:none;}
-  .nav-cta{padding:8px 14px;font-size:11px;}
-  .hero{padding:104px 20px 64px;min-height:auto;}
-  .hero-title{font-size:clamp(48px,13.5vw,78px);margin-bottom:24px;}
-  .hero-title .lead{font-size:0.46em;max-width:16ch;}
-  .hero-subtitle{font-size:17px;line-height:1.55;}
-  .hero-ctas{margin-top:34px;}
-  .hero-meta{align-items:flex-start;line-height:1.55;}
-  .hero-meta-dot{margin-top:6px;flex-shrink:0;}
-  .hero-ctas{flex-direction:column;align-items:flex-start;gap:14px;width:100%;}
-  .btn-primary{width:100%;text-align:center;padding:16px 24px;font-size:14px;}
-  section{padding:64px 20px;}
-  .set-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-left:-20px;margin-right:-20px;}
-  .final-cta{padding:60px 20px;}
-  footer{flex-direction:column;gap:14px;text-align:center;padding:32px 20px;}
+@media(max-width:760px){
+  nav{height:56px;}
+  .nav-links a:not(.btn){display:none;}
+  .hero{padding-top:130px;min-height:auto;}
+  .set-strip{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .head{max-width:none;}
+  footer{flex-direction:column;text-align:center;gap:16px;}
   .footer-copy{padding:0;}
-  .section-title{font-size:clamp(30px,8vw,52px);}
 }
 </style>
 </head>
@@ -493,409 +340,347 @@ footer{
 
 <!-- ════════════════════════════════════════════════════════════════════
      MARK BRAND MARK · reusable SVG defs
-     The mark is a stylised film slate: a black body with a diagonal-stripe
-     snap arm across the top, an italic Fraunces "M" set in cream paper
-     centred in the body, and a small red tally light in the lower-right
-     corner. The wordmark sits to the right: "M" in italic Fraunces,
-     a brand-red filled dot (the "live / recording" tally light film
-     cameras show), and "ARK" in tight Inter all-caps. Together they
-     read as both the company name and a film artefact.
+     Slate body, diagonal snap arm, an M in the body, red tally light in
+     the corner. Body and stripe colours are driven by --mk-body and
+     --mk-stripe on the host element (custom properties inherit into the
+     <use> shadow tree), so the same symbol works on ink and on paper.
      ════════════════════════════════════════════════════════════════════ -->
 <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
   <defs>
     <symbol id="mark-icon" viewBox="0 0 80 80">
-      <!-- Slate body -->
-      <rect width="80" height="80" rx="3" fill="#14110D"/>
-      <!-- Snap arm — top 22 px, diagonal stripes via inline rects -->
-      <g>
-        <rect x="0" y="0" width="80" height="22" fill="#14110D"/>
-        <g transform="rotate(-52 40 11)">
-          <rect x="-30" y="-6" width="10" height="40" fill="#F5F1E8"/>
-          <rect x="-10" y="-6" width="10" height="40" fill="#F5F1E8"/>
-          <rect x="10"  y="-6" width="10" height="40" fill="#F5F1E8"/>
-          <rect x="30"  y="-6" width="10" height="40" fill="#F5F1E8"/>
-          <rect x="50"  y="-6" width="10" height="40" fill="#F5F1E8"/>
-        </g>
-        <!-- Hairline seam between snap and body -->
-        <line x1="0" y1="22" x2="80" y2="22" stroke="#F5F1E8" stroke-width="0.8" opacity="0.4"/>
+      <rect width="80" height="80" rx="3" style="fill:var(--mk-body,#171714)"/>
+      <g transform="rotate(-52 40 11)">
+        <rect x="-30" y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
+        <rect x="-10" y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
+        <rect x="10"  y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
+        <rect x="30"  y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
+        <rect x="50"  y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
       </g>
-      <!-- Italic serif M in the slate body -->
-      <text x="40" y="66" fill="#F5F1E8"
-            font-family="Alegreya, Georgia, serif"
-            font-style="italic"
-            font-size="50"
-            font-weight="600"
-            text-anchor="middle"
-            letter-spacing="-0.025em">M</text>
-      <!-- Tally light — small red dot bottom-right -->
-      <circle cx="68" cy="68" r="3.4" fill="#C8330A"/>
-      <circle cx="68" cy="68" r="6" fill="none" stroke="#C8330A" stroke-width="0.6" opacity="0.4"/>
+      <line x1="0" y1="22" x2="80" y2="22" style="stroke:var(--mk-stripe,#D5D6CE)" stroke-width="0.8" opacity="0.35"/>
+      <text x="40" y="68" style="fill:var(--mk-stripe,#D5D6CE)"
+            font-family="Anton, Impact, sans-serif" font-size="52"
+            text-anchor="middle" letter-spacing="0.02em">M</text>
+      <circle cx="69" cy="69" r="3.4" fill="#C8330A"/>
     </symbol>
   </defs>
 </svg>
+
 <div class="slate-stripe" aria-hidden="true"></div>
 
 <nav id="nav">
   <a href="./" class="nav-logo" aria-label="MARK — Production OS">
     <svg class="mark" aria-hidden="true"><use href="#mark-icon"/></svg>
-    <span class="wm-mark">MARK</span>
+    <span class="wm-mark">Mark</span>
   </a>
   <div class="nav-links">
     <a href="#humans">The humans</a>
     <a href="how-it-works.html">How it&rsquo;s built</a>
     <a href="manifesto.html">What we believe</a>
     <a href="#engagement">Engagement</a>
-    <a href="mailto:krishmpinto@gmail.com?subject=Teardown%20%E2%80%94%20intro%20call&body=Happy%20to%20talk%20it%20through%20first%20%E2%80%94%2020%20minutes%2C%20nothing%20to%20send%20over%20yet.%0A%0ARoughly%20how%20many%20productions%20a%20year%3A%0ALast%20three%20jobs%20%28one%20line%20each%29%3A%0ATwo%20times%20that%20suit%20you%3A%0A" class="nav-cta">Book a teardown</a>
+    <a href="mailto:krishmpinto@gmail.com?subject=Teardown%20%E2%80%94%20intro%20call&body=Happy%20to%20talk%20it%20through%20first%20%E2%80%94%2020%20minutes%2C%20nothing%20to%20send%20over%20yet.%0A%0ARoughly%20how%20many%20productions%20a%20year%3A%0ALast%20three%20jobs%20%28one%20line%20each%29%3A%0ATwo%20times%20that%20suit%20you%3A%0A" class="btn btn-dark">Book a teardown</a>
   </div>
 </nav>
 
-<!-- HERO — the setup line, the answer, one button, two doors. -->
+<!-- HERO — a still from a real stage, the name at title-card size. -->
 <section class="hero">
-  <div class="hero-content">
-    <h1 class="hero-title"><span class="lead">Every production runs on paperwork.</span> <em>Ask Mark.</em></h1>
-    <p class="hero-subtitle">Mark&rsquo;s brain isn&rsquo;t random artificial intelligence. It carries the experience of crew across films, TV, commercials and music videos &mdash; built on real production data from the ground up.</p>
+  <div class="hero-bg" aria-hidden="true">
+    <img src="assets/set-cyc.jpg" alt="" loading="eager" decoding="async"/>
+  </div>
+  <div class="hero-inner">
+    <p class="eyebrow">Production OS for film</p>
+    <h1 class="hero-title display">Ask Mark</h1>
+    <p class="hero-lede lede">Every production runs on paperwork. Mark&rsquo;s brain isn&rsquo;t random
+      artificial intelligence &mdash; it carries the experience of crew across films, TV,
+      commercials and music videos, built on real production data from the ground up.</p>
     <div class="hero-ctas">
-      <a href="mailto:krishmpinto@gmail.com?subject=Teardown%20%E2%80%94%20intro%20call&body=Happy%20to%20talk%20it%20through%20first%20%E2%80%94%2020%20minutes%2C%20nothing%20to%20send%20over%20yet.%0A%0ARoughly%20how%20many%20productions%20a%20year%3A%0ALast%20three%20jobs%20%28one%20line%20each%29%3A%0ATwo%20times%20that%20suit%20you%3A%0A" class="btn-primary"><span>Book a teardown &rarr;</span></a>
+      <a href="mailto:krishmpinto@gmail.com?subject=Teardown%20%E2%80%94%20intro%20call&body=Happy%20to%20talk%20it%20through%20first%20%E2%80%94%2020%20minutes%2C%20nothing%20to%20send%20over%20yet.%0A%0ARoughly%20how%20many%20productions%20a%20year%3A%0ALast%20three%20jobs%20%28one%20line%20each%29%3A%0ATwo%20times%20that%20suit%20you%3A%0A" class="btn btn-light">Book a teardown</a>
       <div class="hero-try">
         <a href="callsheet.html">Call sheet builder</a>
         <a href="budget.html">Budget builder</a>
       </div>
     </div>
-    <div class="hero-meta">
-      <div class="hero-meta-dot"></div>
-      <span>Indian Cinema live · UK commercial in beta · A line producer reviews every output</span>
-    </div>
+    <p class="hero-meta">Indian Cinema live &middot; UK commercial in beta &middot; A line producer reviews every output</p>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════════
-     ON SET — real production stills. Proof before the pitch.
-     ════════════════════════════════════════════════════════════════════ -->
+<!-- CALLOUT — the whole proposition in four lines. -->
+<section class="callout on-paper">
+  <span class="display">Mark does</span>
+  <span class="display">the paperwork</span>
+  <span class="display quiet">crews do</span>
+  <span class="display quiet">the film</span>
+</section>
+
+<!-- ON SET -->
 <section class="set-gallery">
-  <div class="section-label">On set</div>
-  <div class="set-grid">
+  <div class="wrap">
+    <p class="eyebrow">On set</p>
+  </div>
+  <div class="set-strip">
     <figure class="set-figure">
       <img src="assets/set-soundstage.jpg" alt="A film soundstage with a long camera-crane truss rigged over a white floor, monitors and an ARRI camera in the foreground." loading="lazy" decoding="async"/>
-      <figcaption>Soundstage · crane &amp; camera build</figcaption>
+      <figcaption>Soundstage &middot; crane &amp; camera build</figcaption>
     </figure>
     <figure class="set-figure">
       <img src="assets/set-commercial.jpg" alt="A studio set for a vehicle commercial — two cars lit with diffusion frames, a camera dolly on track and lighting rigs." loading="lazy" decoding="async"/>
-      <figcaption>Commercial unit · vehicle set</figcaption>
+      <figcaption>Commercial unit &middot; vehicle set</figcaption>
     </figure>
     <figure class="set-figure">
       <img src="assets/set-cyc.jpg" alt="A darkened cyclorama stage with silhouetted crew around a single lit set piece — a bare tree on a small island of earth." loading="lazy" decoding="async"/>
-      <figcaption>Cyc stage · night build</figcaption>
+      <figcaption>Cyc stage &middot; night build</figcaption>
     </figure>
     <figure class="set-figure">
       <img src="assets/set-wrap.jpg" alt="A black-and-white reflection of a crew member walking while coiling cable, shot upside down in a puddle." loading="lazy" decoding="async"/>
-      <figcaption>Wrap · the walk back</figcaption>
+      <figcaption>Wrap &middot; the walk back</figcaption>
     </figure>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════════
-     SC. 02 · THE HUMANS — Who is actually behind MARK
-     Positioning beat #1: this is built by creatives with real on-set
-     credits. The proof is the credit roll. The AI is the multiplier.
-     ════════════════════════════════════════════════════════════════════ -->
-
-<!-- ════════════════════════════════════════════════════════════════════
-     THE HUMANS — proof, not assertion. A named person, a real quote, a
-     credit list anyone can check, and an actual set photo.
-     ════════════════════════════════════════════════════════════════════ -->
-<section id="humans" class="humans-section">
-  <div class="section-label">The humans</div>
-  <div class="section-title">Built by the people who&rsquo;ve been the runner, the AC, the <em>1st AD.</em></div>
-
-  <div class="humans-lead">
-    <figure class="humans-portrait">
-      <img src="assets/krish-pinto.jpg" alt="Krish Pinto, founding creative at MARK." loading="lazy" decoding="async" width="900" height="1200"/>
-    </figure>
-    <div class="humans-lead-copy">
-    <blockquote class="humans-quote">
-      I&rsquo;ve marked up a call sheet at 1am with a torch in my teeth. MARK is
-      the thing I wish I&rsquo;d had on every set &mdash; the paperwork handled, so
-      the people are free to make the film.
-    </blockquote>
-    <div class="humans-attrib">
-      <div class="humans-attrib-name">Krish Pinto</div>
-      <div class="humans-attrib-role">Founding creative &middot; Cinematographer</div>
-      <div class="humans-attrib-bio">London &middot; MetFilm School &middot; Straight 8 winner 2022 &amp; 2023 &middot; Author, &ldquo;Becoming a Filmmaker&rdquo;</div>
+<!-- THE HUMANS -->
+<section id="humans" class="band-rule">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">The humans</p>
+      <h2 class="display">Built by the runner, the AC, the 1st AD</h2>
     </div>
+
+    <div class="humans-lead">
+      <figure class="humans-portrait">
+        <img src="assets/krish-pinto.jpg" alt="Krish Pinto, founding creative at MARK." loading="lazy" decoding="async" width="900" height="1200"/>
+      </figure>
+      <div>
+        <blockquote class="humans-quote">
+          I&rsquo;ve marked up a call sheet at 1am with a torch in my teeth. MARK is
+          the thing I wish I&rsquo;d had on every set &mdash; the paperwork handled, so
+          the people are free to make the film.
+        </blockquote>
+        <div class="humans-attrib">
+          <div class="attrib-name">Krish Pinto</div>
+          <div class="attrib-role">Founding creative &middot; Cinematographer</div>
+          <div class="attrib-bio">London &middot; MetFilm School &middot; Straight 8 winner 2022 &amp; 2023 &middot; Author, &ldquo;Becoming a Filmmaker&rdquo;</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="credit-list">
+      <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">&ldquo;Lovestore&rdquo; &mdash; YSL Beauty, ft. Dua Lipa</span><span class="credit-client">Yves Saint Laurent</span></div>
+      <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">AW 2025&ndash;26</span><span class="credit-client">Christian Dior</span></div>
+      <div class="credit-line"><span class="credit-role">Production</span><span class="credit-name">Idris Elba: Our Knife Crime Crisis</span><span class="credit-client">BBC One &times; 22 Summers</span></div>
+      <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">Bullet 650 &middot; House of Classic &middot; Classic 350 Unveiled</span><span class="credit-client">Royal Enfield</span></div>
+      <div class="credit-line"><span class="credit-role">Cinematographer</span><span class="credit-name">OMF &middot; Energy &middot; Nostalgia</span><span class="credit-client">Dappy &middot; Tinie Tempah &middot; Sammy Virji</span></div>
+      <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">Mutual Funds</span><span class="credit-client">PhonePe</span></div>
     </div>
   </div>
-
-  <div class="credit-roll-label" style="text-align:left;margin-top:64px;">Selected credits</div>
-  <div class="credit-list">
-    <div class="credit-line">
-      <span class="credit-role">Camera dept</span>
-      <span class="credit-name">&ldquo;Lovestore&rdquo; &mdash; YSL Beauty, ft. Dua Lipa</span>
-      <span class="credit-client">Yves Saint Laurent</span>
-    </div>
-    <div class="credit-line">
-      <span class="credit-role">Camera dept</span>
-      <span class="credit-name">AW 2025&ndash;26</span>
-      <span class="credit-client">Christian Dior</span>
-    </div>
-    <div class="credit-line">
-      <span class="credit-role">Production</span>
-      <span class="credit-name">Idris Elba: Our Knife Crime Crisis</span>
-      <span class="credit-client">BBC One &times; 22 Summers</span>
-    </div>
-    <div class="credit-line">
-      <span class="credit-role">Camera dept</span>
-      <span class="credit-name">Bullet 650 &middot; House of Classic &middot; Classic 350 Unveiled</span>
-      <span class="credit-client">Royal Enfield</span>
-    </div>
-    <div class="credit-line">
-      <span class="credit-role">Cinematographer</span>
-      <span class="credit-name">OMF &middot; Energy &middot; Nostalgia</span>
-      <span class="credit-client">Dappy &middot; Tinie Tempah &middot; Sammy Virji</span>
-    </div>
-    <div class="credit-line">
-      <span class="credit-role">Camera dept</span>
-      <span class="credit-name">Mutual Funds</span>
-      <span class="credit-client">PhonePe</span>
-    </div>
-  </div>
-
 </section>
 
-<section id="model" class="model-section">
-  <div class="section-label">The model</div>
-  <div class="section-title">Not a tool you buy. Someone who <em>deploys.</em></div>
-  <a href="manifesto.html" style="display:inline-block;margin-top:22px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent);">What we believe &rarr;</a>
-  <div class="section-body">
-    MARK doesn&rsquo;t sell you software and wish you luck. A production creative embeds
-    with your department, runs a real job alongside your team, and leaves behind a
-    system built on your rate cards, your vendors and your crew &mdash; not a generic template.
-  </div>
-  <div class="features-grid">
-    <div class="feature-card reveal">
-      <span class="feature-badge">01</span>
-      <div class="feature-title">Embedded, not licensed</div>
-      <div class="feature-desc">A line producer or 1st AD who has done the job at scale sits inside your production department for the length of the engagement. Their judgement is the product; the AI removes the work nobody wanted anyway.</div>
+<!-- THE MODEL -->
+<section id="model" class="on-paper">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">The model</p>
+      <h2 class="display">Not a tool you buy. Someone who deploys</h2>
+      <p class="head-lede lede">MARK doesn&rsquo;t sell you software and wish you luck. A production creative embeds
+        with your department, runs a real job alongside your team, and leaves behind a
+        system built on your rate cards, your vendors and your crew &mdash; not a generic template.</p>
+      <a href="manifesto.html" class="head-link">What we believe &rarr;</a>
     </div>
-    <div class="feature-card reveal">
-      <span class="feature-badge">02</span>
-      <div class="feature-title">Built on your data</div>
-      <div class="feature-desc">Your rate cards, your vendor list, your crew roster, your last three cost reports. The system knows what a shoot day actually costs you &mdash; not what it costs on average.</div>
-    </div>
-    <div class="feature-card reveal">
-      <span class="feature-badge">03</span>
-      <div class="feature-title">Agentic search</div>
-      <div class="feature-desc">Rate cards, union schedules, vendor catalogues, permits, weather windows. The answer a producer would have spent half a day finding, with its sources attached.</div>
-    </div>
-    <div class="feature-card reveal">
-      <span class="feature-badge">04</span>
-      <div class="feature-title">Trained on outcomes</div>
-      <div class="feature-desc">What came in under. What overran. Which line the producer cut, and which vendor delivered. Every production that runs through MARK sharpens the estimate on the next one.</div>
+
+    <div class="suite">
+      <div class="suite-row reveal">
+        <div><div class="suite-n">01</div><h3 class="suite-name display">Embedded, not licensed</h3></div>
+        <p class="suite-body">A line producer or 1st AD who has done the job at scale sits inside your production department for the length of the engagement. Their judgement is the product; the AI removes the work nobody wanted anyway.</p>
+      </div>
+      <div class="suite-row reveal">
+        <div><div class="suite-n">02</div><h3 class="suite-name display">Built on your data</h3></div>
+        <p class="suite-body">Your rate cards, your vendor list, your crew roster, your last three cost reports. The system knows what a shoot day actually costs you &mdash; not what it costs on average.</p>
+      </div>
+      <div class="suite-row reveal">
+        <div><div class="suite-n">03</div><h3 class="suite-name display">Agentic search</h3></div>
+        <p class="suite-body">Rate cards, union schedules, vendor catalogues, permits, weather windows. The answer a producer would have spent half a day finding, with its sources attached.</p>
+      </div>
+      <div class="suite-row reveal">
+        <div><div class="suite-n">04</div><h3 class="suite-name display">Trained on outcomes</h3></div>
+        <p class="suite-body">What came in under. What overran. Which line the producer cut, and which vendor delivered. Every production that runs through MARK sharpens the estimate on the next one.</p>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- HOW IT WORKS -->
 <section id="how">
-  <div class="section-label">How it works</div>
-  <div class="section-title">Slate. Wire. Ship. With a human in the <em>cut.</em></div>
-  <a href="how-it-works.html" style="display:inline-block;margin-top:22px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent);">The architecture, and why &rarr;</a>
-  <div class="how-steps">
-    <div class="how-step reveal">
-      <div class="step-num">01</div>
-      <div class="step-title">Slate the production</div>
-      <div class="step-desc">Drop in the script, the dates, the lead cast &mdash; or just paste a paragraph. The agentic layer sluglines the scenes, counts the days, builds the breakdown. The line producer on duty checks it before you see it.</div>
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">How it works</p>
+      <h2 class="display">Slate. Wire. Ship. With a human in the cut</h2>
+      <a href="how-it-works.html" class="head-link">The architecture, and why &rarr;</a>
     </div>
-    <div class="how-step reveal">
-      <div class="step-num">02</div>
-      <div class="step-title">Wire the floor</div>
-      <div class="step-desc">Plug in Gmail, WhatsApp, Drive. Crew, vendors, location managers, NDAs &mdash; MARK holds the rolodex and the paper trail. Our 1st AD on the module makes sure the call sheet reads like a call sheet, not a SaaS export.</div>
-    </div>
-    <div class="how-step reveal">
-      <div class="step-num">03</div>
-      <div class="step-title">Ask, and it ships</div>
-      <div class="step-desc">&ldquo;Cut tomorrow&rsquo;s call sheet.&rdquo; &ldquo;Trim catering by &#8377;2L.&rdquo; &ldquo;Send the new SOC to all 40 crew.&rdquo; English or Hindi. The AI does the busywork; the human reviews anything you&rsquo;d want a human to review.</div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-n display">01</div>
+        <h3 class="step-title">Slate the production</h3>
+        <p class="step-desc">Drop in the script, the dates, the lead cast &mdash; or just paste a paragraph. The agentic layer sluglines the scenes, counts the days, builds the breakdown. The line producer on duty checks it before you see it.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-n display">02</div>
+        <h3 class="step-title">Wire the floor</h3>
+        <p class="step-desc">Plug in Gmail, WhatsApp, Drive. Crew, vendors, location managers, NDAs &mdash; MARK holds the rolodex and the paper trail. Our 1st AD on the module makes sure the call sheet reads like a call sheet, not a SaaS export.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-n display">03</div>
+        <h3 class="step-title">Ask, and it ships</h3>
+        <p class="step-desc">&ldquo;Cut tomorrow&rsquo;s call sheet.&rdquo; &ldquo;Trim catering by &#8377;2L.&rdquo; &ldquo;Send the new SOC to all 40 crew.&rdquo; English or Hindi. The AI does the busywork; the human reviews anything you&rsquo;d want a human to review.</p>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- INTEGRATIONS -->
-<section style="background:var(--paper-deep);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);">
-  <div class="section-label">Integrations</div>
-  <div class="section-title">The whole floor routes through <em>Mark.</em></div>
-  <div class="io">
-    <div class="io-col">
-      <div class="io-head">Plugs into</div>
-      <ul>
-        <li>Gmail</li>
-        <li>WhatsApp</li>
-        <li>Google Calendar</li>
-        <li>Google Drive</li>
-        <li>Telegram</li>
-      </ul>
+<section class="band-rule">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Integrations</p>
+      <h2 class="display">The whole floor routes through Mark</h2>
     </div>
-    <div class="io-col">
-      <div class="io-head">Comes back with</div>
-      <ul>
-        <li>Call sheets built &amp; sent</li>
-        <li>Contracts issued &amp; tracked</li>
-        <li>Budget monitored live</li>
-        <li>Transport coordinated</li>
-        <li>Daily to-do generated</li>
-      </ul>
+    <div class="io">
+      <div class="io-col">
+        <div class="io-head">Plugs into</div>
+        <ul>
+          <li>Gmail</li>
+          <li>WhatsApp</li>
+          <li>Google Calendar</li>
+          <li>Google Drive</li>
+          <li>Telegram</li>
+        </ul>
+      </div>
+      <div class="io-col">
+        <div class="io-head">Comes back with</div>
+        <ul>
+          <li>Call sheets built &amp; sent</li>
+          <li>Contracts issued &amp; tracked</li>
+          <li>Budget monitored live</li>
+          <li>Transport coordinated</li>
+          <li>Daily to-do generated</li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ENGAGEMENT LADDER
-     Replaces the old "Modules" grid. Rationale: a services/deployment firm
-     sells engagements, not a feature roadmap. Five "Coming soon" cards read
-     as "not ready to hire" to a producer with a job to place.
-     PRICES BELOW ARE PLACEHOLDERS — confirm against cost-to-serve before merge. -->
-<section id="engagement">
-  <div class="section-label">Engagement</div>
-  <div class="section-title">Four stages. Start with <em>five days.</em></div>
-  <div class="section-body">
-    Land small, prove it in currency, expand. Every stage ends with a decision
-    the Client can walk away from &mdash; and a number that says whether they should.
-  </div>
-
-  <div class="stage-list">
-
-    <div class="stage reveal">
-      <div>
-        <div class="stage-num">00</div>
-        <div class="stage-dur">5 working days</div>
-      </div>
-      <div>
-        <div class="stage-name">Teardown</div>
-        <div class="stage-desc">We take your last three productions &mdash; budgets, actuals, call sheets, invoices &mdash; and show you where the money leaked, which lines are wrong every single time, and what the paperwork actually costs you across a year.</div>
-        <ul class="stage-gets">
-          <li>Teardown report</li>
-          <li>Variance ledger</li>
-          <li>Annual cost of process</li>
-          <li>Remediation plan</li>
-        </ul>
-      </div>
-      <div class="stage-price">
-        <span class="price-label">Fixed fee</span>
-        <!-- Fee basis + comparables: docs/pricing-basis.md §1 -->
-        $4,500
-        <span class="price-note">Credited in full against Stage 1</span>
-      </div>
+<!-- ENGAGEMENT -->
+<section id="engagement" class="on-paper">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Engagement</p>
+      <h2 class="display">Four stages. Start with five days</h2>
+      <p class="head-lede lede">Land small, prove it in currency, expand. Every stage ends with a decision
+        the Client can walk away from &mdash; and a number that says whether they should.</p>
     </div>
 
-    <div class="stage reveal">
-      <div>
-        <div class="stage-num">01</div>
-        <div class="stage-dur">2&ndash;4 weeks</div>
+    <div class="stages">
+      <div class="stage reveal">
+        <div>
+          <h3 class="stage-name display">Teardown</h3>
+          <div class="stage-dur">Stage 00 &middot; 5 working days</div>
+        </div>
+        <div>
+          <p class="stage-desc">We take your last three productions &mdash; budgets, actuals, call sheets, invoices &mdash; and show you where the money leaked, which lines are wrong every single time, and what the paperwork actually costs you across a year.</p>
+          <ul class="stage-gets"><li>Teardown report</li><li>Variance ledger</li><li>Annual cost of process</li><li>Remediation plan</li></ul>
+        </div>
+        <div class="stage-price">
+          <span class="price-label">Fixed fee</span>
+          <!-- Fee basis + comparables: docs/pricing-basis.md §1 -->
+          <span class="price-fig">$4,500</span>
+          <span class="price-note">Credited in full against Stage 1</span>
+        </div>
       </div>
-      <div>
-        <div class="stage-name">Bootcamp</div>
-        <div class="stage-desc">We embed on your next live production. Not a demo, not a sandbox &mdash; the real job. Your rate cards, vendors and crew go into the system; a locked budget, daily call sheets and a live cost report come out, run alongside your producer.</div>
-        <ul class="stage-gets">
-          <li>Locked budget</li>
-          <li>Call sheets, every day</li>
-          <li>Live cost report</li>
-          <li>Your data, configured</li>
-        </ul>
+
+      <div class="stage reveal">
+        <div>
+          <h3 class="stage-name display">Bootcamp</h3>
+          <div class="stage-dur">Stage 01 &middot; 2&ndash;4 weeks</div>
+        </div>
+        <div>
+          <p class="stage-desc">We embed on your next live production. Not a demo, not a sandbox &mdash; the real job. Your rate cards, vendors and crew go into the system; a locked budget, daily call sheets and a live cost report come out, run alongside your producer.</p>
+          <ul class="stage-gets"><li>Locked budget</li><li>Call sheets, every day</li><li>Live cost report</li><li>Your data, configured</li></ul>
+        </div>
+        <div class="stage-price">
+          <span class="price-label">Fixed fee</span>
+          <!-- Fee basis + comparables: docs/pricing-basis.md §2 -->
+          <span class="price-fig">From $18,000</span>
+          <span class="price-note">One production, start to wrap</span>
+        </div>
       </div>
-      <div class="stage-price">
-        <span class="price-label">Fixed fee</span>
-        <!-- Fee basis + comparables: docs/pricing-basis.md §2 -->
-        From $18,000
-        <span class="price-note">One production, start to wrap</span>
+
+      <div class="stage reveal">
+        <div>
+          <h3 class="stage-name display">Deployment</h3>
+          <div class="stage-dur">Stage 02 &middot; Monthly, 6-month min.</div>
+        </div>
+        <div>
+          <p class="stage-desc">A MARK creative sits inside your production department. Every job routes through the system. We are in your Monday production meeting and your crew WhatsApp, and the paperwork stops being something you think about.</p>
+          <ul class="stage-gets"><li>Every production</li><li>Named creative</li><li>Vendor + crew ops</li><li>Guaranteed turnaround</li></ul>
+        </div>
+        <div class="stage-price">
+          <span class="price-label">Retainer</span>
+          <!-- Fee basis + comparables: docs/pricing-basis.md §3 -->
+          <span class="price-fig">From $9,000/mo</span>
+          <span class="price-note">Six-month minimum &middot; scaled to volume</span>
+        </div>
+      </div>
+
+      <div class="stage reveal">
+        <div>
+          <h3 class="stage-name display">Platform</h3>
+          <div class="stage-dur">Stage 03 &middot; Per production</div>
+        </div>
+        <div>
+          <p class="stage-desc">Once it is load-bearing, the deployment intensity drops and MARK converts to a licence your own producers drive. We stay on call for the weeks that need a human who has done it before.</p>
+          <ul class="stage-gets"><li>Self-serve modules</li><li>Support retainer</li><li>Quarterly recalibration</li></ul>
+        </div>
+        <div class="stage-price">
+          <span class="price-label">Licence</span>
+          <span class="price-fig">Scoped</span>
+          <span class="price-note">Available after Stage 2</span>
+        </div>
       </div>
     </div>
-
-    <div class="stage reveal">
-      <div>
-        <div class="stage-num">02</div>
-        <div class="stage-dur">Monthly &middot; 6-month min.</div>
-      </div>
-      <div>
-        <div class="stage-name">Deployment</div>
-        <div class="stage-desc">A MARK creative sits inside your production department. Every job routes through the system. We are in your Monday production meeting and your crew WhatsApp, and the paperwork stops being something you think about.</div>
-        <ul class="stage-gets">
-          <li>Every production</li>
-          <li>Named creative</li>
-          <li>Vendor + crew ops</li>
-          <li>Guaranteed turnaround</li>
-        </ul>
-      </div>
-      <div class="stage-price">
-        <span class="price-label">Retainer</span>
-        <!-- Fee basis + comparables: docs/pricing-basis.md §3 -->
-        From $9,000/mo
-        <span class="price-note">Six-month minimum &middot; scaled to volume</span>
-      </div>
-    </div>
-
-    <div class="stage reveal">
-      <div>
-        <div class="stage-num">03</div>
-        <div class="stage-dur">Per production</div>
-      </div>
-      <div>
-        <div class="stage-name">Platform</div>
-        <div class="stage-desc">Once it is load-bearing, the deployment intensity drops and MARK converts to a licence your own producers drive. We stay on call for the weeks that need a human who has done it before.</div>
-        <ul class="stage-gets">
-          <li>Self-serve modules</li>
-          <li>Support retainer</li>
-          <li>Quarterly recalibration</li>
-        </ul>
-      </div>
-      <div class="stage-price">
-        <span class="price-label">Licence</span>
-        Scoped
-        <span class="price-note">Available after Stage 2</span>
-      </div>
-    </div>
-
   </div>
 </section>
 
-<!-- CTA -->
-<section class="final-cta">
-  <div class="section-label" style="justify-content:center;">Roll camera</div>
-  <div class="cta-title">The start of AI-native <em>film production.</em></div>
-  <div class="cta-sub">Embedded creatives · Agentic infrastructure · Production-specific datasets · RL on outcomes</div>
-  <a href="mailto:krishmpinto@gmail.com?subject=Teardown%20%E2%80%94%20intro%20call&body=Happy%20to%20talk%20it%20through%20first%20%E2%80%94%2020%20minutes%2C%20nothing%20to%20send%20over%20yet.%0A%0ARoughly%20how%20many%20productions%20a%20year%3A%0ALast%20three%20jobs%20%28one%20line%20each%29%3A%0ATwo%20times%20that%20suit%20you%3A%0A" class="btn-primary"><span>Book a teardown &rarr;</span></a>
-  <div class="cta-terms">Five working days · $4,500 fixed · Credited in full against Stage 1</div>
-  <a href="mailto:krishmpinto@gmail.com" class="contact-email" id="contact">krishmpinto@gmail.com</a>
+<!-- CLOSER -->
+<section class="closer">
+  <div class="wrap">
+    <p class="eyebrow">Roll camera</p>
+    <h2 class="display">The start of AI-native film production</h2>
+    <p class="closer-sub">Embedded creatives &middot; Agentic infrastructure &middot; Production-specific datasets &middot; RL on outcomes</p>
+    <div><a href="mailto:krishmpinto@gmail.com?subject=Teardown%20%E2%80%94%20intro%20call&body=Happy%20to%20talk%20it%20through%20first%20%E2%80%94%2020%20minutes%2C%20nothing%20to%20send%20over%20yet.%0A%0ARoughly%20how%20many%20productions%20a%20year%3A%0ALast%20three%20jobs%20%28one%20line%20each%29%3A%0ATwo%20times%20that%20suit%20you%3A%0A" class="btn btn-light">Book a teardown &rarr;</a></div>
+    <p class="closer-terms">Five working days &middot; $4,500 fixed &middot; Credited in full against Stage 1</p>
+    <a href="mailto:krishmpinto@gmail.com" class="closer-email" id="contact">krishmpinto@gmail.com</a>
+  </div>
 </section>
 
 <footer>
   <div class="footer-logo" aria-label="MARK — Production OS">
     <svg class="mark" aria-hidden="true"><use href="#mark-icon"/></svg>
-    <span class="wm-mark">MARK</span>
+    <span class="wm-mark">Mark</span>
   </div>
   <div class="footer-copy">© 2026 MARK · Production OS · The Mario Jude Ltd · Registered in England &amp; Wales no. 15842207<br/><span class="footer-office">Registered office: Flat 52, Niemann Court, Louis Close, London N7 0FQ</span></div>
   <div class="footer-email"><a href="mailto:krishmpinto@gmail.com">krishmpinto@gmail.com</a></div>
 </footer>
 
 <script>
-// NAV SCROLL
-window.addEventListener('scroll', () => {
-  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
-});
-
-// SCROLL REVEALS — staggered children when entering viewport
+// SCROLL REVEALS — staggered siblings when a group enters the viewport.
 const observer = new IntersectionObserver(entries => {
-  entries.forEach((e, i) => {
-    if (e.isIntersecting) {
-      // Stagger siblings by their index within the parent grid for a natural cascade
-      const siblings = Array.from(e.target.parentElement?.children || []).filter(c => c.classList.contains('reveal'));
-      const idx = Math.max(0, siblings.indexOf(e.target));
-      e.target.style.transitionDelay = (idx * 60) + 'ms';
-      e.target.classList.add('in');
-      observer.unobserve(e.target);
-    }
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const siblings = Array.from(e.target.parentElement?.children || [])
+      .filter(c => c.classList.contains('reveal'));
+    e.target.style.transitionDelay = (Math.max(0, siblings.indexOf(e.target)) * 60) + 'ms';
+    e.target.classList.add('in');
+    observer.unobserve(e.target);
   });
-}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-document.querySelectorAll('.reveal, .wish').forEach(el => {
-  el.classList.add('reveal');
-  observer.observe(el);
-});
+}, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
 </body>
 </html>

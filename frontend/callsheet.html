@@ -4,10 +4,10 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>MARK — Call Sheet · Production OS</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%2314110D'/&gt;&lt;g transform='rotate(-52 40 11)'&gt;&lt;rect x='-30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='-10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='10' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='30' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;rect x='50' y='-6' width='10' height='40' fill='%23F5F1E8'/&gt;&lt;/g&gt;&lt;text x='40' y='66' fill='%23F5F1E8' font-family='Georgia,serif' font-style='italic' font-size='50' font-weight='600' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='68' cy='68' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%23171714'/&gt;&lt;g transform='rotate(-52 40 11)'&gt;&lt;rect x='-30' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;rect x='-10' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;rect x='10' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;rect x='30' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;rect x='50' y='-6' width='10' height='40' fill='%23D5D6CE'/&gt;&lt;/g&gt;&lt;text x='40' y='68' fill='%23D5D6CE' font-family='Impact,sans-serif' font-size='52' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='69' cy='69' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700&family=Gelasio:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -20,27 +20,39 @@
  */
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --paper:#F5F1E8;
-  --paper-deep:#EBE5D2;
-  --paper-edge:#E0D9C2;
-  --paper-shadow:rgba(20,17,13,0.04);
-  --ink:#14110D;
-  --ink-soft:#3A352D;
-  --muted:#5C5650;
-  --rule:rgba(20,17,13,0.10);
-  --rule-strong:rgba(20,17,13,0.16);
-  --accent:#C8330A;
-  --accent-deep:#8A2306;
-  --accent-tint:rgba(200,51,10,0.08);
+  /* Surfaces — warm white paper, warm near-black ink */
+  --paper:#D5D6CE;
+  --paper-deep:#C9CAC2;
+  --paper-edge:#BDBEB5;
+  --paper-shadow:rgba(23,23,20,0.05);
+
+  --ink:#171714;
+  --ink-soft:#3B3C36;
+  --muted:#6B6C65;
+  --rule:rgba(23,23,20,0.14);
+  --rule-strong:rgba(23,23,20,0.22);
+
+  /* The brand carries no accent hue any more, so --accent is simply the
+     primary weight: ink. Anything that has to SIGNAL — an error, a budget
+     flag, an edited line — uses --signal instead, which is still red,
+     because a flag that matches the body text is not a flag. */
+  --accent:#171714;
+  --accent-deep:#1D1D19;
+  --accent-tint:rgba(23,23,20,0.07);
+  --signal:#C8330A;
+  --signal-tint:rgba(200,51,10,0.08);
+
+  /* Semantic status colours — untouched, they mean something */
   --gold:#B8842D;
   --green:#2E6B3E;
+
   --ease-out:cubic-bezier(.16,1,.3,1);
   --ease-soft:cubic-bezier(.4,0,.2,1);
 }
 html{scroll-behavior:smooth;overflow-x:clip;}
 body{
   background:var(--paper);color:var(--ink);
-  font-family:'Gelasio',Georgia,serif;font-size:19px;
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:19px;
   font-feature-settings:"ss01","cv11";min-height:100vh;overflow-x:clip;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
@@ -67,7 +79,7 @@ body::after{
 /* HEADER */
 .back-btn{
   display:inline-flex;align-items:center;gap:10px;color:var(--muted);
-  font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;
+  font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.08em;text-transform:uppercase;
   text-decoration:none;margin-bottom:32px;cursor:pointer;background:none;border:none;
   transition:color 0.2s var(--ease-out);
 }
@@ -82,7 +94,7 @@ body::after{
 }
 .brand-mark svg{width:100%;height:100%;}
 .hero-title{
-  font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:clamp(34px,5vw,54px);
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:600;font-size:clamp(34px,5vw,54px);
   color:var(--ink);line-height:1.05;letter-spacing:-0.015em;margin-bottom:10px;
   font-variation-settings:"opsz" 144;
 }
@@ -98,10 +110,10 @@ body::after{
   display:flex;align-items:center;gap:0;margin-bottom:36px;
   padding:14px 18px;background:var(--paper-deep);border:1px solid var(--rule);
 }
-.si-item{display:flex;align-items:center;gap:10px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;}
+.si-item{display:flex;align-items:center;gap:10px;font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.08em;text-transform:uppercase;}
 .si-num{
   width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:600;flex-shrink:0;font-family:'Alegreya',Georgia,serif;font-style:italic;
+  font-size:10px;font-weight:600;flex-shrink:0;font-family:'Archivo',system-ui,-apple-system,sans-serif;font-style:italic;
   transition:background-color 0.3s var(--ease-out),border-color 0.3s var(--ease-out),color 0.3s var(--ease-out);
 }
 .si-item.active .si-num{background:var(--ink);color:var(--paper);}
@@ -125,9 +137,9 @@ body::after{
 }
 
 /* WORKFLOW STEP HELPERS — shared by the new script-driven step pages */
-.step-help{font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.7;margin-bottom:22px;}
+.step-help{font-size:18px;color:var(--ink-soft);font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.7;margin-bottom:22px;}
 .flow-actions{display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;}
-.flow-progress{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.05em;}
+.flow-progress{font-size:12px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.05em;}
 
 /* SCENE BREAKDOWN (3.1) + CAST (3.2) — selectable editable rows */
 .sel-grid{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);}
@@ -152,7 +164,7 @@ body::after{
   .prod-type-grid{grid-template-columns:1fr;}
   .dept-grid{grid-template-columns:1fr 1fr;}
 }
-.sel-hdr{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;}
+.sel-hdr{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
 .sel-row{display:grid;background:var(--paper);align-items:stretch;transition:background 0.18s var(--ease-out);}
 .sel-row.sel-hdr>div{padding:10px 12px;background:var(--paper-deep);}
 .sel-row:not(.sel-hdr){cursor:default;}
@@ -161,15 +173,15 @@ body::after{
 .sel-cell{padding:0;display:flex;align-items:stretch;}
 .sel-cell input{border:none;background:transparent;padding:11px 12px;font-size:13px;}
 .sel-cell input:focus{background:var(--paper);box-shadow:inset 0 0 0 1px var(--ink);}
-.sel-toggle{display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.04em;color:var(--muted);user-select:none;}
+.sel-toggle{display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:0.04em;color:var(--muted);user-select:none;}
 .sel-toggle .dot{width:18px;height:18px;border:1.5px solid var(--rule-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all 0.18s var(--ease-out);}
 .sel-row.on .sel-toggle .dot{background:var(--ink);border-color:var(--ink);color:var(--paper);}
-.sel-intext{display:flex;align-items:center;padding:0 12px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.05em;}
-.sel-intext select{border:none;background:transparent;padding:8px 4px;font-family:'DM Mono',monospace;font-size:11px;}
+.sel-intext{display:flex;align-items:center;padding:0 12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:0.05em;}
+.sel-intext select{border:none;background:transparent;padding:8px 4px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;}
 
 /* DEPARTMENTS NOT NEEDED (3.4) — chip toggles */
 .dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
-.dept-chip{display:flex;align-items:center;gap:10px;padding:13px 15px;border:1px solid var(--rule);background:var(--paper);cursor:pointer;font-family:'Gelasio',Georgia,serif;font-size:14px;color:var(--ink);transition:all 0.18s var(--ease-out);}
+.dept-chip{display:flex;align-items:center;gap:10px;padding:13px 15px;border:1px solid var(--rule);background:var(--paper);cursor:pointer;font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:14px;color:var(--ink);transition:all 0.18s var(--ease-out);}
 .dept-chip .dchk{width:18px;height:18px;border:1.5px solid var(--rule-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
 .dept-chip.needed{border-color:var(--rule-strong);}
 .dept-chip.off{opacity:0.55;background:var(--paper-deep);text-decoration:line-through;text-decoration-color:var(--muted);}
@@ -177,34 +189,34 @@ body::after{
 
 /* HOSPITAL LOOKUP (3.5) */
 .hosp-find{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 4px;}
-.hosp-status{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;}
+.hosp-status{font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.04em;}
 
 /* MAPS / DRAWINGS (3.6) */
 .maps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px;}
 .map-thumb{position:relative;border:1px solid var(--rule);background:var(--paper);padding:8px;}
 .map-thumb img{width:100%;height:110px;object-fit:cover;display:block;background:var(--paper-deep);}
-.map-thumb .map-file{height:110px;display:flex;align-items:center;justify-content:center;background:var(--paper-deep);font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;padding:8px;}
-.map-name{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.map-thumb .map-file{height:110px;display:flex;align-items:center;justify-content:center;background:var(--paper-deep);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:var(--muted);text-align:center;padding:8px;}
+.map-name{font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .map-remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border:none;background:var(--ink);color:var(--paper);cursor:pointer;font-size:14px;line-height:1;border-radius:50%;}
 
 /* GMAIL N/A WARNING (3.3) */
-.gmail-warn{display:none;margin-top:12px;padding:11px 14px;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--paper));font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.03em;line-height:1.6;color:var(--ink);}
+.gmail-warn{display:none;margin-top:12px;padding:11px 14px;border:1px solid var(--signal);background:color-mix(in srgb,var(--signal) 7%,var(--paper));font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:0.03em;line-height:1.6;color:var(--ink);}
 
 /* Generated call-sheet maps block */
 .cs-maps{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:8px;}
 .cs-map{margin:0;border:1px solid rgba(20,17,13,0.18);}
 .cs-map img{width:100%;display:block;}
-.cs-map figcaption{font-size:9px;font-family:'DM Mono',monospace;padding:4px 6px;color:#555;}
-.cs-map-file{border:1px solid rgba(20,17,13,0.18);padding:10px;font-family:'DM Mono',monospace;font-size:10px;}
+.cs-map figcaption{font-size:9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:4px 6px;color:#555;}
+.cs-map-file{border:1px solid rgba(20,17,13,0.18);padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;}
 
 /* PANELS, INPUTS, BUTTONS */
 .panel{background:var(--paper-deep);border:1px solid var(--rule);padding:48px 52px;margin-bottom:24px;}
-.panel-title{font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-family:'DM Mono',monospace;font-weight:600;margin-bottom:20px;}
+.panel-title{font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;margin-bottom:20px;}
 .panel-title em{color:var(--accent);font-style:italic;}
 
 textarea, input[type=text], input[type=email], input[type=tel], input[type=date], select{
   width:100%;background:var(--paper);border:1px solid var(--rule);color:var(--ink);
-  font-family:'Gelasio',Georgia,serif;font-size:14px;padding:12px 14px;outline:none;line-height:1.6;
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:14px;padding:12px 14px;outline:none;line-height:1.6;
   transition:border-color 0.2s,background 0.2s;
 }
 textarea{resize:vertical;min-height:120px;}
@@ -212,12 +224,12 @@ textarea:focus, input:focus, select:focus{border-color:var(--ink);background:var
 input::placeholder, textarea::placeholder{color:var(--muted);}
 label.field-label{
   display:block;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);
-  font-family:'DM Mono',monospace;margin-bottom:6px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:6px;
 }
 
 .btn-red{
   background:var(--ink);border:none;color:var(--paper);
-  font-family:'Gelasio',Georgia,serif;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
   padding:14px 28px;cursor:pointer;position:relative;overflow:hidden;
   transition:transform 0.25s var(--ease-out),background 0.2s;
 }
@@ -233,7 +245,7 @@ label.field-label{
 
 .btn-ghost{
   background:transparent;border:1px solid var(--rule-strong);color:var(--ink-soft);
-  font-family:'Gelasio',Georgia,serif;font-size:12px;font-weight:500;letter-spacing:0.04em;
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;
   padding:11px 18px;cursor:pointer;
   transition:border-color 0.2s,color 0.2s,background 0.2s;
 }
@@ -241,7 +253,7 @@ label.field-label{
 
 .btn-sm{
   padding:8px 14px;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
-  cursor:pointer;border:1px solid var(--rule-strong);font-family:'Gelasio',Georgia,serif;
+  cursor:pointer;border:1px solid var(--rule-strong);font-family:'Archivo',system-ui,-apple-system,sans-serif;
   background:transparent;color:var(--ink-soft);transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .btn-sm:hover{border-color:var(--ink);color:var(--ink);background:var(--paper);}
@@ -259,13 +271,13 @@ label.field-label{
 .brief-opt-card:hover{background:var(--paper-deep);border-color:var(--ink-soft);transform:translateY(-2px);box-shadow:0 4px 16px var(--paper-shadow);}
 .brief-opt-card.active{background:var(--paper);border-color:var(--ink);border-left:4px solid var(--accent);box-shadow:0 4px 20px var(--paper-shadow);}
 .brief-opt-num{
-  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:500;font-size:32px;
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-style:italic;font-weight:500;font-size:32px;
   color:var(--accent);line-height:1;flex-shrink:0;letter-spacing:-0.02em;
   font-variation-settings:"opsz" 144;
 }
 .brief-opt-card.active .brief-opt-num{color:var(--accent-deep);}
-.brief-opt-name{font-family:'Alegreya',Georgia,serif;font-weight:600;font-size:18px;color:var(--ink);margin-bottom:6px;letter-spacing:-0.005em;}
-.brief-opt-desc{font-size:13px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.55;}
+.brief-opt-name{font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:600;font-size:18px;color:var(--ink);margin-bottom:6px;letter-spacing:-0.005em;}
+.brief-opt-desc{font-size:13px;color:var(--ink-soft);font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.55;}
 @media(max-width:680px){.brief-option-cards{grid-template-columns:1fr;}}
 
 /* MODE TABS (for brief input + crew input) */
@@ -274,7 +286,7 @@ label.field-label{
   border:1px solid var(--rule-strong);background:var(--paper-edge);
 }
 .mode-tab{
-  flex:1;padding:18px 24px;font-size:14px;font-family:'DM Mono',monospace;letter-spacing:0.06em;
+  flex:1;padding:18px 24px;font-size:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;
   text-transform:uppercase;color:var(--muted);background:transparent;border:none;cursor:pointer;
   border-bottom:3px solid transparent;border-right:1px solid var(--rule-strong);
   transition:background-color 0.2s,border-color 0.2s,color 0.2s;
@@ -297,7 +309,7 @@ label.field-label{
 .demo-btn{
   display:flex;align-items:center;gap:14px;padding:14px 18px;
   background:var(--paper);border:1px solid var(--rule);color:var(--ink);
-  font-family:'Gelasio',Georgia,serif;font-size:13px;cursor:pointer;
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:13px;cursor:pointer;
   transition:border-color 0.2s,transform 0.3s var(--ease-out),box-shadow 0.3s;
   text-align:left;
 }
@@ -305,10 +317,10 @@ label.field-label{
 .demo-btn.sel{border-color:var(--ink);background:var(--paper-deep);box-shadow:0 2px 12px var(--paper-shadow);}
 .demo-btn.sel .demo-num{color:var(--accent-deep);}
 .demo-num{
-  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:500;font-size:24px;
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-style:italic;font-weight:500;font-size:24px;
   color:var(--accent);line-height:1;flex-shrink:0;letter-spacing:-0.01em;
 }
-.demo-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.06em;margin-top:2px;}
+.demo-meta{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:var(--muted);letter-spacing:0.06em;margin-top:2px;}
 
 /* PRODUCTION TYPE SELECTOR — chosen first */
 .prod-type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
@@ -316,16 +328,16 @@ label.field-label{
 .prod-type-btn{
   display:flex;align-items:center;gap:14px;padding:16px 18px;
   background:var(--paper);border:1px solid var(--rule);color:var(--ink);
-  font-family:'Gelasio',Georgia,serif;font-size:13px;cursor:pointer;text-align:left;
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:13px;cursor:pointer;text-align:left;
   transition:border-color 0.2s,transform 0.3s var(--ease-out),box-shadow 0.3s;
 }
 .prod-type-btn:hover{border-color:var(--ink);transform:translateY(-1px);box-shadow:0 2px 12px var(--paper-shadow);}
 .prod-type-btn.sel{border-color:var(--accent);background:var(--paper-deep);box-shadow:0 2px 12px var(--paper-shadow);}
 .prod-type-num{
-  font-family:'Alegreya',Georgia,serif;font-style:italic;font-weight:500;font-size:24px;
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-style:italic;font-weight:500;font-size:24px;
   color:var(--accent);line-height:1;flex-shrink:0;letter-spacing:-0.01em;
 }
-.prod-type-name{font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);}
+.prod-type-name{font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:500;font-size:15px;color:var(--ink);}
 
 /* UPLOAD ZONE */
 .upload-zone{
@@ -351,7 +363,7 @@ input[type=file]{display:none;}
 .crew-row.crew-hdr{background:var(--paper-edge);}
 .crew-row.crew-hdr > div{
   padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;
-  color:var(--muted);font-family:'DM Mono',monospace;background:var(--paper-edge);
+  color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper-edge);
 }
 .crew-cell{background:var(--paper);padding:0;}
 .crew-cell input, .crew-cell select{
@@ -365,7 +377,7 @@ input[type=file]{display:none;}
 .crew-remove:hover{color:var(--accent);}
 .crew-add-btn{
   display:inline-flex;align-items:center;gap:8px;margin-top:12px;
-  padding:8px 14px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;
+  padding:8px 14px;font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.08em;
   background:transparent;border:1px solid var(--rule-strong);color:var(--ink-soft);cursor:pointer;
   text-transform:uppercase;transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
@@ -642,18 +654,18 @@ input[type=file]{display:none;}
 .cs-crew-table th{
   text-align:left;padding:6px 10px;background:var(--paper-edge);
   font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8275;
-  font-family:'DM Mono',monospace;font-weight:600;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;
 }
 .cs-crew-table td{padding:7px 10px;border-bottom:1px solid var(--rule);}
 .cs-crew-table tr:last-child td{border-bottom:none;}
 .cs-dept-row td{
-  background:var(--paper-deep);font-family:'DM Mono',monospace;font-size:9px;
+  background:var(--paper-deep);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;
   letter-spacing:0.12em;text-transform:uppercase;color:#3A352D;font-weight:600;
   padding:6px 10px;
 }
 .cs-footer{
   padding:12px 22px;background:var(--paper-deep);
-  font-size:9px;color:#8A8275;font-family:'DM Mono',monospace;letter-spacing:0.06em;
+  font-size:9px;color:#8A8275;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;
   text-align:center;
 }
 
@@ -666,7 +678,7 @@ input[type=file]{display:none;}
 }
 .refine-chat-title{
   padding:14px 18px;border-bottom:1px solid var(--rule);
-  font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:500;font-size:15px;color:var(--ink);
 }
 .refine-chat-title em{color:var(--accent);font-style:italic;}
 .chat-log{flex:1;padding:14px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
@@ -678,14 +690,14 @@ input[type=file]{display:none;}
 }
 .chat-msg.mark .chat-mark-tag{
   font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);
-  font-family:'DM Mono',monospace;margin-bottom:4px;display:block;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:4px;display:block;
 }
 .chat-suggestions{
   padding:10px 18px;display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--rule);
 }
 .chat-chip{
   font-size:11px;padding:6px 12px;background:var(--paper);border:1px solid var(--rule-strong);
-  cursor:pointer;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;
+  cursor:pointer;color:var(--ink-soft);font-family:'Archivo',system-ui,-apple-system,sans-serif;
   transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .chat-chip:hover{border-color:var(--ink);color:var(--ink);}
@@ -693,7 +705,7 @@ input[type=file]{display:none;}
 .chat-input-row input{padding:10px 12px;font-size:13px;}
 .chat-send-btn{
   padding:10px 18px;background:var(--ink);color:var(--paper);border:none;cursor:pointer;
-  font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;
+  font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.08em;text-transform:uppercase;
   transition:background 0.2s;
 }
 .chat-send-btn:hover{background:var(--accent);}
@@ -713,17 +725,17 @@ input[type=file]{display:none;}
 .channel-toggle:hover{border-color:var(--rule-strong);}
 .channel-toggle.sel{border-color:var(--ink);background:var(--paper-deep);}
 .channel-info{flex:1;}
-.channel-name{font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);}
-.channel-desc{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-top:3px;}
+.channel-name{font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:500;font-size:15px;color:var(--ink);}
+.channel-desc{font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.04em;margin-top:3px;}
 .channel-tag{
-  font-size:9px;font-family:'DM Mono',monospace;padding:3px 8px;
+  font-size:9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:3px 8px;
   border:1px solid var(--gold);color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;
 }
 .channel-tag.ready{border-color:var(--green);color:var(--green);}
 .channel-tag.not-connected{border-color:var(--rule-strong);color:var(--muted);}
 .channel-toggle.disabled{opacity:0.5;cursor:not-allowed;}
 .channel-toggle.disabled:hover{transform:none;border-color:var(--rule);}
-.channel-acct{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0.04em;margin-left:6px;}
+.channel-acct{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0.04em;margin-left:6px;}
 .channel-toggle .channel-check{
   width:22px;height:22px;border:2px solid var(--rule-strong);border-radius:4px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -737,7 +749,7 @@ input[type=file]{display:none;}
 }
 .summary-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;}
 .summary-row:not(:last-child){border-bottom:1px solid var(--rule);}
-.summary-label{color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;}
+.summary-label{color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;}
 .summary-val{color:var(--ink);font-weight:500;}
 
 .next-day-banner{
@@ -745,13 +757,13 @@ input[type=file]{display:none;}
   display:none;
 }
 .next-day-banner.show{display:block;}
-.next-day-title{font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:17px;margin-bottom:4px;}
+.next-day-title{font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:500;font-size:17px;margin-bottom:4px;}
 .next-day-title em{color:var(--accent);font-style:italic;}
-.next-day-sub{font-size:12px;opacity:0.8;font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:14px;}
+.next-day-sub{font-size:12px;opacity:0.8;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.04em;margin-bottom:14px;}
 .next-day-actions{display:flex;gap:10px;flex-wrap:wrap;}
 .next-day-actions button{
   background:transparent;color:var(--paper);border:1px solid rgba(245,241,232,0.4);
-  padding:9px 16px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.08em;
+  padding:9px 16px;font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.08em;
   text-transform:uppercase;cursor:pointer;transition:background-color 0.2s,border-color 0.2s,color 0.2s;
 }
 .next-day-actions button:hover{border-color:var(--paper);background:rgba(245,241,232,0.08);}
@@ -768,18 +780,18 @@ input[type=file]{display:none;}
   background:var(--paper);border:1px solid var(--rule-strong);max-width:440px;width:100%;
   padding:30px 32px;box-shadow:0 20px 60px rgba(20,17,13,0.20);
 }
-.gate-eyebrow{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);font-family:'DM Mono',monospace;margin-bottom:8px;}
-.gate-title{font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:24px;color:var(--ink);letter-spacing:-0.01em;margin-bottom:8px;}
+.gate-eyebrow{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:8px;}
+.gate-title{font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:500;font-size:24px;color:var(--ink);letter-spacing:-0.01em;margin-bottom:8px;}
 .gate-title em{font-style:italic;color:var(--accent);font-weight:400;}
 .gate-sub{font-size:13px;color:var(--ink-soft);line-height:1.55;margin-bottom:18px;}
 .gate-form{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
 .gate-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
-.gate-skip{background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;padding:6px 10px;}
-.gate-error{font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;margin-top:6px;display:none;}
+.gate-skip{background:transparent;border:none;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;padding:6px 10px;}
+.gate-error{font-size:11px;color:var(--signal);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:6px;display:none;}
 .gate-error.show{display:block;}
 
 /* ERRORS / TOASTS */
-.error-msg{background:transparent;border:1px solid var(--accent);padding:14px 18px;color:var(--accent);font-size:13px;line-height:1.5;margin-bottom:18px;}
+.error-msg{background:transparent;border:1px solid var(--signal);padding:14px 18px;color:var(--signal);font-size:13px;line-height:1.5;margin-bottom:18px;}
 .success-msg{background:transparent;border:1px solid var(--green);padding:14px 18px;color:var(--green);font-size:13px;line-height:1.5;margin-bottom:18px;}
 
 @media print {
@@ -827,23 +839,19 @@ input[type=file]{display:none;}
 <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
   <defs>
     <symbol id="mark-icon" viewBox="0 0 80 80">
-      <rect width="80" height="80" rx="3" fill="#14110D"/>
-      <g>
-        <rect x="0" y="0" width="80" height="22" fill="#14110D"/>
-        <g transform="rotate(-52 40 11)">
-          <rect x="-30" y="-6" width="10" height="40" fill="#F5F1E8"/>
-          <rect x="-10" y="-6" width="10" height="40" fill="#F5F1E8"/>
-          <rect x="10"  y="-6" width="10" height="40" fill="#F5F1E8"/>
-          <rect x="30"  y="-6" width="10" height="40" fill="#F5F1E8"/>
-          <rect x="50"  y="-6" width="10" height="40" fill="#F5F1E8"/>
-        </g>
-        <line x1="0" y1="22" x2="80" y2="22" stroke="#F5F1E8" stroke-width="0.8" opacity="0.4"/>
+      <rect width="80" height="80" rx="3" style="fill:var(--mk-body,#171714)"/>
+      <g transform="rotate(-52 40 11)">
+        <rect x="-30" y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
+        <rect x="-10" y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
+        <rect x="10"  y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
+        <rect x="30"  y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
+        <rect x="50"  y="-6" width="10" height="40" style="fill:var(--mk-stripe,#D5D6CE)"/>
       </g>
-      <text x="40" y="66" fill="#F5F1E8" font-family="Alegreya, Georgia, serif"
-            font-style="italic" font-size="50" font-weight="600" text-anchor="middle"
-            letter-spacing="-0.025em">M</text>
-      <circle cx="68" cy="68" r="3.4" fill="#C8330A"/>
-      <circle cx="68" cy="68" r="6" fill="none" stroke="#C8330A" stroke-width="0.6" opacity="0.4"/>
+      <line x1="0" y1="22" x2="80" y2="22" style="stroke:var(--mk-stripe,#D5D6CE)" stroke-width="0.8" opacity="0.35"/>
+      <text x="40" y="68" style="fill:var(--mk-stripe,#D5D6CE)"
+            font-family="Anton, Impact, sans-serif" font-size="52"
+            text-anchor="middle" letter-spacing="0.02em">M</text>
+      <circle cx="69" cy="69" r="3.4" fill="#C8330A"/>
     </symbol>
   </defs>
 </svg>
@@ -878,13 +886,13 @@ input[type=file]{display:none;}
 
     <div class="panel">
       <div class="panel-title">Start with your <em>template</em></div>
-      <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.7;margin-bottom:24px;">Each production team has its own call-sheet style. Upload your own template and Mark builds every call sheet in <strong>your</strong> format. No template? Mark uses its standard format. This is optional — you can skip straight ahead.</p>
+      <p style="font-size:18px;color:var(--ink-soft);font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.7;margin-bottom:24px;">Each production team has its own call-sheet style. Upload your own template and Mark builds every call sheet in <strong>your</strong> format. No template? Mark uses its standard format. This is optional — you can skip straight ahead.</p>
       <div class="mode-tabs">
         <button class="mode-tab active" data-tmode="standard" onclick="setTemplateMode('standard')">Use AskMark's standard format</button>
         <button class="mode-tab" data-tmode="upload" onclick="setTemplateMode('upload')">Upload my own template</button>
       </div>
       <div class="mode-pane active" id="template-standard">
-        <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.7;margin:14px 2px;">Mark's standard format follows the industry-standard call sheet layout — clean, complete, and ready to send.</p>
+        <p style="font-size:18px;color:var(--ink-soft);font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.7;margin:14px 2px;">Mark's standard format follows the industry-standard call sheet layout — clean, complete, and ready to send.</p>
       </div>
       <div class="mode-pane" id="template-upload">
         <div class="upload-zone" id="template-upload-zone"
@@ -900,15 +908,15 @@ input[type=file]{display:none;}
               <line x1="10" y1="36" x2="22" y2="36"/>
             </svg>
           </div>
-          <div id="template-upload-title" style="font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload your template</div>
-          <div id="template-upload-sub" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — PDF, DOCX, XLSX, TXT, HTML</div>
+          <div id="template-upload-title" style="font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload your template</div>
+          <div id="template-upload-sub" style="font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — PDF, DOCX, XLSX, TXT, HTML</div>
         </div>
       </div>
     </div>
 
     <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;">
       <button class="btn-red" id="step0-next" onclick="goTo('step1')"><span>Continue →</span></button>
-      <span style="font-size:13px;color:var(--ink-soft);font-family:'DM Mono',monospace;" id="step0-progress">Using AskMark's standard format</span>
+      <span style="font-size:13px;color:var(--ink-soft);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;" id="step0-progress">Using AskMark's standard format</span>
     </div>
   </div>
 
@@ -931,7 +939,7 @@ input[type=file]{display:none;}
     <!-- PRODUCTION TYPE — chosen first, before anything else -->
     <div class="panel">
       <div class="panel-title">Choose your <em>production type</em></div>
-      <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.65;margin-bottom:24px;">Pick one — Mark tailors the call sheet to the kind of production you're running.</p>
+      <p style="font-size:18px;color:var(--ink-soft);font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.65;margin-bottom:24px;">Pick one — Mark tailors the call sheet to the kind of production you're running.</p>
       <div class="prod-type-grid">
         <button class="prod-type-btn" data-ptype="film" onclick="setProductionType('film')">
           <span class="prod-type-num">01</span>
@@ -951,7 +959,7 @@ input[type=file]{display:none;}
     <!-- BRIEF -->
     <div class="panel">
       <div class="panel-title">Add your <em>brief</em></div>
-      <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.65;margin-bottom:24px;">Choose <strong>one</strong> of these three — you don't need all of them. Pick whichever suits you best.</p>
+      <p style="font-size:18px;color:var(--ink-soft);font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.65;margin-bottom:24px;">Choose <strong>one</strong> of these three — you don't need all of them. Pick whichever suits you best.</p>
       <div class="brief-option-cards">
         <button class="brief-opt-card active" data-mode="type" onclick="setBriefMode('type')">
           <div class="brief-opt-num">01</div>
@@ -992,8 +1000,8 @@ input[type=file]{display:none;}
               <line x1="10" y1="36" x2="22" y2="36"/>
             </svg>
           </div>
-          <div id="brief-upload-title" style="font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload script</div>
-          <div id="brief-upload-sub" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — PDF, FDX, TXT, Fountain</div>
+          <div id="brief-upload-title" style="font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload script</div>
+          <div id="brief-upload-sub" style="font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — PDF, FDX, TXT, Fountain</div>
         </div>
       </div>
       <div class="mode-pane" id="brief-demo">
@@ -1020,7 +1028,7 @@ input[type=file]{display:none;}
 
     <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;">
       <button class="btn-red disabled" id="step1-next" onclick="finishSource()"><span>Continue →</span></button>
-      <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;" id="step1-progress">Add a brief or script to continue</span>
+      <span style="font-size:10px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;" id="step1-progress">Add a brief or script to continue</span>
     </div>
   </div>
 
@@ -1075,7 +1083,7 @@ input[type=file]{display:none;}
         </div>
       </div>
       <p class="step-help" style="margin-bottom:8px;">Upload your crew list by XLS, DOCX or CSV — or input the details manually in the table below. Each crew member needs a name, role and email. Set the department so the call sheet groups them correctly.</p>
-      <div id="crew-drop-hint" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-bottom:8px;">Or drag &amp; drop a CSV / Excel file anywhere on the table below.</div>
+      <div id="crew-drop-hint" style="font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;margin-bottom:8px;">Or drag &amp; drop a CSV / Excel file anywhere on the table below.</div>
       <div class="crew-table" id="crew-table"
            ondragover="crewDragOver(event)" ondragleave="crewDragLeave(event)" ondrop="crewDrop(event)">
         <div class="crew-row crew-hdr">
@@ -1154,8 +1162,8 @@ input[type=file]{display:none;}
             <line x1="10" y1="26" x2="30" y2="26"/><line x1="10" y1="32" x2="30" y2="32"/>
           </svg>
         </div>
-        <div style="font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload maps or drawings</div>
-        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — images or PDF</div>
+        <div style="font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:500;font-size:15px;color:var(--ink);margin-bottom:4px;">Upload maps or drawings</div>
+        <div style="font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;">Drag &amp; drop, or click — images or PDF</div>
       </div>
       <div class="maps-grid" id="maps-grid"></div>
     </div>
@@ -1187,7 +1195,7 @@ input[type=file]{display:none;}
         <div>
           <label class="field-label">Shoot date *</label>
           <input type="date" id="shoot-date"/>
-          <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-top:4px;">Past dates are greyed out — you can't time-travel.</div>
+          <div style="font-size:9px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.04em;margin-top:4px;">Past dates are greyed out — you can't time-travel.</div>
         </div>
         <div>
           <label class="field-label">Shooting day *</label>
@@ -1206,7 +1214,7 @@ input[type=file]{display:none;}
         <div class="full">
           <label class="field-label">Scenes being shot</label>
           <input type="text" id="shoot-scenes" placeholder="e.g. Scenes 1, 4, 7B — or short description"/>
-          <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-top:4px;">Pre-filled from the scenes you confirmed in step 3.1 — edit freely.</div>
+          <div style="font-size:9px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.04em;margin-top:4px;">Pre-filled from the scenes you confirmed in step 3.1 — edit freely.</div>
         </div>
         <div class="full">
           <label class="field-label">Weather</label>
@@ -1228,7 +1236,7 @@ input[type=file]{display:none;}
          field left blank. -->
     <div class="panel">
       <div class="panel-title">Production <em>masthead</em> · the canonical call-sheet fields</div>
-      <p style="font-size:18px;color:var(--ink-soft);font-family:'Gelasio',Georgia,serif;line-height:1.65;margin-bottom:24px;">These fields make the export read as a real call sheet. All optional — fill what you have, refine the rest in the chat step.</p>
+      <p style="font-size:18px;color:var(--ink-soft);font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.65;margin-bottom:24px;">These fields make the export read as a real call sheet. All optional — fill what you have, refine the rest in the chat step.</p>
       <div class="shoot-grid">
         <div class="full">
           <label class="field-label">Shoot name / Project *</label>
@@ -1283,8 +1291,8 @@ input[type=file]{display:none;}
           <textarea id="shoot-special" placeholder="Olly Rice — Promised Land&#10;Daisy — Management&#10;Patrick — Management" style="min-height:70px;"></textarea>
         </div>
         <div class="full">
-          <label class="field-label">Schedule · one line per event, format <code style="font-family:'DM Mono',monospace;">HH:MM Event</code> — pre-filled, just edit the text</label>
-          <textarea id="shoot-schedule" placeholder="06:00  Catering call&#10;07:00  Crew arrival&#10;07:30  Camera ready&#10;08:00  First shot&#10;12:30  Lunch&#10;19:00  Wrap" style="min-height:160px;font-family:'DM Mono',monospace;font-size:12px;"></textarea>
+          <label class="field-label">Schedule · one line per event, format <code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">HH:MM Event</code> — pre-filled, just edit the text</label>
+          <textarea id="shoot-schedule" placeholder="06:00  Catering call&#10;07:00  Crew arrival&#10;07:30  Camera ready&#10;08:00  First shot&#10;12:30  Lunch&#10;19:00  Wrap" style="min-height:160px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;"></textarea>
         </div>
         <div class="full">
           <label class="field-label" style="display:flex;align-items:center;gap:10px;">
@@ -1298,7 +1306,7 @@ input[type=file]{display:none;}
     <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;">
       <button class="btn-red disabled" id="step2-next" onclick="finishStep2()"><span>Generate call sheet →</span></button>
       <button class="btn-ghost" onclick="goBack()">← Back</button>
-      <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;" id="step2-progress">Fill the required fields</span>
+      <span style="font-size:10px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;" id="step2-progress">Fill the required fields</span>
     </div>
   </div>
 
@@ -1320,8 +1328,8 @@ input[type=file]{display:none;}
 
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
       <div>
-        <div style="font-family:'Alegreya',Georgia,serif;font-weight:500;font-size:24px;color:var(--ink);">Your <em>call sheet.</em></div>
-        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-top:4px;">Review it. If it needs edits, talk to Mark in the next step.</div>
+        <div style="font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:500;font-size:24px;color:var(--ink);">Your <em>call sheet.</em></div>
+        <div style="font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;margin-top:4px;">Review it. If it needs edits, talk to Mark in the next step.</div>
       </div>
       <div class="action-btns" style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-sm" onclick="gateAction('export', () => window.print())">Download PDF</button>
@@ -1404,7 +1412,7 @@ input[type=file]{display:none;}
 
     <div class="panel">
       <div class="panel-title">Send <em>channels</em></div>
-      <div id="unipile-status" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-bottom:14px;">Checking Unipile accounts…</div>
+      <div id="unipile-status" style="font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;margin-bottom:14px;">Checking Unipile accounts…</div>
       <div class="channel-toggle" id="ch-email" onclick="toggleChannel('email')">
         <div class="channel-info">
           <div class="channel-name">Email <span class="channel-acct" id="acct-email"></span></div>
@@ -1618,7 +1626,7 @@ const PREVIEW_ROUTES = {
   // format instead, and say so rather than failing.
   '/callsheet/render-template': async () => {
     await _previewPause(1100);
-    const note = `<div style="border:1px solid var(--rule);background:var(--paper-deep);padding:12px 14px;margin-bottom:14px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:0.04em;color:var(--muted);">
+    const note = `<div style="border:1px solid var(--rule);background:var(--paper-deep);padding:12px 14px;margin-bottom:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.6;letter-spacing:0.04em;color:var(--muted);">
       WALKTHROUGH · Mark rebuilds the sheet in <strong style="color:var(--ink);">${escHtml(callsheet.template.file_name || 'your uploaded template')}</strong>’s own layout on a live workspace. Below is the standard format, built from what you entered.
     </div>`;
     return { html: note + buildCallSheetHtml(callsheet) };
@@ -1667,7 +1675,7 @@ function _mountPreviewBadge() {
     #preview-badge{position:fixed;left:18px;bottom:18px;z-index:9000;display:flex;align-items:center;gap:10px;
       max-width:min(360px,calc(100vw - 36px));padding:10px 14px;background:var(--paper,#F5F1E8);
       border:1px solid var(--ink,#14110D);box-shadow:0 3px 0 rgba(20,17,13,0.16);cursor:pointer;
-      font-family:'DM Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.05em;color:var(--muted,#6B6459);}
+      font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.05em;color:var(--muted,#6B6459);}
     #preview-badge strong{color:var(--ink,#14110D);letter-spacing:0.09em;text-transform:uppercase;}
     #preview-badge .pv-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--accent,#C8330A);}
     #preview-badge.folded{padding:9px;gap:0;}
@@ -2329,7 +2337,7 @@ function renderScenes(){
   const list = document.getElementById('scene-list');
   if (!list) return;
   if (!callsheet.scenes.length){
-    list.innerHTML = `<div class="sel-row" style="grid-column:1/-1;"><div class="sel-cell" style="padding:14px 12px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;">No scenes detected from the brief. Add the day's scenes manually below.</div></div>`;
+    list.innerHTML = `<div class="sel-row" style="grid-column:1/-1;"><div class="sel-cell" style="padding:14px 12px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;">No scenes detected from the brief. Add the day's scenes manually below.</div></div>`;
   } else {
     list.innerHTML = callsheet.scenes.map(s => `
       <div class="sel-row scene-grid ${s.selected ? 'on' : 'off'}" id="row-${s.id}">
@@ -2387,7 +2395,7 @@ function renderCast(){
   const list = document.getElementById('cast-list');
   if (!list) return;
   if (!callsheet.cast.length){
-    list.innerHTML = `<div class="sel-row" style="grid-column:1/-1;"><div class="sel-cell" style="padding:14px 12px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;">No characters detected from the script. Add cast manually below.</div></div>`;
+    list.innerHTML = `<div class="sel-row" style="grid-column:1/-1;"><div class="sel-cell" style="padding:14px 12px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;">No characters detected from the script. Add cast manually below.</div></div>`;
   } else {
     list.innerHTML = callsheet.cast.map(c => `
       <div class="sel-row cast-grid ${c.selected ? 'on' : 'off'}" id="row-${c.id}">
@@ -2588,7 +2596,7 @@ function renderUploadedTemplateCallSheet(){
 }
 
 function _templatePendingHtml(){
-  return `<div class="callsheet-doc" style="padding:48px;text-align:center;font-family:'DM Mono',monospace;">
+  return `<div class="callsheet-doc" style="padding:48px;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">
     <div style="font-size:13px;letter-spacing:0.08em;color:var(--muted);">Building your call sheet in <strong>${escHtml(callsheet.template.file_name || 'your uploaded')}</strong> format…</div>
   </div>`;
 }
@@ -3397,7 +3405,7 @@ function _renderSendPreview(preview, proposalId){
     const rows = (info.recipients || []).map(r =>
       `<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:13px;">`
       + `<span>${escHtml(r.name || '—')}</span>`
-      + `<span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;">${escHtml(r.to || '')}</span></div>`
+      + `<span style="color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;">${escHtml(r.to || '')}</span></div>`
     ).join('') || '<div style="font-size:12px;color:var(--muted);">No crew have this contact type on record.</div>';
     return `<div style="margin-bottom:12px;"><div style="font-weight:600;margin-bottom:4px;">${CHANNEL_LABEL[ch] || ch} · ${info.count || 0}</div>${rows}</div>`;
   }).join('');
@@ -3453,8 +3461,8 @@ function _renderSendResults(data){
   const rows = results.map(r => {
     const label = `${CHANNEL_LABEL[r.channel] || r.channel}${r.name ? ' · ' + escHtml(r.name) : ''}${r.to ? ' · ' + escHtml(r.to) : ''}`;
     const status = r.ok
-      ? '<span style="color:var(--green);font-family:DM Mono,monospace;font-size:11px;">✓ sent</span>'
-      : `<span style="color:var(--accent);font-family:DM Mono,monospace;font-size:11px;">✗ ${escHtml(r.error || 'failed')}</span>`;
+      ? '<span style="color:var(--green);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;">✓ sent</span>'
+      : `<span style="color:var(--accent);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;">✗ ${escHtml(r.error || 'failed')}</span>`;
     return `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--rule);font-size:13px;">${label}<span>${status}</span></div>`;
   }).join('');
   return head + '<div style="margin-top:10px;max-height:240px;overflow:auto;">' + rows + '</div>';
@@ -3540,12 +3548,12 @@ async function submitGate(){
   margin-top:64px;padding:34px 40px;
   background:var(--paper-deep,#EBE5D2);border-top:1px solid var(--rule,rgba(20,17,13,0.10));
   display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
-  font-family:'DM Mono',ui-monospace,monospace;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 .mk-ft a{color:inherit;}
 .mk-ft-logo{
   display:inline-flex;align-items:center;gap:8px;text-decoration:none;
-  color:var(--ink,#14110D);font-family:'Alegreya',Georgia,serif;font-weight:700;
+  color:var(--ink,#14110D);font-family:'Archivo',system-ui,-apple-system,sans-serif;font-weight:700;
   font-size:17px;letter-spacing:0.04em;text-transform:uppercase;flex-shrink:0;
 }
 .mk-ft-logo svg{width:20px;height:20px;border-radius:2px;flex-shrink:0;}
