@@ -330,7 +330,7 @@ body::after{
 .si-line{flex:1;height:1px;background:var(--rule-strong);margin:0 14px;min-width:16px;}
 
 /* REGION CARDS — cream surface, hand-drawn marks */
-.region-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;}
+.region-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px;}
 .region-card{
   background:var(--paper);border:1px solid var(--rule);padding:28px 22px;
   text-align:left;cursor:pointer;position:relative;overflow:hidden;
@@ -357,14 +357,6 @@ body::after{
   letter-spacing:0.08em;background:transparent;
 }
 .region-card.sel .region-badge{border-color:var(--accent);color:var(--accent);}
-.region-card.region-soon{cursor:not-allowed;opacity:0.55;}
-.region-card.region-soon::after{
-  content:'Coming soon';position:absolute;top:14px;right:14px;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;letter-spacing:0.14em;
-  text-transform:uppercase;color:var(--accent);background:var(--paper);
-  border:1px solid var(--accent);padding:4px 10px;
-}
-.region-card.region-soon:hover{transform:none;box-shadow:none;border-color:var(--rule);}
 .coming-toast{
   position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);
   background:var(--ink);color:var(--paper);padding:12px 22px;
@@ -1012,7 +1004,6 @@ input[type=file]{display:none;}
   </defs>
 </svg>
 <div class="slate-stripe" aria-hidden="true"></div>
-<div class="coming-toast" id="coming-toast"></div>
 <div id="app">
   <button class="back-btn" id="back-btn" onclick="goBack()"><span class="arr">←</span> <span id="back-btn-label">Back to home</span></button>
 
@@ -1044,111 +1035,21 @@ input[type=file]{display:none;}
     </div>
 
     <div class="region-grid">
+      <!-- One market. India is where the data, the rate cards and the
+           testing are, so it is the only thing on offer rather than the
+           first of four. The drawn skyline icons went with the other
+           three cards. -->
       <div class="region-card" id="rc-india" onclick="selectRegion('india','₹','INR','Indian Rupee')">
-        <!-- Mumbai skyline silhouette — Gateway of India arch + buildings -->
-        <svg class="region-mark" viewBox="0 0 72 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M2 46 L70 46"/>
-          <path d="M8 46 L8 30 L14 30 L14 46"/>
-          <path d="M16 46 L16 24 L22 24 L22 46"/>
-          <path d="M26 46 L26 32 L26 30 Q26 22 30 22 Q34 22 34 30 L34 32 L34 46"/>
-          <path d="M26 32 L34 32"/>
-          <line x1="30" y1="22" x2="30" y2="14"/>
-          <path d="M38 46 L38 22 L46 22 L46 46"/>
-          <path d="M50 46 L50 16 L58 16 L58 46"/>
-          <path d="M62 46 L62 28 L68 28 L68 46"/>
-          <circle cx="58" cy="10" r="2"/>
-        </svg>
         <div class="region-name">Indian Cinema</div>
-        <div class="region-sub">Bollywood · South India</div>
-        <div class="region-badge">₹ INR</div>
-      </div>
-      <div class="region-card region-soon" id="rc-hollywood" onclick="comingSoon('Hollywood')">
-        <!-- Manhattan grid + Hollywood hills -->
-        <svg class="region-mark" viewBox="0 0 72 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M2 46 L70 46"/>
-          <path d="M6 46 L6 14 L18 14 L18 46"/>
-          <path d="M10 18 L10 42 M14 18 L14 42"/>
-          <line x1="6" y1="22" x2="18" y2="22"/>
-          <line x1="6" y1="30" x2="18" y2="30"/>
-          <line x1="6" y1="38" x2="18" y2="38"/>
-          <path d="M22 46 L22 6 L34 6 L34 46"/>
-          <path d="M26 10 L26 42 M30 10 L30 42"/>
-          <line x1="22" y1="14" x2="34" y2="14"/>
-          <line x1="22" y1="22" x2="34" y2="22"/>
-          <line x1="22" y1="30" x2="34" y2="30"/>
-          <line x1="22" y1="38" x2="34" y2="38"/>
-          <path d="M38 46 L38 18 L48 18 L48 46"/>
-          <line x1="42" y1="22" x2="42" y2="42"/>
-          <line x1="38" y1="26" x2="48" y2="26"/>
-          <line x1="38" y1="34" x2="48" y2="34"/>
-          <path d="M52 46 L52 24 L66 24 L66 46"/>
-          <line x1="58" y1="28" x2="58" y2="42"/>
-          <line x1="52" y1="34" x2="66" y2="34"/>
-        </svg>
-        <div class="region-name">Hollywood</div>
-        <div class="region-sub">North America</div>
-        <div class="region-badge">$ USD</div>
-      </div>
-      <div class="region-card region-soon" id="rc-uk" onclick="comingSoon('UK &amp; Europe')">
-        <!-- London — Big Ben + Tower Bridge silhouette -->
-        <svg class="region-mark" viewBox="0 0 72 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M2 46 L70 46"/>
-          <path d="M10 46 L10 12 L18 12 L18 46"/>
-          <path d="M10 16 L18 16 M10 20 L18 20"/>
-          <path d="M12 12 L12 6 L16 6 L16 12"/>
-          <path d="M14 6 L14 2"/>
-          <path d="M22 46 L22 32 L34 32 L34 46"/>
-          <path d="M22 36 Q28 28 34 36"/>
-          <path d="M38 46 L38 32 L50 32 L50 46"/>
-          <path d="M38 36 Q44 28 50 36"/>
-          <line x1="34" y1="32" x2="38" y2="32"/>
-          <line x1="36" y1="32" x2="36" y2="22"/>
-          <path d="M54 46 L54 18 L62 18 L62 46"/>
-          <path d="M58 18 L58 12"/>
-          <circle cx="58" cy="9" r="2"/>
-        </svg>
-        <div class="region-name">UK &amp; Europe</div>
-        <div class="region-sub">London · Berlin · Paris</div>
-        <div class="region-badge">£ GBP · € EUR</div>
-      </div>
-      <div class="region-card region-soon" id="rc-other" onclick="comingSoon('Other markets')">
-        <!-- Globe with longitude/latitude -->
-        <svg class="region-mark" viewBox="0 0 72 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="36" cy="24" r="20"/>
-          <ellipse cx="36" cy="24" rx="20" ry="8"/>
-          <ellipse cx="36" cy="24" rx="8" ry="20"/>
-          <line x1="16" y1="24" x2="56" y2="24"/>
-          <line x1="36" y1="4" x2="36" y2="44"/>
-          <path d="M22 12 Q28 16 22 20" opacity="0.5"/>
-          <path d="M50 28 Q44 32 50 36" opacity="0.5"/>
-        </svg>
-        <div class="region-name">Other</div>
-        <div class="region-sub">Custom industry &amp; currency</div>
-        <div class="region-badge" id="rc-other-badge">Custom</div>
+        <div class="region-sub">Bollywood &middot; South India &middot; TVC &middot; Music video</div>
+        <div class="region-badge">₹ INR &middot; GST</div>
       </div>
     </div>
 
-    <!-- Custom inputs — shown only when Other is selected -->
-    <div id="custom-inputs" style="display:none;margin-top:16px;background:var(--s1);border:1px solid var(--border);padding:20px;display:none;">
-      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:14px;">Your Industry & Currency</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-        <div>
-          <label style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;display:block;margin-bottom:6px;">Industry / Market *</label>
-          <input id="custom-industry" type="text" placeholder="e.g. Korean Cinema" oninput="updateCustomRegion()" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:13px;padding:9px 12px;outline:none;"/>
-        </div>
-        <div>
-          <label style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;display:block;margin-bottom:6px;">Currency Symbol *</label>
-          <input id="custom-symbol" type="text" placeholder="e.g. €" maxlength="3" oninput="updateCustomRegion()" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:13px;padding:9px 12px;outline:none;"/>
-        </div>
-        <div>
-          <label style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;display:block;margin-bottom:6px;">Currency Code *</label>
-          <input id="custom-code" type="text" placeholder="e.g. EUR" maxlength="5" oninput="updateCustomRegion()" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--cream);font-family:'Archivo',system-ui,-apple-system,sans-serif;font-size:13px;padding:9px 12px;outline:none;text-transform:uppercase;"/>
-        </div>
-      </div>
-    </div>
+    
 
     <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
-      <div style="font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.08em;">Hollywood, UK &amp; Europe, and Other coming soon. Indian Cinema is the only live market today.</div>
+      <div style="font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.08em;">Built on Indian production data &mdash; real rate cards, real vendors, GST handled.</div>
       <button class="btn-red" id="market-next-btn" onclick="proceedFromMarket()" style="opacity:0.4;pointer-events:none;"><span>Continue →</span></button>
     </div>
   </div>
@@ -1553,8 +1454,9 @@ input[type=file]{display:none;}
 
 <script>
 // ── REGION / CURRENCY STATE ───────────────────────────────────────────────────
-// Indian Cinema is the only live market — Hollywood / UK / Other are stubbed
-// behind a "Coming soon" toast. We pre-select India on load so the producer
+// India is the only market. Not the first of four with the rest greyed
+// out — the others are gone, because this is where the rate cards, the
+// vendors and the testing are. Pre-selected on load so the producer
 // doesn't have to click twice to get started.
 let region = 'india';
 let currency = { symbol: '₹', code: 'INR', name: 'Indian Rupee' };
@@ -1563,33 +1465,10 @@ const regionMeta = {
   india: {
     label: 'Indian Cinema',
     currencyLabel: '₹ INR — Indian Rupee',
-    icon: `<svg viewBox="0 0 32 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 L30 22"/><path d="M5 22 L5 14 L8 14 L8 22"/><path d="M11 22 L11 6 Q14 2 17 6 L17 22"/><line x1="14" y1="6" x2="14" y2="2"/><path d="M20 22 L20 10 L24 10 L24 22"/><path d="M26 22 L26 14 L30 14"/></svg>`,
-  },
-  hollywood: {
-    label: 'Hollywood / North America',
-    currencyLabel: '$ USD — US Dollar',
-    icon: `<svg viewBox="0 0 32 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 L30 22"/><path d="M4 22 L4 6 L12 6 L12 22"/><line x1="6" y1="10" x2="6" y2="20"/><line x1="9" y1="10" x2="9" y2="20"/><line x1="4" y1="14" x2="12" y2="14"/><path d="M16 22 L16 12 L24 12 L24 22"/><line x1="20" y1="16" x2="20" y2="20"/><path d="M27 22 L27 16 L30 16"/></svg>`,
-  },
-  uk: {
-    label: 'UK & Europe',
-    currencyLabel: '£ GBP — British Pound',
-    icon: `<svg viewBox="0 0 32 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 L30 22"/><path d="M6 22 L6 6 L11 6 L11 22"/><line x1="8" y1="2" x2="8" y2="6"/><path d="M14 22 L14 14 Q17 10 20 14 L20 22"/><line x1="17" y1="14" x2="17" y2="22"/><path d="M23 22 L23 8 L27 8 L27 22"/><circle cx="25" cy="5" r="1.2"/></svg>`,
-  },
-  other: {
-    label: 'Other / International',
-    currencyLabel: '$ USD — US Dollar',
-    icon: `<svg viewBox="0 0 32 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="16" cy="12" r="10"/><ellipse cx="16" cy="12" rx="10" ry="4"/><line x1="6" y1="12" x2="26" y2="12"/></svg>`,
+    icon: '',
   },
 };
 
-function comingSoon(label) {
-  const t = document.getElementById('coming-toast');
-  if (!t) return;
-  t.textContent = label + ' — coming soon · Indian Cinema is live';
-  t.classList.add('show');
-  clearTimeout(window._comingTimer);
-  window._comingTimer = setTimeout(() => t.classList.remove('show'), 2400);
-}
 
 function selectRegion(r, sym, code, name) {
   region = r;
@@ -1597,8 +1476,6 @@ function selectRegion(r, sym, code, name) {
   document.querySelectorAll('.region-card').forEach(c => c.classList.remove('sel'));
   document.getElementById('rc-' + r).classList.add('sel');
 
-  const customBox = document.getElementById('custom-inputs');
-  if (customBox) customBox.style.display = 'none';
   const btn = document.getElementById('market-next-btn');
   if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
 
@@ -1608,19 +1485,6 @@ function selectRegion(r, sym, code, name) {
   window._autoAdvanceMarket = setTimeout(() => proceedFromMarket(), 700);
 }
 
-function updateCustomRegion() {
-  const industry = document.getElementById('custom-industry').value.trim();
-  const sym = document.getElementById('custom-symbol').value.trim();
-  const code = document.getElementById('custom-code').value.trim().toUpperCase();
-  const ready = industry && sym && code;
-  const btn = document.getElementById('market-next-btn');
-  btn.style.opacity = ready ? '1' : '0.4';
-  btn.style.pointerEvents = ready ? 'auto' : 'none';
-  if (ready) {
-    currency = { symbol: sym, code, name: industry };
-    document.getElementById('rc-other-badge').textContent = sym + ' ' + code;
-  }
-}
 
 function proceedFromMarket() {
   if (region === 'other') {
@@ -2237,15 +2101,9 @@ markFetch = async function (path, opts = {}) {
 // plus the standing follow-up set — and the answers genuinely drive the budget.
 const PREVIEW_CITIES = {
   india: ['Mumbai', 'Delhi NCR', 'Hyderabad', 'Chennai', 'Goa', 'Multiple cities'],
-  hollywood: ['Los Angeles', 'Atlanta', 'New York', 'New Mexico', 'Vancouver', 'Multiple states'],
-  uk: ['London', 'Manchester', 'Glasgow', 'Budapest', 'Prague', 'Multiple countries'],
-  other: ['Primary city', 'Secondary city', 'Two cities', 'Multiple countries'],
 };
 const PREVIEW_BANDS = {
   india: ['Low — ₹15–25L/day', 'Mid — ₹25–50L/day', 'High — ₹50–120L/day', 'Premium — ₹120L+/day'],
-  hollywood: ['Low — $30–50K/day', 'Mid — $50–100K/day', 'High — $100–220K/day', 'Premium — $220K+/day'],
-  uk: ['Low — £25–40K/day', 'Mid — £40–80K/day', 'High — £80–180K/day', 'Premium — £180K+/day'],
-  other: ['Low band', 'Mid band', 'High band', 'Premium band'],
 };
 
 function previewGroundingQuestions() {
@@ -2310,22 +2168,7 @@ function _mountPreviewBadge() {
   setTimeout(() => el.classList.add('folded'), 9000);
   document.body.appendChild(el);
 }
-// The live product is India-only, so the other markets are gated in the markup.
-// The walkthrough prices every territory off the same card, so open the two that
-// matter — London and North America — for the walkthrough only. The gate stays
-// exactly where it is on the live build.
-function _unlockPreviewMarkets() {
-  if (!PREVIEW_MODE) return;
-  [['rc-uk', () => selectRegion('uk', '£', 'GBP', 'British Pound')],
-   ['rc-hollywood', () => selectRegion('hollywood', '$', 'USD', 'US Dollar')]].forEach(([id, go]) => {
-    const card = document.getElementById(id);
-    if (!card) return;
-    card.classList.remove('region-soon');   // also drops the "Coming soon" tag
-    card.onclick = go;                      // replaces the inline comingSoon handler
-  });
-}
-
-function _mountPreview() { _mountPreviewBadge(); _unlockPreviewMarkets(); }
+function _mountPreview() { _mountPreviewBadge(); }
 if (document.body) _mountPreview();
 else window.addEventListener('DOMContentLoaded', _mountPreview);
 

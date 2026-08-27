@@ -308,8 +308,88 @@ footer{
   .reveal{opacity:1;transform:none;transition:none;}
 }
 
+/* ── CREDITS: two groups, India first ──────────────────────────────── */
+.credit-head{
+  font-family:'Anton',Impact,sans-serif;text-transform:uppercase;letter-spacing:.05em;
+  font-size:clamp(16px,1.4vw,22px);color:var(--paper);
+  margin:clamp(40px,4.5vw,72px) 0 4px;
+}
+.credit-head:first-of-type{margin-top:clamp(46px,5vw,86px);}
+
+/* ── THE CHANNEL ───────────────────────────────────────────────────── */
+.channel-grid{
+  display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);
+  gap:clamp(28px,4vw,72px);align-items:start;margin-top:clamp(40px,4.5vw,76px);
+}
+/* A thread, not a phone. No device chrome, no third-party marks — the
+   shape alone is enough to read as the group the unit is already in. */
+.thread{
+  background:var(--ink-raise);border:1px solid var(--ink-line);border-radius:12px;
+  padding:18px;display:flex;flex-direction:column;gap:10px;
+}
+.thread-head{
+  font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim);padding:2px 4px 12px;border-bottom:1px solid var(--ink-line);margin-bottom:4px;
+}
+.msg{
+  font-size:14px;line-height:1.5;padding:11px 14px;border-radius:10px;max-width:86%;
+}
+.msg.out{background:#2B2B26;color:var(--paper);align-self:flex-end;border-bottom-right-radius:3px;}
+.msg.in{background:#E4E5DD;color:var(--ink);align-self:flex-start;border-bottom-left-radius:3px;}
+.msg-who{
+  display:block;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim-ink);margin-bottom:5px;
+}
+.msg.doc{background:#E4E5DD;padding:12px 14px;}
+.msg-doc{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  letter-spacing:.06em;color:var(--ink);
+}
+
+/* ── UNDER THE HOOD ────────────────────────────────────────────────── */
+.stack-grid{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+  margin-top:clamp(40px,4.5vw,76px);border-top:1px solid var(--paper-line);
+}
+.stack-item{
+  padding:26px 28px 26px 0;border-bottom:1px solid var(--paper-line);
+}
+.stack-item:not(:nth-child(4n+1)){border-left:1px solid var(--paper-line);padding-left:28px;}
+/* Vendor names as wordmarks in our own face. See the note in the markup. */
+.stack-name{
+  font-family:'Anton',Impact,sans-serif;text-transform:uppercase;letter-spacing:.04em;
+  font-size:clamp(20px,2vw,34px);line-height:1;color:var(--ink);
+}
+.stack-role{font-size:13px;line-height:1.5;color:var(--dim-ink);margin-top:10px;max-width:22ch;}
+
+.checks{margin-top:clamp(40px,4.5vw,76px);}
+.checks-head{
+  font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim-ink);margin-bottom:18px;
+}
+.checks-list{
+  list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+  gap:0;border-top:1px solid var(--paper-line);
+}
+.checks-list li{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+  color:var(--ink);padding:11px 0;border-bottom:1px solid var(--paper-line);
+}
+.checks-list li::before{content:'✓ ';color:var(--dim-ink);}
+.checks-note{
+  font-size:clamp(14px,1.05vw,18px);line-height:1.6;color:#3B3C36;
+  max-width:60ch;margin-top:24px;
+}
+
 /* ── RESPONSIVE ────────────────────────────────────────────────────── */
+@media(max-width:1200px){
+  .stack-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .stack-item:not(:nth-child(4n+1)){border-left:0;padding-left:0;}
+  .stack-item:not(:nth-child(2n+1)){border-left:1px solid var(--paper-line);padding-left:28px;}
+}
 @media(max-width:1000px){
+  .channel-grid{grid-template-columns:1fr;}
+  .thread{max-width:480px;}
   .humans-lead{grid-template-columns:1fr;}
   .humans-portrait{max-width:300px;}
   .suite-row{grid-template-columns:1fr;gap:14px;}
@@ -326,6 +406,8 @@ footer{
   .credit-client{text-align:left;}
 }
 @media(max-width:760px){
+  .stack-grid{grid-template-columns:1fr;}
+  .stack-item,.stack-item:not(:nth-child(2n+1)){border-left:0;padding:22px 0;}
   nav{height:56px;}
   .nav-links a:not(.btn){display:none;}
   .hero{padding-top:130px;min-height:auto;}
@@ -387,11 +469,11 @@ footer{
     <img src="assets/set-cyc.jpg" alt="" loading="eager" decoding="async"/>
   </div>
   <div class="hero-inner">
-    <p class="eyebrow">Production OS for film</p>
+    <p class="eyebrow">Production OS for Indian film</p>
     <h1 class="hero-title display">Ask Mark</h1>
     <p class="hero-lede lede">Every production runs on paperwork. Mark&rsquo;s brain isn&rsquo;t random
-      artificial intelligence &mdash; it carries the experience of crew across films, TV,
-      commercials and music videos, built on real production data from the ground up.</p>
+      artificial intelligence &mdash; it is built on Indian production data: real rate cards, real
+      vendors and real cost reports from films, TV, commercials and music videos shot here.</p>
     <div class="hero-ctas">
       <a href="mailto:krishmpinto@gmail.com?subject=Teardown%20%E2%80%94%20intro%20call&body=Happy%20to%20talk%20it%20through%20first%20%E2%80%94%2020%20minutes%2C%20nothing%20to%20send%20over%20yet.%0A%0ARoughly%20how%20many%20productions%20a%20year%3A%0ALast%20three%20jobs%20%28one%20line%20each%29%3A%0ATwo%20times%20that%20suit%20you%3A%0A" class="btn btn-light">Book a teardown</a>
       <div class="hero-try">
@@ -399,7 +481,7 @@ footer{
         <a href="budget.html">Budget builder</a>
       </div>
     </div>
-    <p class="hero-meta">Indian Cinema live &middot; UK commercial in beta &middot; A line producer reviews every output</p>
+    <p class="hero-meta">Mumbai &middot; Hyderabad &middot; Chennai &middot; Budgets in &#8377; with GST &middot; Hindi, Tamil, Telugu, Malayalam or English &middot; A line producer reviews every output</p>
   </div>
 </section>
 
@@ -426,8 +508,8 @@ footer{
       <figcaption>Commercial unit &middot; vehicle set</figcaption>
     </figure>
     <figure class="set-figure">
-      <img src="assets/set-cyc.jpg" alt="A darkened cyclorama stage with silhouetted crew around a single lit set piece — a bare tree on a small island of earth." loading="lazy" decoding="async"/>
-      <figcaption>Cyc stage &middot; night build</figcaption>
+      <img src="assets/set-monitor.jpg" alt="Three crew watching a take on the monitor beside a cinema camera, backlit by tall studio windows." loading="lazy" decoding="async"/>
+      <figcaption>Playback &middot; crew at the monitor</figcaption>
     </figure>
     <figure class="set-figure">
       <img src="assets/set-wrap.jpg" alt="A black-and-white reflection of a crew member walking while coiling cable, shot upside down in a puddle." loading="lazy" decoding="async"/>
@@ -446,7 +528,7 @@ footer{
 
     <div class="humans-lead">
       <figure class="humans-portrait">
-        <img src="assets/krish-pinto.jpg" alt="Krish Pinto, founding creative at MARK." loading="lazy" decoding="async" width="900" height="1200"/>
+        <img src="assets/krish-onset.jpg" alt="Krish Pinto on set, being clipped with a radio mic between setups." loading="lazy" decoding="async" width="1600" height="1066"/>
       </figure>
       <div>
         <blockquote class="humans-quote">
@@ -462,13 +544,17 @@ footer{
       </div>
     </div>
 
+    <div class="credit-head">India</div>
+    <div class="credit-list">
+      <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">Bullet 650 &middot; House of Classic &middot; Classic 350 Unveiled</span><span class="credit-client">Royal Enfield</span></div>
+      <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">Mutual Funds</span><span class="credit-client">PhonePe</span></div>
+    </div>
+    <div class="credit-head">International</div>
     <div class="credit-list">
       <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">&ldquo;Lovestore&rdquo; &mdash; YSL Beauty, ft. Dua Lipa</span><span class="credit-client">Yves Saint Laurent</span></div>
       <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">AW 2025&ndash;26</span><span class="credit-client">Christian Dior</span></div>
       <div class="credit-line"><span class="credit-role">Production</span><span class="credit-name">Idris Elba: Our Knife Crime Crisis</span><span class="credit-client">BBC One &times; 22 Summers</span></div>
-      <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">Bullet 650 &middot; House of Classic &middot; Classic 350 Unveiled</span><span class="credit-client">Royal Enfield</span></div>
       <div class="credit-line"><span class="credit-role">Cinematographer</span><span class="credit-name">OMF &middot; Energy &middot; Nostalgia</span><span class="credit-client">Dappy &middot; Tinie Tempah &middot; Sammy Virji</span></div>
-      <div class="credit-line"><span class="credit-role">Camera dept</span><span class="credit-name">Mutual Funds</span><span class="credit-client">PhonePe</span></div>
     </div>
   </div>
 </section>
@@ -492,11 +578,11 @@ footer{
       </div>
       <div class="suite-row reveal">
         <div><div class="suite-n">02</div><h3 class="suite-name display">Built on your data</h3></div>
-        <p class="suite-body">Your rate cards, your vendor list, your crew roster, your last three cost reports. The system knows what a shoot day actually costs you &mdash; not what it costs on average.</p>
+        <p class="suite-body">Your rate cards, your vendor list, your crew roster, your last three cost reports. The system knows what a shoot day actually costs in Mumbai or Hyderabad this month &mdash; not what it costs on average.</p>
       </div>
       <div class="suite-row reveal">
         <div><div class="suite-n">03</div><h3 class="suite-name display">Agentic search</h3></div>
-        <p class="suite-body">Rate cards, union schedules, vendor catalogues, permits, weather windows. The answer a producer would have spent half a day finding, with its sources attached.</p>
+        <p class="suite-body">Rate cards, FWICE and union schedules, vendor catalogues, state film-office permits, monsoon windows. The answer a producer would have spent half a day finding, with its sources attached.</p>
       </div>
       <div class="suite-row reveal">
         <div><div class="suite-n">04</div><h3 class="suite-name display">Trained on outcomes</h3></div>
@@ -528,40 +614,112 @@ footer{
       <div class="step reveal">
         <div class="step-n display">03</div>
         <h3 class="step-title">Ask, and it ships</h3>
-        <p class="step-desc">&ldquo;Cut tomorrow&rsquo;s call sheet.&rdquo; &ldquo;Trim catering by &#8377;2L.&rdquo; &ldquo;Send the new SOC to all 40 crew.&rdquo; English or Hindi. The AI does the busywork; the human reviews anything you&rsquo;d want a human to review.</p>
+        <p class="step-desc">&ldquo;Cut tomorrow&rsquo;s call sheet.&rdquo; &ldquo;Trim catering by &#8377;2L.&rdquo; &ldquo;Send the new SOC to all 40 crew.&rdquo; Hindi, Tamil, Telugu, Malayalam or English, over WhatsApp. The AI does the busywork; the human reviews anything you&rsquo;d want a human to review.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- INTEGRATIONS -->
-<section class="band-rule">
+<!-- THE CHANNEL — WhatsApp is not an integration in this market, it is
+     the floor. Crews here already run the unit on it, so Mark answers there
+     rather than asking 40 people to install something. The thread below is
+     set in our own type on purpose: no third-party logos are drawn or
+     approximated anywhere on this site. -->
+<section id="channel" class="band-rule">
   <div class="wrap">
     <div class="head">
-      <p class="eyebrow">Integrations</p>
-      <h2 class="display">The whole floor routes through Mark</h2>
+      <p class="eyebrow">The channel</p>
+      <h2 class="display">Your unit already runs on WhatsApp. So does Mark</h2>
+      <p class="head-lede lede">Nothing for the crew to install, no login for the gaffer, no portal the
+        2nd AD forgets the password to. Mark sits in the group the unit is already in, answers in the
+        language the message arrives in, and sends the paperwork out the same way.</p>
     </div>
-    <div class="io">
-      <div class="io-col">
-        <div class="io-head">Plugs into</div>
-        <ul>
-          <li>Gmail</li>
-          <li>WhatsApp</li>
-          <li>Google Calendar</li>
-          <li>Google Drive</li>
-          <li>Telegram</li>
-        </ul>
+
+    <div class="channel-grid">
+      <div class="thread" aria-label="Example WhatsApp exchange with Mark">
+        <div class="thread-head">Unit 1 &mdash; Production</div>
+        <div class="msg out">Mark, cut tomorrow&rsquo;s call sheet. Same crew, Dharavi rooftop, 5.30 call.</div>
+        <div class="msg in"><span class="msg-who">Mark</span>Day 4 drafted &mdash; 38 crew, sunrise 06:12, unit move 13:00.
+          Catering moved to the rooftop. Sent to the line producer to review.</div>
+        <div class="msg in doc"><span class="msg-doc">DAY-04 &middot; CALL SHEET &middot; PDF</span></div>
+        <div class="msg out">&#2310;&#2332; &#2325;&#2366; &#2325;&#2376;&#2335;&#2352;&#2367;&#2306;&#2327; &#2325;&#2367;&#2340;&#2344;&#2375; &#2325;&#2366; &#2361;&#2376;?</div>
+        <div class="msg in"><span class="msg-who">Mark</span>&#8377;46,200 &mdash; 38 &#2325;&#2381;&#2352;&#2370; &#2340;&#2368;&#2344; &#2350;&#2368;&#2354;&#2404; &#2348;&#2332;&#2335; &#2360;&#2375; &#8377;3,800 &#2325;&#2350;&#2404;</div>
+        <div class="msg out">Send it.</div>
+        <div class="msg in"><span class="msg-who">Mark</span>Approved by Priya and sent to 38 crew. 31 delivered, 7 pending.</div>
       </div>
-      <div class="io-col">
-        <div class="io-head">Comes back with</div>
-        <ul>
-          <li>Call sheets built &amp; sent</li>
-          <li>Contracts issued &amp; tracked</li>
-          <li>Budget monitored live</li>
-          <li>Transport coordinated</li>
-          <li>Daily to-do generated</li>
-        </ul>
+
+      <div class="io">
+        <div class="io-col">
+          <div class="io-head">Plugs into</div>
+          <ul>
+            <li>WhatsApp</li>
+            <li>Gmail</li>
+            <li>Google Calendar</li>
+            <li>Google Drive</li>
+            <li>Telegram</li>
+          </ul>
+        </div>
+        <div class="io-col">
+          <div class="io-head">Comes back with</div>
+          <ul>
+            <li>Call sheets built &amp; sent</li>
+            <li>Contracts issued &amp; tracked</li>
+            <li>Budget monitored live</li>
+            <li>Transport coordinated</li>
+            <li>Daily to-do generated</li>
+          </ul>
+        </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- UNDER THE HOOD — for the people who will ask what it is actually made
+     of. Every name here is something the repo genuinely depends on, and
+     every check name below is a real test in evals/invariants.py. Vendor
+     names are set as wordmarks in our own typeface rather than as logo
+     artwork: drawing approximations of other companies' marks is both a
+     trademark problem and the exact "generated" look we stripped out. -->
+<section id="stack" class="on-paper">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Under the hood</p>
+      <h2 class="display">Built like production software, not a demo</h2>
+      <p class="head-lede lede">A budget that cannot be interrogated is a guess, so the estimate carries its
+        sources, the agent layer is typed, and every build runs a correctness suite over the budget engine
+        before anything reaches a producer.</p>
+      <a href="how-it-works.html" class="head-link">The architecture, and why &rarr;</a>
+    </div>
+
+    <div class="stack-grid">
+      <div class="stack-item"><div class="stack-name">Claude</div><div class="stack-role">Reasoning over scripts, briefs and rate cards</div></div>
+      <div class="stack-item"><div class="stack-name">Flue</div><div class="stack-role">Typed agent runtime &middot; TypeScript</div></div>
+      <div class="stack-item"><div class="stack-name">MCP</div><div class="stack-role">Model Context Protocol &middot; the tool layer</div></div>
+      <div class="stack-item"><div class="stack-name">FastAPI</div><div class="stack-role">Service layer &middot; Python</div></div>
+      <div class="stack-item"><div class="stack-name">Redis</div><div class="stack-role">State, queues and trace storage</div></div>
+      <div class="stack-item"><div class="stack-name">Langfuse</div><div class="stack-role">LLM tracing and eval telemetry</div></div>
+      <div class="stack-item"><div class="stack-name">Railway</div><div class="stack-role">Deploy and environment isolation</div></div>
+      <div class="stack-item"><div class="stack-name">Clerk / OIDC</div><div class="stack-role">Auth &middot; JWT verification</div></div>
+    </div>
+
+    <div class="checks">
+      <div class="checks-head">Every build runs these against the budget engine &mdash; no network, no API key</div>
+      <ul class="checks-list">
+        <li>shape.required_keys</li>
+        <li>shape.sections_nonempty</li>
+        <li>shape.section_count_8_12</li>
+        <li>tax.gst_rate_is_decimal</li>
+        <li>items.conf_valid</li>
+        <li>items.amounts_numeric</li>
+        <li>sections.required_present</li>
+        <li>ratio.post_vs_production</li>
+        <li>reconcile.total_in_band</li>
+        <li>reconcile.shoot_days</li>
+      </ul>
+      <p class="checks-note">A prompt tweak or a rate-card change that breaks any of these fails the build
+        rather than surfacing as a producer complaint. Per-tenant credentials are encrypted at rest;
+        anything irreversible &mdash; messaging the unit, issuing a contract, locking a budget &mdash; is
+        staged and approved by a human first.</p>
     </div>
   </div>
 </section>
@@ -589,7 +747,7 @@ footer{
         <div class="stage-price">
           <span class="price-label">Fixed fee</span>
           <!-- Fee basis + comparables: docs/pricing-basis.md §1 -->
-          <span class="price-fig">$4,500</span>
+          <span class="price-fig">&#8377;3,75,000</span>
           <span class="price-note">Credited in full against Stage 1</span>
         </div>
       </div>
@@ -606,7 +764,7 @@ footer{
         <div class="stage-price">
           <span class="price-label">Fixed fee</span>
           <!-- Fee basis + comparables: docs/pricing-basis.md §2 -->
-          <span class="price-fig">From $18,000</span>
+          <span class="price-fig">From &#8377;15,00,000</span>
           <span class="price-note">One production, start to wrap</span>
         </div>
       </div>
@@ -623,7 +781,7 @@ footer{
         <div class="stage-price">
           <span class="price-label">Retainer</span>
           <!-- Fee basis + comparables: docs/pricing-basis.md §3 -->
-          <span class="price-fig">From $9,000/mo</span>
+          <span class="price-fig">From &#8377;7,50,000/mo</span>
           <span class="price-note">Six-month minimum &middot; scaled to volume</span>
         </div>
       </div>
@@ -654,7 +812,7 @@ footer{
     <h2 class="display">The start of AI-native film production</h2>
     <p class="closer-sub">Embedded creatives &middot; Agentic infrastructure &middot; Production-specific datasets &middot; RL on outcomes</p>
     <div><a href="mailto:krishmpinto@gmail.com?subject=Teardown%20%E2%80%94%20intro%20call&body=Happy%20to%20talk%20it%20through%20first%20%E2%80%94%2020%20minutes%2C%20nothing%20to%20send%20over%20yet.%0A%0ARoughly%20how%20many%20productions%20a%20year%3A%0ALast%20three%20jobs%20%28one%20line%20each%29%3A%0ATwo%20times%20that%20suit%20you%3A%0A" class="btn btn-light">Book a teardown &rarr;</a></div>
-    <p class="closer-terms">Five working days &middot; $4,500 fixed &middot; Credited in full against Stage 1</p>
+    <p class="closer-terms">Five working days &middot; &#8377;3,75,000 fixed &middot; Credited in full against Stage 1</p>
     <a href="mailto:krishmpinto@gmail.com" class="closer-email" id="contact">krishmpinto@gmail.com</a>
   </div>
 </section>
