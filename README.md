@@ -17,12 +17,16 @@ mark/
 │                   budgetdiff.py— what moved between two budget versions.
 │                   exporters.py — xlsx out, Movie Magic interchange, xlsx in.
 │                   teardown_report.py — the Stage 0 client document.
+│                   delivery.py  — who has the call sheet, and who confirmed.
+│                   roster.py    — crew & vendors, and what we actually paid them.
+│                   ca_review_pack.py — prints every tax assumption for a CA.
 ├── frontend/       Static HTML + vanilla JS. The producer-facing UI:
 │                   budget.html    — region picker, script upload, question flow,
 │                                    budget render, export, feedback widget.
 │                   schedule.html  — stripboard, drag between days, DooD.
 │                   rates.html     — the rate library, editable in place.
 │                   teardown.html  — budget vs actuals, ledger, Stage 0 report.
+│                   delivery.html  — who hasn't confirmed, with tap-to-call.
 │                   callsheet.html — call sheet builder and send.
 │                   assets/mark-api.js + mark-tool.css — shared client + chrome.
 ├── flue-agents/    TypeScript agent harness (Flue). Webhook agents:
@@ -78,12 +82,29 @@ module with a thin endpoint, and each is covered offline in `evals/`.
   D1/D3/D4 of the SOW as printable HTML from the ledgers. Every figure traces to a
   ledger line, and the document states what it cannot support instead of filling
   the gap. Print → Save as PDF; no PDF library, no headless browser.
+- **Call-sheet delivery** (`delivery.py`) — sending existed; knowing who has it
+  did not. Every send opens a board: per-recipient state (queued → sent →
+  delivered → read → confirmed), a chase list ordered by how worried to be, and a
+  one-tap confirmation page at `/c/{send_id}/{recipient}/{token}` that needs no
+  login and works over any channel that carries a URL. Delivery and read state
+  come from the provider and are marked unverified until a real webhook has been
+  seen; confirmation is ours and is reliable. Endpoints:
+  `/callsheet/delivery/board|webhook`, `/callsheet/confirm`.
+- **Crew & vendor roster** (`roster.py`) — the answer to "what did we pay him
+  last time". People and vendors at tenant level, deduplicated on phone then
+  email then exact name, with an engagement per job. Rate history reports the
+  median rather than the mean and says when it is one observation.
+  `import_crew()` is idempotent, `ingest_ledger()` records what vendors were
+  actually paid from a teardown, and `propose_rates()` feeds the rate library off
+  at least two engagements. Endpoints under `/roster/*`.
 - **India compliance** (`compliance.py`) — the local equivalent of the US fringe
   engine. Per line: gross, GST, TDS section and rate, deduction (on the pre-GST
   value), net payable; plus blocked GST input credit and an advance/balance
   payment schedule. Endpoints: `/compliance/compute|payment-schedule`.
-  **Indicative only.** Every response carries a disclaimer and the rules in
-  `RULES`/`THRESHOLDS` need a chartered accountant's sign-off before being quoted.
+  **Indicative only, and gated.** Every response carries `reviewed: false` until
+  `TAX_RULES_REVIEWED=1` is set after a chartered accountant signs off the tables.
+  `python3 backend/ca_review_pack.py > docs/ca-review-pack.md` generates the
+  review document from the code, so the pack and the rules cannot drift apart.
 
 ## Robustness & agent-native layer
 

@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import Optional
@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 import httpx
 import time
 import hashlib
+import hmac
 import collections
 from dotenv import load_dotenv
 
@@ -37,6 +38,8 @@ import screenplay
 import budgetdiff
 import exporters
 import teardown_report
+import delivery
+import roster
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
@@ -142,6 +145,8 @@ def _raw_get(key):
 connections.init(r)
 metering.init(r)
 ratecard.init(r)
+delivery.init(r)
+roster.init(r)
 
 def now():
     return datetime.now(timezone.utc).isoformat()
@@ -1315,6 +1320,33 @@ def _pick_account(accounts: list, providers: set) -> Optional[dict]:
             return a
     return None
 
+def _provider_message_id(resp) -> Optional[str]:
+    """Pull the provider's message id out of a Unipile response.
+
+    Delivery and read receipts arrive later as webhooks keyed on this id, so a
+    send that does not capture it can never report anything but "sent". Unipile
+    is not consistent about where it puts the id across endpoints, hence the
+    tolerance — and a miss is silent by design, because failing a successful
+    send over a missing receipt id would be the wrong trade.
+    """
+    try:
+        body = resp.json()
+    except Exception:
+        return None
+    if not isinstance(body, dict):
+        return None
+    for key in ("message_id", "id", "chat_id", "tracking_id"):
+        value = body.get(key)
+        if isinstance(value, (str, int)) and str(value).strip():
+            return str(value)
+    nested = body.get("message") or body.get("data") or {}
+    if isinstance(nested, dict):
+        for key in ("message_id", "id"):
+            value = nested.get(key)
+            if isinstance(value, (str, int)) and str(value).strip():
+                return str(value)
+    return None
+
 def _render_callsheet_text(cs: dict, recipient: dict) -> str:
     """Plain-text call sheet body for WhatsApp / LinkedIn / Telegram. Kept
     short — these channels render best with a compact summary plus a few
@@ -1972,10 +2004,21 @@ async def _execute_callsheet_send(cs: dict, channels: list, project_id, pdf_base
         }
         db_set(f"callsheet-send:{sid}", record)
         db_sadd("callsheet-sends:all", sid)
+        # The delivery board is ours, not Unipile's — it opens on the mocked path
+        # too, so the confirmation flow is exercisable in dev and the board is
+        # never a surprise the first time real credentials are added.
+        try:
+            board = delivery.open_board(sid, crew, channels=channels,
+                                        shoot_day=cs.get("shoot_day", ""),
+                                        date=cs.get("date", ""), project_id=project_id or "")
+        except Exception as e:  # noqa: BLE001
+            board = None
+            print(f"⚠️  delivery board not opened for mocked send {sid}: {type(e).__name__}: {e}")
         return {
             "success": True,
             "send_id": sid,
             "status": "mocked",
+            "delivery": {"total": board["total"], "confirmed": 0} if board else None,
             "message": f"Unipile not configured — would send to {len(email_recipients)} via email and {len(whatsapp_recipients)} via WhatsApp.",
             "recipients": {
                 "email": [r.get("email") for r in email_recipients],
@@ -2046,7 +2089,8 @@ async def _execute_callsheet_send(cs: dict, channels: list, project_id, pdf_base
             }
             r = await _unipile_request("POST", "/api/v1/emails", json_body=payload, timeout=45)
         if r.is_success:
-            return {"channel": "email", "name": recipient.get("name"), "ok": True, "to": addr, "attached": bool(pdf_bytes)}
+            return {"channel": "email", "name": recipient.get("name"), "ok": True, "to": addr,
+                    "attached": bool(pdf_bytes), "message_id": _provider_message_id(r)}
         return {"channel": "email", "name": recipient.get("name"), "ok": False, "to": addr, "error": (r.text or '')[:300], "status": r.status_code}
 
     async def _send_chat(recipient: dict, account_id: str, channel: str, identifier_field: str):
@@ -2064,7 +2108,8 @@ async def _execute_callsheet_send(cs: dict, channels: list, project_id, pdf_base
         }
         r = await _unipile_request("POST", "/api/v1/chats", data=form, timeout=45)
         if r.is_success:
-            return {"channel": channel, "name": recipient.get("name"), "ok": True, "to": ident}
+            return {"channel": channel, "name": recipient.get("name"), "ok": True, "to": ident,
+                    "message_id": _provider_message_id(r)}
         return {"channel": channel, "name": recipient.get("name"), "ok": False, "to": ident, "error": (r.text or '')[:300], "status": r.status_code}
 
     # EMAIL
@@ -2117,6 +2162,19 @@ async def _execute_callsheet_send(cs: dict, channels: list, project_id, pdf_base
     }
     db_set(f"callsheet-send:{sid}", record)
     db_sadd("callsheet-sends:all", sid)
+
+    # Delivery board. Sending was never the hard part — knowing who has it at
+    # 11pm is. Opening the board here means every send is tracked without the
+    # caller having to remember to ask for it. A failure here must never fail a
+    # send that actually went out.
+    try:
+        delivery.open_board(sid, crew, channels=channels,
+                            shoot_day=cs.get("shoot_day", ""), date=cs.get("date", ""),
+                            project_id=project_id or "")
+        board = delivery.record_send(sid, results)
+        record["delivery"] = {"confirmed": board["confirmed"], "total": board["total"]}
+    except Exception as e:  # noqa: BLE001
+        print(f"⚠️  delivery board not updated for send {sid}: {type(e).__name__}: {e}")
 
     if ok_count and not fail_count:
         msg = f"Sent to {ok_count} recipient(s) via Unipile."
@@ -2186,6 +2244,272 @@ async def confirm_callsheet_send(data: SendConfirm, _=Depends(require_api_key)):
     proposal["executed_at"] = now()
     _raw_set(key, proposal, ttl=_SEND_PROPOSAL_TTL_SECONDS)
     return {"success": True, **result}
+
+# ── CREW & VENDOR ROSTER ──────────────────────────────────────────────────────
+# What this company paid this person, last time. See roster.py.
+
+class RosterUpsert(BaseModel):
+    entry: dict
+
+class RosterRef(BaseModel):
+    id: str
+
+class RosterSearch(BaseModel):
+    query: Optional[str] = ""
+    kind: Optional[str] = ""
+    tag: Optional[str] = ""
+
+class EngagementCreate(BaseModel):
+    roster_id: str
+    engagement: dict
+
+class RosterImport(BaseModel):
+    project_id: Optional[str] = None
+    crew: Optional[list] = None
+    production: Optional[str] = ""
+
+class RosterFromLedger(BaseModel):
+    ledger_id: Optional[str] = None
+    ledger: Optional[dict] = None
+    production: Optional[str] = ""
+
+class RosterProposeRates(BaseModel):
+    region: Optional[str] = "india"
+    city: Optional[str] = ""
+    tier: Optional[str] = "mid"
+    min_engagements: Optional[int] = 2
+
+@app.post("/roster/search")
+def roster_search(data: RosterSearch = None, _=Depends(require_api_key)):
+    data = data or RosterSearch()
+    rows = roster.search(data.query or "", kind=data.kind or "", tag=data.tag or "")
+    return {"success": True, "entries": rows, "count": len(rows)}
+
+@app.post("/roster/upsert")
+def roster_upsert(data: RosterUpsert, _=Depends(require_api_key)):
+    try:
+        return {"success": True, "entry": roster.upsert(data.entry)}
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+@app.post("/roster/get")
+def roster_get(data: RosterRef, _=Depends(require_api_key)):
+    entry = roster.get(data.id)
+    if not entry:
+        raise HTTPException(404, "Not on the roster")
+    return {"success": True, "entry": entry}
+
+@app.post("/roster/delete")
+def roster_delete(data: RosterRef, _=Depends(require_api_key)):
+    return {"success": True, "deleted": roster.delete(data.id)}
+
+@app.post("/roster/engagement")
+def roster_engagement(data: EngagementCreate, _=Depends(require_api_key)):
+    """Record one job at one rate. This is what a rate history is made of."""
+    try:
+        return {"success": True, "engagement": roster.record_engagement(data.roster_id, data.engagement)}
+    except KeyError:
+        raise HTTPException(404, "Not on the roster")
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+@app.post("/roster/history")
+def roster_history(data: RosterRef, _=Depends(require_api_key)):
+    """What we have actually paid them — median, spread, and the direction of
+    travel, with every figure traceable to one engagement."""
+    try:
+        return {"success": True, "history": roster.rate_history(data.id)}
+    except KeyError:
+        raise HTTPException(404, "Not on the roster")
+
+@app.post("/roster/import-crew")
+def roster_import_crew(data: RosterImport, _=Depends(require_api_key)):
+    """Pull a project's crew into the roster. Idempotent — run it after every job."""
+    crew = data.crew or []
+    if not crew and data.project_id:
+        crew = [c for c in (db_get(f"crew:{cid}")
+                            for cid in db_smembers(f"project:{data.project_id}:crew")) if c]
+    if not crew:
+        raise HTTPException(422, "Pass `crew`, or a project_id that has crew on it")
+    return {"success": True, **roster.import_crew(crew, production=data.production or "")}
+
+@app.post("/roster/from-ledger")
+def roster_from_ledger(data: RosterFromLedger, _=Depends(require_api_key)):
+    """Record what vendors were actually paid, from a variance ledger. The join
+    that makes a teardown populate the vendor history, not just the rate card."""
+    ledger = data.ledger
+    if not ledger and data.ledger_id:
+        ledger = db_get(f"ledger:{data.ledger_id}")
+    if not ledger:
+        raise HTTPException(422, "Pass `ledger` or a stored `ledger_id`")
+    return {"success": True, **roster.ingest_ledger(ledger, production=data.production or "")}
+
+@app.post("/roster/propose-rates")
+def roster_propose_rates(data: RosterProposeRates = None, _=Depends(require_api_key)):
+    """Roster history → rate-card proposals, on the median of at least two jobs.
+    Feed the accepted ones to /rates/apply-proposals."""
+    data = data or RosterProposeRates()
+    return {"success": True, "proposals": roster.propose_rates(
+        region=data.region or "india", city=data.city or "", tier=data.tier or "mid",
+        min_engagements=data.min_engagements or 2)}
+
+# ── CALL-SHEET DELIVERY STATE ─────────────────────────────────────────────────
+# Sending existed; knowing who has it did not. See delivery.py.
+
+class DeliveryRef(BaseModel):
+    send_id: str
+
+class ConfirmRequest(BaseModel):
+    send_id: str
+    recipient_id: str
+    token: str
+    declined: Optional[bool] = False
+    note: Optional[str] = ""
+
+@app.post("/callsheet/delivery/board")
+def delivery_board(data: DeliveryRef, _=Depends(require_api_key)):
+    """Who has the call sheet, who has read it, who has said they'll be there —
+    and, ordered by how worried to be, who to ring."""
+    board = delivery.get_board(data.send_id)
+    if not board:
+        raise HTTPException(404, "No delivery board for that send id")
+    return {"success": True, "board": board}
+
+@app.post("/callsheet/delivery/webhook")
+async def delivery_webhook(request: Request):
+    """Delivery and read receipts from the messaging provider.
+
+    Deliberately not behind the normal API key — a provider cannot send one. It
+    is behind a shared secret instead, and when that secret is not configured the
+    endpoint refuses rather than accepting anonymous writes: an open webhook that
+    can mark arbitrary crew as having read a call sheet is not a small hole.
+    """
+    secret = os.getenv("WEBHOOK_SECRET", "").strip()
+    if not secret:
+        raise HTTPException(503, "WEBHOOK_SECRET is not configured — refusing to accept "
+                                 "unauthenticated delivery events")
+    supplied = request.headers.get("X-Mark-Webhook-Secret", "")
+    if not hmac.compare_digest(supplied, secret):
+        raise HTTPException(401, "bad webhook secret")
+    try:
+        event = await request.json()
+    except Exception:
+        raise HTTPException(400, "expected a JSON body")
+    applied = delivery.apply_provider_event(event if isinstance(event, dict) else {})
+    # 200 either way: a provider that gets a 4xx for an event we simply don't
+    # care about will retry it forever.
+    return {"success": True, "applied": applied}
+
+@app.post("/callsheet/confirm")
+def callsheet_confirm(data: ConfirmRequest):
+    """A crew member's answer. No API key: the signed token in the link IS the
+    credential, and it is scoped to one person on one call sheet."""
+    try:
+        return {"success": True, **delivery.confirm(
+            data.send_id, data.recipient_id, data.token,
+            declined=bool(data.declined), note=data.note or "")}
+    except PermissionError as e:
+        raise HTTPException(403, str(e))
+    except KeyError as e:
+        raise HTTPException(404, str(e).strip("'"))
+
+@app.get("/c/{send_id}/{recipient_id}/{token}", response_class=HTMLResponse)
+def confirm_page(send_id: str, recipient_id: str, token: str):
+    """The page a crew member opens from WhatsApp.
+
+    One screen, two buttons, no login, no app. It is read on a phone at 6am by
+    someone who is already late, so it carries only what they need to answer:
+    which day, what date, their call time.
+    """
+    board = delivery.get_board(send_id)
+    rec = None
+    if board:
+        rec = next((r for r in board["recipients"] if r["id"] == recipient_id), None)
+    if not board or not rec or not delivery.token_matches(token, send_id, recipient_id):
+        return HTMLResponse(_confirm_html(None, None, None, error="This link isn't valid any more."),
+                            status_code=404)
+    return HTMLResponse(_confirm_html(board, rec, token))
+
+def _confirm_html(board, rec, token, *, error: str = "") -> str:
+    import html as _html
+    e = lambda v: _html.escape(str(v or ""))
+    if error:
+        body = f'<p class="err">{e(error)}</p><p class="sub">Ask the production office to resend it.</p>'
+    else:
+        already = rec["state"] in ("confirmed", "declined")
+        call = rec.get("call_time")
+        # Built outside the f-string: an apostrophe inside an f-string
+        # expression is a syntax error, and "can't" is unavoidable here.
+        CONFIRMED_MSG = "You're confirmed. See you there."
+        DECLINED_MSG = "You said you can't make it. Production has been told."
+        done_msg = DECLINED_MSG if rec["state"] == "declined" else CONFIRMED_MSG
+        body = f"""
+      <p class="kicker">Call sheet</p>
+      <h1>{e(board.get('shoot_day') or 'Shoot day')}</h1>
+      <p class="date">{e(board.get('date') or '')}</p>
+      <p class="who">{e(rec['name'])}{' · ' + e(rec['role']) if rec.get('role') else ''}</p>
+      {f'<p class="call">Your call: <strong>{e(call)}</strong></p>' if call else ''}
+      <div id="done" class="done" {'' if already else 'hidden'}>
+        <p class="ok">{e(done_msg)}</p>
+      </div>
+      <div id="ask" {'hidden' if already else ''}>
+        <button class="yes" onclick="answer(false)">I'll be there</button>
+        <button class="no" onclick="answer(true)">I can't make it</button>
+        <textarea id="note" rows="2" placeholder="Anything production should know (optional)"></textarea>
+      </div>
+      <p id="err" class="err" hidden></p>
+      <script>
+      async function answer(declined) {{
+        document.querySelectorAll('button').forEach(b => b.disabled = true);
+        try {{
+          const r = await fetch('/callsheet/confirm', {{
+            method: 'POST', headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{ send_id: {json.dumps(board['sheet_id'])},
+              recipient_id: {json.dumps(rec['id'])}, token: {json.dumps(token)},
+              declined, note: document.getElementById('note').value }})
+          }});
+          if (!r.ok) throw new Error((await r.json()).detail || 'Could not save that.');
+          document.getElementById('ask').hidden = true;
+          const done = document.getElementById('done');
+          done.querySelector('.ok').textContent = declined
+            ? {json.dumps(DECLINED_MSG)} : {json.dumps(CONFIRMED_MSG)};
+          done.hidden = false;
+        }} catch (err) {{
+          const el = document.getElementById('err');
+          el.textContent = err.message + ' Try again, or ring the production office.';
+          el.hidden = false;
+          document.querySelectorAll('button').forEach(b => b.disabled = false);
+        }}
+      }}
+      </script>"""
+    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Call sheet — confirm</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{background:#171714;color:#D5D6CE;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;line-height:1.5}}
+main{{width:100%;max-width:420px}}
+.kicker{{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#8A8B83;font-weight:700}}
+h1{{font-size:34px;line-height:1.05;margin:10px 0 4px;font-weight:800;letter-spacing:-.01em}}
+.date{{color:#B3B3B3;font-size:17px}}
+.who{{margin-top:22px;font-size:19px;font-weight:600}}
+.call{{margin-top:6px;color:#B3B3B3;font-size:17px}}
+.call strong{{color:#D5D6CE;font-size:22px}}
+button{{display:block;width:100%;margin-top:14px;padding:20px;font-size:18px;font-weight:700;
+  font-family:inherit;border:1px solid #D5D6CE;background:#D5D6CE;color:#171714;cursor:pointer;
+  border-radius:2px}}
+button.no{{background:transparent;color:#D5D6CE}}
+button:disabled{{opacity:.5}}
+#ask{{margin-top:26px}}
+textarea{{width:100%;margin-top:14px;padding:12px;font-family:inherit;font-size:16px;
+  background:#1D1D19;color:#D5D6CE;border:1px solid #2E2E29;border-radius:2px}}
+.done{{margin-top:26px;padding:18px;border-left:2px solid #D5D6CE;background:#1D1D19}}
+.ok{{font-size:18px;font-weight:600}}
+.err{{margin-top:18px;color:#E8724F;font-size:16px}}
+.sub{{margin-top:8px;color:#8A8B83;font-size:15px}}
+[hidden]{{display:none!important}}
+</style></head><body><main>{body}</main></body></html>"""
 
 @app.post("/crew/enrich")
 async def enrich_crew_member(data: CrewEnrich, _=Depends(require_api_key)):

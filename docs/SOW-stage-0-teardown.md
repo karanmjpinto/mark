@@ -10,7 +10,7 @@
 | **Date** | «DATE» |
 | **Engagement** | Stage 0 — Production Teardown |
 | **Duration** | 5 working days from Data Handover (cl. 4) |
-| **Fee** | **USD $4,500** — see cl. 7 |
+| **Fee** | **USD $4,500** — or **INR ₹1,50,000** for an Indian ad-film, branded-content or line-production company. See cl. 7 and `docs/pricing-basis.md` §3b |
 
 > **Remaining placeholders marked «…» must be completed before issue.**
 > The fee is fixed and benchmarked — read `docs/pricing-basis.md` §1 before
@@ -107,16 +107,26 @@ For the avoidance of doubt, this SOW does **not** include:
 
 ## 7. Fee and payment
 
-**Fee: USD $4,500.**
+**Fee: USD $4,500** (UK, US, and Indian studio clients) — **or INR ₹1,50,000**
+for an Indian ad-film, branded-content or line-production company. Delete the row
+that does not apply before issue.
 
 | Milestone | Share | Amount | Due |
 |---|---|---|---|
 | Signature of this SOW | 50% | $2,250 | On invoice, «7» days |
 | Delivery of D1–D4 | 50% | $2,250 | On invoice, «7» days |
+| *INR alternative:* signature of this SOW | 100% | ₹1,50,000 | On invoice, «7» days |
 
 - **Tax.** The fee is exclusive of VAT. VAT is charged only where MARK is
   VAT-registered and the supply falls within the scope of UK VAT. Where MARK
   is not registered, no VAT is chargeable and none will be shown.
+- **Indian clients.** Where the fee is stated in INR, the invoice is issued and
+  settled in INR, in full, on signature — Indian production payment cycles make a
+  split milestone on this sum not worth administering. MARK has no place of
+  business in India; the supply is an import of service and GST is accounted for
+  by the Client under reverse charge, so no GST is charged on the invoice. Any
+  withholding the Client is required to make under s.195 is for the Client's
+  account and MARK will be furnished with the withholding certificate.
 - **Currency and settlement.** Invoices are issued in USD. Settlement is in
   **GBP at the exchange rate stated on the invoice, fixed on the invoice
   date** — so neither party carries FX movement between invoice and payment.

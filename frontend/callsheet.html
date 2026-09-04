@@ -3456,8 +3456,16 @@ async function confirmSend(proposalId){
 
 function _renderSendResults(data){
   const head = `<div style="font-weight:600;margin-bottom:8px;">${escHtml(data.message || 'Sent.')}</div>`;
+  // Sending is not the end of it. The board answers the 11pm question — who
+  // has actually confirmed — and it lives on its own page because a producer
+  // opens it hours after this screen is gone.
+  const boardLink = data.send_id
+    ? `<a href="delivery.html?send=${encodeURIComponent(data.send_id)}" target="_blank" rel="noopener"
+         style="display:inline-block;margin-bottom:10px;font-size:13px;font-weight:600;color:var(--ink);">
+         Track who has confirmed →</a>`
+    : '';
   const results = data.results || [];
-  if (!results.length) return head;
+  if (!results.length) return head + boardLink;
   const rows = results.map(r => {
     const label = `${CHANNEL_LABEL[r.channel] || r.channel}${r.name ? ' · ' + escHtml(r.name) : ''}${r.to ? ' · ' + escHtml(r.to) : ''}`;
     const status = r.ok
@@ -3465,7 +3473,7 @@ function _renderSendResults(data){
       : `<span style="color:var(--accent);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;">✗ ${escHtml(r.error || 'failed')}</span>`;
     return `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--rule);font-size:13px;">${label}<span>${status}</span></div>`;
   }).join('');
-  return head + '<div style="margin-top:10px;max-height:240px;overflow:auto;">' + rows + '</div>';
+  return head + boardLink + '<div style="margin-top:10px;max-height:240px;overflow:auto;">' + rows + '</div>';
 }
 
 function showNextDayBanner(){

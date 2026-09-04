@@ -58,6 +58,59 @@ when a client asks "what does this cost us a year".
 Scale up, not down: a client running 40 productions a year should be at the
 top of the band or on a per-production uplift.
 
+## 3b. India — the same ladder, priced in rupees
+
+Adopted 4 September 2026. The USD ladder holds for the UK, the US and for
+Indian **studios**; the rupee band exists for the segment below them.
+
+$4,500 is roughly ₹4 lakh. To Applause, Banijay Asia or Balaji that is a
+rounding error. To a seventeen-person ad-film house turning over ₹5–10 crore it
+is a decision that leaves the producer's desk, goes to the owner, and stalls —
+and a stalled Stage 0 is a lost Stage 1, because the whole point of the fee is
+that it is small enough to be decided by one person in one meeting.
+
+| Segment | Stage 0 | Stage 1 | Stage 2 |
+|---|---|---|---|
+| Ad-film / TVC house (10–60 staff) | **₹1,50,000** | ₹6–8 L | ₹1.5–2.5 L/month |
+| Branded-content studio | **₹1,50,000** | ₹6–8 L | ₹1.5–2.5 L/month |
+| Line-production / service company | **₹1,50,000** | ₹6–8 L | ₹1.5–2.5 L/month |
+| OTT / film studio, TV factory | keep the USD ladder — $4,500 / $18,000 / $9,000 per month | | |
+
+**Why ₹1,50,000 and not ₹4 lakh.** The comparable is not a US consultant's day
+rate, it is what the same five days costs the client to *not* buy: an Indian
+line producer runs ₹25,000 a day, so five days of a senior pair of eyes is
+₹1.25 lakh at market. ₹1.5 lakh is that, plus the ledger and the readout. It is
+also under the ₹2 lakh mark where most Indian production houses require a second
+signature. Both of those are the argument — not the discount.
+
+**Do not translate the USD number.** Quote ₹1,50,000 as the price, never
+"$4,500, which is about ₹4 lakh". The second version invites a currency
+conversation and reads as a foreign firm's rate card applied to an Indian client.
+
+### Mechanics that are not optional in India
+
+1. **Invoice in INR to an Indian entity.** A USD invoice adds an FX conversation
+   and a finance-team delay, and can add FEMA questions for the client's
+   accountant. Quote and settle in rupees.
+2. **100% upfront below ₹2 lakh.** Indian production payment cycles run 60–90
+   days. A 50/50 split on ₹1.5 lakh means chasing ₹75,000 for three months; the
+   chase costs more than the split protects.
+3. **GST.** THE MARIO JUDE LTD is a UK company with no Indian establishment, so
+   this is an import of service and the Indian client accounts for GST under
+   reverse charge at 18%. Say so on the invoice — "GST payable by the recipient
+   under reverse charge" — and do not add GST to the total yourself. Confirm
+   with the accountant before the first Indian invoice; the alternative (being
+   treated as having a place of business in India) is a different regime
+   entirely.
+4. **TDS will be deducted from you.** An Indian company paying a foreign
+   supplier for professional services withholds under s.195. Expect the receipt
+   to be short by the applicable rate, take the withholding certificate, and
+   claim it under the UK–India DTAA. Price with that in mind: ₹1,50,000 invoiced
+   is not ₹1,50,000 received.
+
+Points 3 and 4 are the same open question as the compliance engine — they need
+the same accountant, in the same conversation.
+
 ## 4. Stage 3 — Platform · scoped
 
 No external comparable — this is priced against the Stage 2 retainer the

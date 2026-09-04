@@ -29,8 +29,17 @@ accountant, not an answer.
 
 from __future__ import annotations
 
+import os
 import re
 from typing import Any, Optional
+
+# Flipped to "1" only after a chartered accountant has signed off the tables
+# below — see `docs/ca-review-pack.md`, which is generated from them. Until then
+# every response says `reviewed: false`, and any UI that shows a tax figure is
+# expected to refuse to present it as final. A disclaimer nobody reads is not a
+# control; a boolean the code can check is.
+TAX_RULES_REVIEWED = os.getenv("TAX_RULES_REVIEWED", "").strip() in ("1", "true", "yes")
+TAX_RULES_REVIEWED_BY = os.getenv("TAX_RULES_REVIEWED_BY", "").strip()
 
 DISCLAIMER = (
     "Indicative computation only. Rates, sections and thresholds are defaults that must be "
@@ -217,6 +226,22 @@ def compute_line(item: dict, *, section_code: str = "", payee_type: str = PAYEE_
     }
 
 
+def review_status() -> dict:
+    """The block every tax response carries.
+
+    `reviewed` is the field a caller should branch on. While it is false the
+    figures are a structured question for an accountant, not an answer, and no
+    client-facing document may present them as final.
+    """
+    return {
+        "reviewed": TAX_RULES_REVIEWED,
+        "reviewed_by": TAX_RULES_REVIEWED_BY or None,
+        "disclaimer": DISCLAIMER if not TAX_RULES_REVIEWED else (
+            f"Rates and sections reviewed by {TAX_RULES_REVIEWED_BY or 'a qualified reviewer'}. "
+            "Still indicative: confirm the payee's status and annual aggregates before deducting."),
+    }
+
+
 def _itc_block_reason(desc: str, sub: str = "") -> Optional[str]:
     text = f"{desc} {sub}".lower()
     for kw, reason in ITC_BLOCKED_KEYWORDS.items():
@@ -301,7 +326,7 @@ def compute_budget(budget: dict, *, payee_types: Optional[dict] = None,
                     "registration and outward supplies. Blocked heads are flagged, not netted off.",
         },
         "flags": sorted({f for l in lines for f in l["flags"]}),
-        "disclaimer": DISCLAIMER,
+        **review_status(),
     }
 
 
@@ -338,5 +363,5 @@ def payment_schedule(budget: dict, *, advance_pct: float = 0.4,
         "by_tds_section": computed["by_tds_section"],
         "note": "TDS is deducted at each payment, not once at the end. Certificates "
                 "(Form 16A) follow the quarterly return for the quarter the deduction falls in.",
-        "disclaimer": DISCLAIMER,
+        **review_status(),
     }

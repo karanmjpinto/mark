@@ -75,12 +75,12 @@ with the format spec or a licence.
 
 ## Phase 3 — distribution and proof
 
-| # | Build |
-|---|---|
-| 3.1 | Call-sheet delivery + read state and one-tap crew confirmation (the send path already exists via Unipile — this is the state layer on top) |
-| 3.2 | Crew/vendor roster with rate history, feeding the rate library |
-| 3.3 | Public accuracy report generated from `evals/` |
-| 3.4 | Hindi/Marathi call sheets |
+| # | Build | Delivered as |
+|---|---|---|
+| 3.1 | Call-sheet delivery state + one-tap crew confirmation | `backend/delivery.py`, `frontend/delivery.html`, `/c/{send}/{recipient}/{token}` |
+| 3.2 | Crew/vendor roster with rate history, feeding the rate library | `backend/roster.py` + `/roster/*` |
+| 3.3 | Public accuracy report generated from `evals/` | not started |
+| 3.4 | Hindi/Marathi call sheets | not started |
 
 ---
 
@@ -118,7 +118,30 @@ Updated as work lands.
 | 2.3 Stage 0 report | ✅ shipped | `backend/teardown_report.py`, 11 tests; renders inline, prints to PDF |
 | 2.4 Interop | ✅ shipped | `backend/exporters.py`, 13 tests; xlsx out/in + Movie Magic interchange |
 | 2.5 Versioning + diff | ✅ shipped | `backend/budgetdiff.py`, 11 tests |
-| Phase 3 | 3.1 partially exists | `/callsheet/send` already dispatches over WhatsApp via Unipile; delivery/read state and crew confirmation are the missing half |
+| 3.1 Delivery state + confirmation | ✅ shipped | `backend/delivery.py` (16 tests), `frontend/delivery.html`, crew page verified on a 375px viewport |
+| 3.2 Crew/vendor roster | ✅ shipped | `backend/roster.py` (20 tests); `ingest_ledger` joins a teardown to vendor history |
+| 3.3 / 3.4 | not started | |
+
+### Phase 3 — verified how
+
+The crew-facing confirmation page was driven in a real browser at phone size: tap
+"I'll be there" with a note, and the board moved to 1 of 3 confirmed with the note
+attached. The webhook endpoint refuses without the shared secret (401) and refuses
+to exist at all when `WEBHOOK_SECRET` is unset (503) — an open endpoint that can
+mark arbitrary crew as having read a call sheet is not a small hole. A guessed
+confirmation token returns 403.
+
+Two defects the smoke test found in the roster, both of the kind that corrupt data
+quietly rather than crashing:
+
+1. **A later call sheet overwrote a fuller name.** "Ravi Kulkarni" became "Ravi K"
+   on the second import, because the latest write won. The roster would have got
+   worse every time it was used. The fuller name now wins.
+2. **Crew imports could never reach the rate card.** A crew list carries roles,
+   not rate-card keys, so every imported person was skipped by `propose_rates()`.
+   The key is now derived from the role through the same normalisation the rate
+   card uses — and every proposal says whether its key was given or derived,
+   because a derived key can create a rate-card row nobody chose the name of.
 
 ### Phase 2 — verified how
 
@@ -186,8 +209,14 @@ correcting its number does.
 - **The .xlsx was never opened in Excel.** It is verified against the OOXML spec
   (every part well-formed, all required parts present) and round-trips through
   Mark's own reader. Open one in Excel and Numbers before sending a client a file.
-- **The three new pages have no auth.** They talk to the backend with whatever
+- **The new pages have no auth.** They talk to the backend with whatever
   `AUTH_MODE` allows, same as `budget.html`. Fine for the demo, not for a tenant.
+  The crew confirmation page is deliberately different: it is public by design and
+  authenticated by a signed per-recipient token.
+- **Delivery and read state have never seen a real Unipile webhook.** The event
+  mapping is written from the documented shapes and is tolerant, but until a real
+  payload arrives the board says so in `note` and `read_state_verified` is false.
+  Confirmation does not depend on it.
 - **Tax rules are unsigned.** `compliance.RULES` and `THRESHOLDS` are defaults.
   Correct before quoting.
 - **The rate seeds are placeholders.** 46 India, 15 UK, 12 US rows, all

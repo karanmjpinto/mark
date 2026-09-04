@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MARK — Who has the call sheet</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%23171714'/&gt;&lt;text x='40' y='68' fill='%23D5D6CE' font-family='Impact,sans-serif' font-size='52' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='69' cy='69' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/mark-tool.css"/>
+<style>
+/* The chase list is the page. Everything else is context. */
+.chase{border:1px solid var(--paper-line);background:var(--paper);}
+.chase-row{display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid var(--paper-line);}
+.chase-row:last-child{border-bottom:none;}
+.chase-row .who{flex:1;min-width:0;}
+.chase-row .nm{font-weight:700;}
+.chase-row .rl{font-size:12.5px;color:var(--dim-ink);}
+.chase-row a{color:var(--ink);text-decoration:none;font-weight:700;font-size:12.5px;
+  border:1px solid var(--paper-line);padding:6px 10px;white-space:nowrap;}
+.chase-row a:hover{background:var(--paper-deep);}
+.state{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 7px;
+  border:1px solid var(--paper-line);color:var(--dim-ink);white-space:nowrap;}
+.state.failed{border-color:var(--signal);color:var(--signal);}
+.state.confirmed{border-color:var(--green);color:var(--green);}
+.state.declined{border-color:var(--gold);color:var(--gold);}
+.bar{height:8px;background:var(--paper-deep);border:1px solid var(--paper-line);margin:14px 0 6px;}
+.bar span{display:block;height:100%;background:var(--ink);}
+</style>
+</head>
+<body>
+<div class="slate-stripe"></div>
+<nav>
+  <a class="nav-logo" href="index.html">
+    <svg viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" fill="#171714"/>
+      <text x="40" y="68" fill="#D5D6CE" font-family="Anton, Impact, sans-serif" font-size="52" text-anchor="middle">M</text>
+      <circle cx="69" cy="69" r="3.4" fill="#C8330A"/></svg>
+    <span>Mark</span>
+  </a>
+  <div class="nav-links">
+    <a href="budget.html">Budget</a>
+    <a href="schedule.html">Schedule</a>
+    <a href="callsheet.html">Call sheet</a>
+    <a href="delivery.html" aria-current="page">Delivery</a>
+    <a href="rates.html">Rates</a>
+    <a href="teardown.html">Teardown</a>
+  </div>
+</nav>
+
+<main>
+  <p class="page-kicker">Call sheet · delivery</p>
+  <h1 class="display">Who hasn't<br>confirmed</h1>
+  <p class="page-lede">Sending was never the hard part. This is the eleven-o'clock question: who
+    has the call sheet, who has opened it, and who still needs a phone call.</p>
+
+  <div class="toolbar">
+    <div class="field" style="flex:1 1 320px">
+      <label for="send">Send id</label>
+      <input id="send" type="text" placeholder="from the call-sheet send, or ?send= in the URL"/>
+    </div>
+    <button id="load">Open board</button>
+    <label class="hint" style="display:flex;align-items:center;gap:7px;margin-bottom:9px">
+      <input type="checkbox" id="auto" style="width:auto"/> refresh every 30s
+    </label>
+  </div>
+
+  <div id="status" class="status" hidden></div>
+
+  <div id="board" hidden>
+    <p class="page-kicker" id="head"></p>
+    <div class="bar"><span id="bar" style="width:0%"></span></div>
+    <p class="hint" id="pct"></p>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="split wide" style="margin-top:22px">
+      <div>
+        <div class="panel-head" style="border:1px solid var(--paper-line);border-bottom:none">
+          Still to chase — <span id="chaseCount"></span>
+        </div>
+        <div class="chase" id="chase"></div>
+        <p class="hint" id="note" style="margin-top:12px"></p>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-head">Everyone</div>
+          <div class="table-wrap" style="border:none">
+            <table><thead><tr><th>Name</th><th>Role</th><th>State</th><th>Note</th></tr></thead>
+              <tbody id="all"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="assets/mark-api.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const statusEl = $('status');
+let timer = null;
+
+const LABEL = {
+  queued: 'not sent yet', sent: 'sent', delivered: 'delivered',
+  read: 'read, no reply', confirmed: 'confirmed', declined: 'declined', failed: "didn't send",
+};
+
+async function load(quiet) {
+  const id = $('send').value.trim();
+  if (!id) { status(statusEl, 'Paste the send id from the call-sheet send.', 'error'); return; }
+  try {
+    if (!quiet) status(statusEl, 'Loading…');
+    const out = await apiPost('/callsheet/delivery/board', { send_id: id });
+    render(out.board);
+    if (!quiet) status(statusEl, '', 'ok');
+    statusEl.hidden = true;
+    const url = new URL(location.href);
+    url.searchParams.set('send', id);
+    history.replaceState(null, '', url);
+  } catch (err) {
+    status(statusEl, err.message, 'error');
+  }
+}
+
+function render(b) {
+  $('board').hidden = false;
+  $('head').textContent = [b.shoot_day, b.date].filter(Boolean).join(' · ') || 'Call sheet';
+  const pct = Math.round((b.confirmed_pct || 0) * 100);
+  $('bar').style.width = pct + '%';
+  $('pct').textContent = `${b.confirmed} of ${b.total} confirmed (${pct}%)`;
+
+  const c = b.counts || {};
+  const cells = [
+    ['Confirmed', b.confirmed, false],
+    ['Declined', c.declined || 0, (c.declined || 0) > 0],
+    ["Didn't send", c.failed || 0, (c.failed || 0) > 0],
+    ['Read, no reply', c.read || 0, false],
+    ['Not opened', (c.queued || 0) + (c.sent || 0) + (c.delivered || 0), false],
+  ];
+  $('stats').innerHTML = cells.map(([k, v, warn]) =>
+    `<div class="stat ${warn ? 'warn' : ''}"><div class="v">${v}</div><div class="k">${esc(k)}</div></div>`).join('');
+
+  const out = b.outstanding || [];
+  $('chaseCount').textContent = out.length ? `${out.length} to go` : 'nobody, everyone answered';
+  $('chase').innerHTML = out.length ? out.map(r => `
+    <div class="chase-row">
+      <span class="state ${esc(r.state)}">${esc(LABEL[r.state] || r.state)}</span>
+      <span class="who"><span class="nm">${esc(r.name || '—')}</span>
+        <span class="rl">${esc(r.role || '')}${r.call_time ? ' · call ' + esc(r.call_time) : ''}</span></span>
+      ${r.phone ? `<a href="tel:${esc(r.phone)}">Call</a>
+                   <a href="https://wa.me/${esc(String(r.phone).replace(/[^0-9]/g, ''))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+      ${!r.phone && r.email ? `<a href="mailto:${esc(r.email)}">Email</a>` : ''}
+    </div>`).join('')
+    : '<div class="empty">Everyone has answered.</div>';
+
+  $('all').innerHTML = (b.recipients || []).map(r => `<tr>
+    <td>${esc(r.name || '—')}</td><td>${esc(r.role || '')}</td>
+    <td><span class="state ${esc(r.state)}">${esc(LABEL[r.state] || r.state)}</span></td>
+    <td class="evidence">${esc(r.note || '')}</td></tr>`).join('');
+
+  $('note').textContent = b.note || '';
+}
+
+$('load').addEventListener('click', () => load(false));
+$('send').addEventListener('keydown', e => { if (e.key === 'Enter') load(false); });
+$('auto').addEventListener('change', e => {
+  clearInterval(timer);
+  if (e.target.checked) timer = setInterval(() => load(true), 30000);
+});
+
+const fromUrl = new URL(location.href).searchParams.get('send');
+if (fromUrl) { $('send').value = fromUrl; load(false); }
+</script>
+</body>
+</html>

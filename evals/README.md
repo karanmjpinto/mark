@@ -21,6 +21,8 @@ into a real, versioned suite.
 | `test_budgetdiff.py` | Version-to-version change: no line matched twice, totals reconcile against the line deltas, a reworded line is not hidden. |
 | `test_exporters.py` | Interop: every part of the .xlsx package is well-formed, hostile characters are escaped, numbers round-trip, and export→import returns the same total. |
 | `test_teardown_report.py` | The client document: findings carry evidence, nothing is extrapolated from one production, and it never calls itself an audit. |
+| `test_delivery.py` | Call-sheet delivery: state never moves backwards, a late webhook cannot un-confirm someone, one crew member's link cannot confirm another. |
+| `test_roster.py` | Crew and vendor history: Indian phone formats are the same handset, a shorter name never overwrites a fuller one, no rate is proposed from one job. |
 | `run_unit_tests.py` | Runs every `test_*.py` above in one command. |
 
 ## Run

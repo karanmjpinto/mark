@@ -33,6 +33,11 @@ backend stays the single source of truth — no logic is duplicated here.
 | `budget_diff` | `/budget/diff` | What moved between two versions, with the money on each. |
 | `export_budget` | `/budget/export` | .xlsx (base64) or a Movie Magic interchange file. |
 | `teardown_report` | `/teardown/report` | The Stage 0 document as printable HTML. |
+| `delivery_board` | `/callsheet/delivery/board` | Who has the call sheet and who has confirmed. |
+| `roster_search` | `/roster/search` | Crew and vendors, with engagement counts and median rates. |
+| `roster_history` | `/roster/history` | What one person or vendor has actually been paid. |
+| `roster_from_ledger` | `/roster/from-ledger` | Record vendor payments from a teardown. |
+| `roster_propose_rates` | `/roster/propose-rates` | Roster history → rate-card proposals. |
 | `recent_traces` | `/admin/traces` | Recent agent-run traces, for debugging. |
 
 The send flow is split on purpose: `propose` → (human approves the preview) →

@@ -152,6 +152,30 @@ def test_every_line_carries_a_basis_and_the_response_carries_the_disclaimer():
     assert "not tax advice" in out["disclaimer"]
 
 
+def test_output_is_marked_unreviewed_until_a_ca_signs_it_off():
+    """The control that matters. A disclaimer is prose; `reviewed` is a boolean a
+    caller can branch on, and it is false until TAX_RULES_REVIEWED is set."""
+    out = compliance.compute_budget(BUDGET)
+    assert out["reviewed"] is False
+    assert out["reviewed_by"] is None
+    assert compliance.payment_schedule(BUDGET)["reviewed"] is False
+
+
+def test_review_status_flips_when_signed_off():
+    original = (compliance.TAX_RULES_REVIEWED, compliance.TAX_RULES_REVIEWED_BY)
+    try:
+        compliance.TAX_RULES_REVIEWED = True
+        compliance.TAX_RULES_REVIEWED_BY = "A. Accountant FCA"
+        out = compliance.compute_budget(BUDGET)
+        assert out["reviewed"] is True
+        assert out["reviewed_by"] == "A. Accountant FCA"
+        # Even signed off, it stays indicative — payee status and annual
+        # aggregates are per-vendor facts the product cannot know.
+        assert "indicative" in out["disclaimer"].lower()
+    finally:
+        compliance.TAX_RULES_REVIEWED, compliance.TAX_RULES_REVIEWED_BY = original
+
+
 def test_tds_rolls_up_by_section():
     out = compliance.compute_budget(BUDGET)
     by_section = {r["tds_section"]: r for r in out["by_tds_section"]}

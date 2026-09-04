@@ -321,6 +321,50 @@ async def teardown_report(ledgers: list[dict], client: str = "",
 
 
 @mcp.tool()
+async def delivery_board(send_id: str) -> dict:
+    """Who has the call sheet, who has opened it, and who has confirmed — plus
+    `outstanding`, ordered by how worried to be (a failed send first, then people
+    who never opened it, then people who read it and didn't reply). Delivery and
+    read state depend on the messaging provider; confirmation is a human tapping
+    a link and is the only one that means anything on a shoot day."""
+    return await _post("/callsheet/delivery/board", {"send_id": send_id})
+
+
+@mcp.tool()
+async def roster_search(query: str = "", kind: str = "", tag: str = "") -> dict:
+    """Search the crew and vendor roster. `kind` is `person` or `vendor`.
+    Returns each entry's engagement count and median rate — the answer to
+    "who have we used, and what do we pay them"."""
+    return await _post("/roster/search", {"query": query, "kind": kind, "tag": tag})
+
+
+@mcp.tool()
+async def roster_history(roster_id: str) -> dict:
+    """What this person or vendor has actually been paid: every engagement, the
+    median (not the mean — one emergency weekend rate should not move it), the
+    spread, and the direction of travel. `confidence` says whether it is one
+    observation or a real history."""
+    return await _post("/roster/history", {"id": roster_id})
+
+
+@mcp.tool()
+async def roster_from_ledger(ledger: dict, production: str = "") -> dict:
+    """Record what vendors were actually paid on a production, from its variance
+    ledger. This is the join that makes a teardown populate the vendor history as
+    well as the rate card."""
+    return await _post("/roster/from-ledger", {"ledger": ledger, "production": production})
+
+
+@mcp.tool()
+async def roster_propose_rates(city: str = "", region: str = "india", tier: str = "mid") -> dict:
+    """Turn roster history into rate-card proposals — the median of at least two
+    engagements, never one. Pass accepted ones to the rates endpoints. A proposal
+    whose `item_key_source` is "derived from role" had its key inferred rather
+    than confirmed."""
+    return await _post("/roster/propose-rates", {"region": region, "city": city, "tier": tier})
+
+
+@mcp.tool()
 async def recent_traces(limit: int = 20) -> dict:
     """Read recent agent-run traces (name, model, latency, tokens, cache_hit,
     ok/error) — useful for debugging why a budget came out the way it did."""
