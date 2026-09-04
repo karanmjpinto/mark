@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MARK — Stripboard &amp; Day out of Days</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%23171714'/&gt;&lt;text x='40' y='68' fill='%23D5D6CE' font-family='Impact,sans-serif' font-size='52' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='69' cy='69' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/mark-tool.css"/>
+</head>
+<body>
+<div class="slate-stripe"></div>
+<nav>
+  <a class="nav-logo" href="index.html">
+    <svg viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" fill="#171714"/>
+      <text x="40" y="68" fill="#D5D6CE" font-family="Anton, Impact, sans-serif" font-size="52" text-anchor="middle">M</text>
+      <circle cx="69" cy="69" r="3.4" fill="#C8330A"/></svg>
+    <span>Mark</span>
+  </a>
+  <div class="nav-links">
+    <a href="budget.html">Budget</a>
+    <a href="schedule.html" aria-current="page">Schedule</a>
+    <a href="callsheet.html">Call sheet</a>
+    <a href="rates.html">Rates</a>
+    <a href="teardown.html">Teardown</a>
+  </div>
+</nav>
+
+<main>
+  <p class="page-kicker">Stripboard</p>
+  <h1 class="display">Scenes into days</h1>
+  <p class="page-lede">Scenes come from a parsed script. Days are packed to keep each location
+    contiguous and night work late, then you move them by hand — every figure below recomputes on
+    the server, so what you see and what is stored cannot drift apart.</p>
+
+  <div class="toolbar">
+    <div class="field" style="flex:1 1 240px">
+      <label for="project">Project id (optional — enables save &amp; reconcile)</label>
+      <input id="project" type="text" placeholder="paste a project id"/>
+    </div>
+    <div class="field" style="width:120px">
+      <label for="days">Shoot days</label>
+      <input id="days" type="number" min="1" max="200" placeholder="auto"/>
+    </div>
+    <div class="field" style="width:160px">
+      <label for="start">First shoot day</label>
+      <input id="start" type="date"/>
+    </div>
+    <div class="field" style="flex:1 1 200px">
+      <label for="script">Script PDF (optional)</label>
+      <input id="script" type="file" accept=".pdf"/>
+    </div>
+    <button id="go">Build schedule</button>
+    <button id="demo" class="ghost">Load a demo</button>
+  </div>
+
+  <details style="margin-bottom:8px">
+    <summary class="hint" style="cursor:pointer">Or paste scenes as JSON</summary>
+    <textarea id="scenes" rows="5" placeholder='[{"number":1,"location":"OFFICE","region":"INT","time":"DAY","eighths":16,"characters":["RAVI"]}]'
+      style="margin-top:10px"></textarea>
+  </details>
+
+  <div id="status" class="status" hidden></div>
+
+  <div id="stats" class="stats" hidden></div>
+  <div id="warnings" hidden></div>
+
+  <div class="split wide">
+    <div>
+      <div class="panel" style="border:none">
+        <div id="board" class="board"><div class="empty">No schedule yet. Build one, or load the demo.</div></div>
+      </div>
+      <div id="callsheetOut" class="panel" hidden style="margin-top:18px">
+        <div class="panel-head">Call sheet seed</div>
+        <div class="panel-body">
+          <p class="hint" id="csNeeds"></p>
+          <textarea id="csJson" rows="10" readonly style="margin-top:10px"></textarea>
+          <div class="actions"><button class="small" id="csCopy">Copy JSON</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-head">Day out of Days</div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-wrap" style="border:none;max-height:460px;overflow-y:auto">
+            <table class="dood"><thead id="doodHead"></thead><tbody id="doodBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="reconcilePanel" hidden style="margin-top:18px">
+        <div class="panel-head">Against the budget</div>
+        <div class="panel-body" id="reconcileBody"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="assets/mark-api.js"></script>
+<script>
+/* ── state ──────────────────────────────────────────────────────────────
+   `schedule` is whatever the server last returned. Dragging mutates a local
+   copy of the day→scenes assignment and posts it straight back: the browser
+   never computes a page count, a company move or a hold day itself, because
+   two implementations of the same arithmetic is how a stripboard and a budget
+   end up disagreeing in a meeting. */
+let schedule = null;
+const $ = id => document.getElementById(id);
+const statusEl = $('status');
+
+const DEMO_SCENES = [
+  { number: 1, location: 'CHAWL ROOFTOP', region: 'EXT', time: 'DAY', eighths: 24, characters: ['RAVI', 'MEERA'] },
+  { number: 2, location: 'RAVI’S ROOM', region: 'INT', time: 'DAY', eighths: 16, characters: ['RAVI'] },
+  { number: 3, location: 'RAVI’S ROOM', region: 'INT', time: 'NIGHT', eighths: 20, characters: ['RAVI', 'SAM'] },
+  { number: 4, location: 'CHAWL ROOFTOP', region: 'EXT', time: 'NIGHT', eighths: 12, characters: ['MEERA'] },
+  { number: 5, location: 'MARINE DRIVE', region: 'EXT', time: 'DAY', eighths: 32, characters: ['RAVI', 'MEERA', 'SAM'] },
+  { number: 6, location: 'TAXI', region: 'INT/EXT', time: 'NIGHT', eighths: 8, characters: ['SAM'] },
+  { number: 7, location: 'MARINE DRIVE', region: 'EXT', time: 'DAY', eighths: 16, characters: ['MEERA'] },
+  { number: 8, location: 'OFFICE', region: 'INT', time: 'DAY', eighths: 28, characters: ['RAVI', 'BOSS'] },
+];
+
+/* ── build ─────────────────────────────────────────────────────────── */
+async function build() {
+  const body = {
+    project_id: $('project').value.trim() || null,
+    shoot_days: Number($('days').value) || null,
+    start_date: $('start').value || null,
+    title: 'Stripboard',
+  };
+
+  const file = $('script').files[0];
+  const pasted = $('scenes').value.trim();
+  try {
+    status(statusEl, 'Working…');
+    if (file) {
+      const fd = new FormData();
+      fd.append('file', file);
+      const parsed = await apiPost('/script/parse', fd, { timeout: 180000 });
+      const summary = parsed.summary || {};
+      body.scenes = summary.scenes && summary.scenes.length ? summary.scenes : null;
+      if (!body.scenes) body.breakdown = summary;
+      status(statusEl, `Parsed ${summary.total_scenes || 0} scenes from the script.`, 'ok');
+    } else if (pasted) {
+      body.scenes = JSON.parse(pasted);
+    } else {
+      body.scenes = DEMO_SCENES;
+    }
+    const out = await apiPost('/schedule/generate', body);
+    schedule = out.schedule;
+    render();
+    status(statusEl, `${schedule.total_days} shooting days · ${schedule.total_pages} pages.`, 'ok');
+    reconcile();
+  } catch (err) {
+    status(statusEl, err.message, 'error');
+  }
+}
+
+/* ── render ────────────────────────────────────────────────────────── */
+function render() {
+  if (!schedule) return;
+  renderStats();
+  renderBoard();
+  renderDood();
+}
+
+function renderStats() {
+  const s = schedule;
+  const cells = [
+    ['Shooting days', s.total_days],
+    ['Pages', s.total_pages],
+    ['Scenes', s.total_scenes],
+    ['Locations', (s.locations || []).length],
+    ['Company moves', s.company_moves],
+    ['Night days', s.night_days],
+    ['Cast hold days', (s.dood || {}).total_hold_days || 0],
+  ];
+  $('stats').innerHTML = cells.map(([k, v]) => {
+    const warn = (k === 'Cast hold days' && v > 0) || (k === 'Company moves' && v > s.total_days);
+    return `<div class="stat ${warn ? 'warn' : ''}"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`;
+  }).join('');
+  $('stats').hidden = false;
+
+  const warns = s.warnings || [];
+  $('warnings').innerHTML = warns.map(w =>
+    `<div class="status" data-kind="error" style="margin:6px 0">${esc(w)}</div>`).join('');
+  $('warnings').hidden = !warns.length;
+}
+
+function renderBoard() {
+  const board = $('board');
+  board.innerHTML = schedule.days.map(day => `
+    <div class="day" data-day="${day.day}">
+      <div class="day-head">
+        <div class="n">Day ${day.day}</div>
+        <div class="meta">${esc(day.date || 'unscheduled')} · ${day.pages} pp · ${esc((day.locations || []).join(', ') || '—')}</div>
+        <div class="badges">
+          ${day.night_work ? '<span class="tag off">Night</span>' : ''}
+          ${day.company_moves ? `<span class="tag">${day.company_moves} move${day.company_moves > 1 ? 's' : ''}</span>` : ''}
+          <span class="tag">${(day.cast || []).length} cast</span>
+        </div>
+      </div>
+      <div class="strips" data-drop="${day.day}">
+        ${(day.scenes || []).map(sc => strip(sc, day.day)).join('') ||
+          '<p class="hint" style="padding:8px">Empty day — drag a strip here.</p>'}
+      </div>
+      <div class="day-foot">
+        <button class="small ghost" data-callsheet="${day.day}">Call sheet from day ${day.day}</button>
+      </div>
+    </div>`).join('');
+  wireDragAndDrop();
+  board.querySelectorAll('[data-callsheet]').forEach(b =>
+    b.addEventListener('click', () => callsheetFor(Number(b.dataset.callsheet))));
+}
+
+function strip(sc, dayNumber) {
+  return `<div class="strip ${sc.time === 'NIGHT' ? 'night' : ''}" draggable="true"
+       data-scene="${esc(sc.number)}" data-from="${dayNumber}" tabindex="0">
+    <div class="l1"><span>${esc(sc.number)}. ${esc(sc.location)}</span><span class="num">${sc.eighths}/8</span></div>
+    <div class="l2">${esc(sc.region)} · ${esc(sc.time)}${sc.heading ? ' · ' + esc(sc.heading) : ''}</div>
+  </div>`;
+}
+
+function renderDood() {
+  const dood = schedule.dood || { characters: [], matrix: {} };
+  const days = schedule.days.map(d => d.day);
+  if (!dood.characters.length) {
+    $('doodHead').innerHTML = '';
+    $('doodBody').innerHTML = '<tr><td class="empty">No cast on the strips — the script had no character cues.</td></tr>';
+    return;
+  }
+  $('doodHead').innerHTML = `<tr><th>Character</th>${days.map(d => `<th class="num">${d}</th>`).join('')}
+    <th class="num">Work</th><th class="num">Hold</th></tr>`;
+  $('doodBody').innerHTML = dood.characters.map(c => {
+    const row = dood.matrix[c.character] || {};
+    return `<tr class="${c.hold_days ? 'material' : ''}"><td>${esc(c.character)}</td>
+      ${days.map(d => {
+        const code = row[d] || row[String(d)] || '';
+        return `<td class="code" data-c="${esc(code)}">${esc(code)}</td>`;
+      }).join('')}
+      <td class="num">${c.work_days}</td><td class="num">${c.hold_days}</td></tr>`;
+  }).join('');
+}
+
+/* ── drag and drop ─────────────────────────────────────────────────── */
+function wireDragAndDrop() {
+  let dragged = null;
+  document.querySelectorAll('.strip').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragged = el;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', el.dataset.scene);
+    });
+    el.addEventListener('dragend', () => { el.classList.remove('dragging'); dragged = null; });
+  });
+  document.querySelectorAll('.day').forEach(col => {
+    col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drop'); });
+    col.addEventListener('dragleave', () => col.classList.remove('drop'));
+    col.addEventListener('drop', e => {
+      e.preventDefault();
+      col.classList.remove('drop');
+      const sceneNumber = e.dataTransfer.getData('text/plain') || (dragged && dragged.dataset.scene);
+      if (sceneNumber) moveScene(sceneNumber, Number(col.dataset.day));
+    });
+  });
+}
+
+async function moveScene(sceneNumber, toDay) {
+  const groups = schedule.days.map(d => d.scenes.slice());
+  let moving = null;
+  groups.forEach(g => {
+    const i = g.findIndex(s => String(s.number) === String(sceneNumber));
+    if (i > -1) moving = g.splice(i, 1)[0];
+  });
+  if (!moving) return;
+  const target = groups[toDay - 1];
+  if (!target) return;
+  target.push(moving);
+
+  try {
+    status(statusEl, 'Re-cutting the schedule…');
+    const out = await apiPost('/schedule/save', {
+      project_id: $('project').value.trim() || null,
+      days: groups,
+      start_date: $('start').value || null,
+      title: schedule.title || 'Stripboard',
+    });
+    schedule = out.schedule;
+    render();
+    status(statusEl, `Scene ${sceneNumber} moved to day ${toDay}. Everything recomputed.`, 'ok');
+    reconcile();
+  } catch (err) {
+    status(statusEl, err.message, 'error');
+  }
+}
+
+/* ── call sheet + reconcile ────────────────────────────────────────── */
+async function callsheetFor(day) {
+  try {
+    const out = await apiPost('/callsheet/from-schedule', { schedule, day });
+    const cs = out.callsheet;
+    $('csNeeds').textContent = 'Seeded from the schedule. Still needed, and deliberately not invented: '
+      + (cs.needs || []).join(', ').replace(/_/g, ' ') + '.';
+    $('csJson').value = JSON.stringify(cs, null, 2);
+    $('callsheetOut').hidden = false;
+    $('callsheetOut').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (err) {
+    status(statusEl, err.message, 'error');
+  }
+}
+
+async function reconcile() {
+  const pid = $('project').value.trim();
+  const panel = $('reconcilePanel');
+  if (!pid) { panel.hidden = true; return; }
+  try {
+    const out = await apiPost('/schedule/reconcile', { project_id: pid });
+    const r = out.reconciliation;
+    $('reconcileBody').innerHTML = `
+      <div class="stats" style="margin:0 0 12px">
+        <div class="stat"><div class="v">${r.schedule_days}</div><div class="k">Schedule days</div></div>
+        <div class="stat ${r.matches === false ? 'warn' : ''}"><div class="v">${r.budget_shoot_days ?? '—'}</div>
+          <div class="k">Budget pays for</div></div>
+      </div>
+      ${(r.notes || []).map(n => `<p class="hint" style="margin-bottom:8px">· ${esc(n)}</p>`).join('')
+        || '<p class="hint">Schedule and budget agree.</p>'}`;
+    panel.hidden = false;
+  } catch (err) {
+    // No budget saved yet is the normal case, not an error worth shouting about.
+    $('reconcileBody').innerHTML = `<p class="hint">${esc(err.message)}</p>`;
+    panel.hidden = false;
+  }
+}
+
+/* ── wiring ────────────────────────────────────────────────────────── */
+$('go').addEventListener('click', build);
+$('demo').addEventListener('click', () => {
+  $('scenes').value = JSON.stringify(DEMO_SCENES, null, 2);
+  $('start').value = $('start').value || new Date(Date.now() + 6048e5).toISOString().slice(0, 10);
+  build();
+});
+$('csCopy').addEventListener('click', () => {
+  navigator.clipboard.writeText($('csJson').value)
+    .then(() => status(statusEl, 'Call sheet JSON copied.', 'ok'))
+    .catch(() => status(statusEl, 'Could not copy — select the text and copy manually.', 'error'));
+});
+</script>
+</body>
+</html>

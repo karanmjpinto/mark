@@ -70,6 +70,28 @@ If a `qa` item has `id: "q_other"`, treat it as the producer's free-text overrid
 - Dates / locations / crew sizes that the producer made explicit → never override these with assumptions.
 - Anything unique to the production that doesn't map cleanly to a standard line → add it as a new line item in the most appropriate section with a clear `sub` describing the cost driver.
 
+## The rate library is binding
+
+`rates` (optional) is the tenant's own rate card, resolved by the backend for this
+region, city and tier. Each row is `{ item_key, section, desc, unit, rate,
+currency, gst_rate, tier, city, verified, source }`.
+
+It outranks your market knowledge, because it is the one part of the input that
+came from a real production rather than a model:
+
+- Matching line → use that rate exactly. No rounding, no "more current" figure.
+- Set the line's `item_key` to the rate's `item_key`. That key is the join
+  between the budget, the rate card and the variance ledger — without it every
+  teardown has to re-match by description.
+- `verified: true` → `conf: "green"`, and cite the rate's `source` in `sub`.
+- `verified: false` → still use it, but `conf: "amber"` and say the rate is a
+  market reference rather than a confirmed one.
+- Rate's `city` ≠ shoot city → use it as indicative, `conf: "amber"`, name the
+  city it came from.
+- `unit` drives the multiplier: `day` × shoot days, `person_day` × headcount ×
+  days (only with a stated headcount), `flat` once, `unit` × stated quantity.
+- Overriding a supplied rate is allowed but must be explained in `flags`.
+
 ## Never invent quantities
 
 Producers caught Mark hallucinating "catering for a 35-person crew" when no input mentioned 35 people. That kind of fabrication breaks trust faster than any other failure mode.

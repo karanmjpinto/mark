@@ -20,6 +20,19 @@ backend stays the single source of truth — no logic is duplicated here.
 | `propose_callsheet_send` | `/callsheet/send/propose` | **Stages** a send; returns a preview. Sends nothing. |
 | `confirm_callsheet_send` | `/callsheet/send/confirm` | Executes an approved send. Idempotent. |
 | `enrich_crew` | `/crew/enrich` | Contact/role lookup for a stored crew member. |
+| `list_rates` | `/rates/list` | The tenant's rate library. `verified` distinguishes a real rate from a placeholder. |
+| `upsert_rate` | `/rates/upsert` | Create or correct one rate. Same identity tuple corrects in place. |
+| `rate_pack` | `/rates/pack` | What the budget agent receives, plus verified coverage. |
+| `generate_schedule` | `/schedule/generate` | Scenes → shooting days + Day-out-of-Days. |
+| `callsheet_from_schedule` | `/callsheet/from-schedule` | Seeds a call sheet from one shooting day. Partial by design. |
+| `variance_ledger` | `/variance/compute` | Budget vs actuals, classified with evidence. |
+| `teardown` | `/teardown/compute` | Recurring lines across productions + the annualised cost. |
+| `india_compliance` | `/compliance/compute` | GST + TDS per line. Indicative; carries a disclaimer. |
+| `payment_schedule` | `/compliance/payment-schedule` | Advance/balance split with tax resolved at each stage. |
+| `budget_versions` | `/budget/versions` | Saved versions with line counts and totals. |
+| `budget_diff` | `/budget/diff` | What moved between two versions, with the money on each. |
+| `export_budget` | `/budget/export` | .xlsx (base64) or a Movie Magic interchange file. |
+| `teardown_report` | `/teardown/report` | The Stage 0 document as printable HTML. |
 | `recent_traces` | `/admin/traces` | Recent agent-run traces, for debugging. |
 
 The send flow is split on purpose: `propose` → (human approves the preview) →

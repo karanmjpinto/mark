@@ -23,6 +23,25 @@ const LineItem = v.object({
   gst_rate: v.number(),
   conf: v.picklist(['green', 'amber', 'red']),
   note: v.optional(v.string()),
+  // Set when the line was priced from a supplied rate. It is the join between a
+  // budget line, the rate card and the variance ledger — without it a teardown
+  // has to re-match by description every time.
+  item_key: v.optional(v.string(), ''),
+});
+
+// One row of the tenant's rate library, resolved for this region/city/tier.
+const Rate = v.object({
+  item_key: v.string(),
+  section: v.optional(v.string(), ''),
+  desc: v.string(),
+  unit: v.string(),
+  rate: v.number(),
+  currency: v.string(),
+  gst_rate: v.optional(v.number(), 0),
+  tier: v.optional(v.string(), 'any'),
+  city: v.optional(v.string(), ''),
+  verified: v.optional(v.boolean(), false),
+  source: v.optional(v.string(), ''),
 });
 
 const Section = v.object({
@@ -61,6 +80,7 @@ const Payload = v.object({
   currency: Currency,
   qa: v.array(QA),
   breakdown: v.optional(Breakdown),
+  rates: v.optional(v.array(Rate), []),
   project: v.optional(v.looseObject({})),
   crew: v.optional(v.array(v.looseObject({})), []),
   // Optional model override. The sync path leaves this unset (→ Haiku, to fit
@@ -84,6 +104,16 @@ GROUND TRUTH
 - When \`breakdown\` is present, use it as canonical: \`total_scenes\` is the scene count, \`unique_locations\` drives Location Hire (12400) sizing, \`int_count\`/\`ext_count\` informs lighting/grip, \`night_count\` informs lighting package + catering, lead \`characters\` (high scene_count) drive talent fees.
 - If qa and breakdown conflict, prefer qa for scheduling and breakdown for content; explain the assumption in \`flags\`.
 - If \`crew\` is non-empty, prefer their declared \`day_rate\` for matching departments; if a declared rate is >30% off market, add a brief \`note\`.
+
+RATE LIBRARY — \`rates\` is the tenant's own rate card and it outranks your market knowledge
+- Each row is { item_key, section, desc, unit, rate, currency, gst_rate, tier, city, verified, source }.
+- If a line item you are building matches a supplied rate, USE THAT RATE. Do not round it, average it, or substitute a market figure you believe is more current.
+- Set the line's \`item_key\` to the rate's \`item_key\` so the budget can be reconciled against actuals later. Lines priced without a supplied rate leave \`item_key\` empty.
+- \`verified: true\` means a human confirmed this number from real production data → use it, set \`conf: "green"\`, and put the rate's \`source\` in \`sub\` (e.g. "₹45,000/day × 3 — rate card, verified on 3 productions").
+- \`verified: false\` means it is an unconfirmed market reference → still use it, but set \`conf: "amber"\` and note in \`sub\` that the rate is unverified.
+- If the rate's \`city\` differs from the shoot city, treat it as indicative: use it, set \`conf: "amber"\`, and say which city it came from in \`sub\`.
+- \`unit\` tells you what to multiply: day → × shoot days; person_day → × people × days (only if the inputs state a headcount); flat → once; unit → × the stated quantity.
+- A rate you were given and did not use is a mistake unless the line genuinely isn't in the production. If you deliberately override one, say why in \`flags\`.
 
 NEVER INVENT QUANTITIES (anti-hallucination rule)
 - Crew sizes, day rates, talent fees, unit counts MUST come from \`qa\`, \`breakdown\`, or \`crew\`. If the producer didn't say it, you don't know it.
@@ -109,7 +139,7 @@ OUTPUT SHAPE — return exactly this structure
       "name": "<SECTION NAME>",
       "type": "above_the_line" | "below_the_line" | "post" | "other",
       "items": [
-        { "code": "10001", "desc": "<line item>", "sub": "<basis>", "amount": <number>, "gst_rate": <number>, "conf": "green"|"amber"|"red", "note": "<optional>" }
+        { "code": "10001", "desc": "<line item>", "sub": "<basis>", "amount": <number>, "gst_rate": <number>, "conf": "green"|"amber"|"red", "note": "<optional>", "item_key": "<rate item_key if one was used, else empty>" }
       ]
     }
   ],
@@ -150,6 +180,7 @@ export default async function ({ init, payload }: FlueContext) {
     currency: input.currency,
     qa: input.qa,
     breakdown: input.breakdown ?? null,
+    rates: input.rates ?? [],
     project: input.project ?? null,
     crew: input.crew,
   };
