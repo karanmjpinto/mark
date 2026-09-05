@@ -198,6 +198,20 @@ uvicorn main:app --reload --port 8000
 
 ## Deploy
 
+**Live:** the site is <https://askmark.filmsbykp.com> (GitHub Pages, from `main`)
+and the API is `https://backend-production-6ea4.up.railway.app`.
+
+**Both deploy on a push to `main`.** The Railway `backend` service is connected
+to this repository with root directory `backend`, so merging to `main` builds and
+releases the API; GitHub Pages publishes `frontend/` from the same commit. There
+is no manual deploy step and no `railway up` — before September 2026 the service
+had no source attached, which is why it could only be released by CLI upload from
+one particular machine.
+
+Because both move together, **deploy order matters when an endpoint is new**: the
+API must be live before the pages that call it. Merging one commit does both in
+the right order; splitting them across two merges does not.
+
 - **Backend** → Railway (Dockerfile included). Set `ANTHROPIC_API_KEY`,
   `FLUE_BASE_URL`, `API_KEY` (optional shared secret), `ALLOWED_ORIGINS`,
   `REDIS_HOST`/`REDIS_PORT`.
