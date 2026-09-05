@@ -1,0 +1,19 @@
+{
+  "region": "usa",
+  "currency": "USD",
+  "note": "UNVERIFIED market-reference placeholders. Non-union Los Angeles commercials, 2026. Union work is materially different and is NOT modelled here — see compliance.py for why fringes are out of scope in this seed.",
+  "rates": [
+    {"item_key": "director.tvc",           "section": "10300", "city": "los angeles", "tier": "mid",  "desc": "Director fee — commercial, per film",    "unit": "flat",       "rate": 20000, "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "ad.first",               "section": "10600", "city": "los angeles", "tier": "any",  "desc": "1st Assistant Director",                 "unit": "day",        "rate": 900,   "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "line_producer",          "section": "10800", "city": "los angeles", "tier": "any",  "desc": "Line producer",                          "unit": "day",        "rate": 1200,  "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "dop",                    "section": "11300", "city": "los angeles", "tier": "mid",  "desc": "Director of photography",                "unit": "day",        "rate": 2500,  "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "camera.package.alexa35", "section": "11300", "city": "los angeles", "tier": "mid",  "desc": "ARRI Alexa 35 + prime set, rental",      "unit": "day",        "rate": 2200,  "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "lighting.package.tvc",   "section": "11500", "city": "los angeles", "tier": "mid",  "desc": "Lighting + grip package, mid commercial","unit": "day",        "rate": 3500,  "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "gaffer",                 "section": "11500", "city": "los angeles", "tier": "any",  "desc": "Gaffer",                                 "unit": "day",        "rate": 950,   "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "art_director",           "section": "11000", "city": "los angeles", "tier": "mid",  "desc": "Production designer / art director",     "unit": "day",        "rate": 1100,  "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "location.studio_floor",  "section": "12400", "city": "los angeles", "tier": "mid",  "desc": "Stage hire, mid-size",                   "unit": "day",        "rate": 4500,  "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "catering.crew_meal",     "section": "12600", "city": "los angeles", "tier": "any",  "desc": "Crew catering, per head per day",        "unit": "person_day", "rate": 45,    "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "editorial.offline",      "section": "12900", "city": "los angeles", "tier": "mid",  "desc": "Offline editor + suite",                 "unit": "day",        "rate": 1400,  "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"},
+    {"item_key": "post_sound.mix",         "section": "13100", "city": "los angeles", "tier": "mid",  "desc": "Sound design + mix, short-form",         "unit": "flat",       "rate": 6000,  "currency": "USD", "gst_rate": 0, "source": "market reference, unverified"}
+  ]
+}

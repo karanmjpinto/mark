@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MARK — Teardown bench</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%23171714'/&gt;&lt;text x='40' y='68' fill='%23D5D6CE' font-family='Impact,sans-serif' font-size='52' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='69' cy='69' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/mark-tool.css"/>
+</head>
+<body>
+<div class="slate-stripe"></div>
+<nav>
+  <a class="nav-logo" href="index.html">
+    <svg viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" fill="#171714"/>
+      <text x="40" y="68" fill="#D5D6CE" font-family="Anton, Impact, sans-serif" font-size="52" text-anchor="middle">M</text>
+      <circle cx="69" cy="69" r="3.4" fill="#C8330A"/></svg>
+    <span>Mark</span>
+  </a>
+  <div class="nav-links">
+    <a href="budget.html">Budget</a>
+    <a href="schedule.html">Schedule</a>
+    <a href="callsheet.html">Call sheet</a>
+    <a href="rates.html">Rates</a>
+    <a href="teardown.html" aria-current="page">Teardown</a>
+  </div>
+</nav>
+
+<main>
+  <p class="page-kicker">Stage 0 · Teardown bench</p>
+  <h1 class="display">Budget against<br>what was spent</h1>
+  <p class="page-lede">One production at a time: its approved budget, its final cost report, and the
+    ledger of every line that moved. Add a second and a third, and the lines that are wrong
+    <em>every</em> time separate themselves from the ones that went wrong once.</p>
+
+  <div id="status" class="status" hidden></div>
+
+  <!-- 1 ─────────────────────────────────────────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="n">01</span><h2>The approved budget</h2></div>
+    <div class="step-body">
+      <div class="toolbar" style="margin-top:0">
+        <div class="field" style="flex:1 1 220px">
+          <label for="production">Production name</label>
+          <input id="production" placeholder="e.g. Tata Tea — Jaago Re"/>
+        </div>
+        <div class="field" style="flex:1 1 240px">
+          <label for="budgetFile">Their budget spreadsheet (.xlsx)</label>
+          <input id="budgetFile" type="file" accept=".xlsx"/>
+        </div>
+        <button id="importBudget" class="ghost">Import</button>
+        <button id="demoBudget" class="ghost">Use a demo budget</button>
+      </div>
+      <details><summary class="hint" style="cursor:pointer">Or paste the budget JSON</summary>
+        <textarea id="budgetJson" rows="6" style="margin-top:10px"></textarea></details>
+      <p id="budgetSummary" class="hint" style="margin-top:10px"></p>
+    </div>
+  </section>
+
+  <!-- 2 ─────────────────────────────────────────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="n">02</span><h2>What was actually spent</h2></div>
+    <div class="step-body">
+      <div class="toolbar" style="margin-top:0">
+        <div class="field" style="flex:1 1 260px">
+          <label for="actualsFile">Cost report (.csv / .xlsx)</label>
+          <input id="actualsFile" type="file" accept=".csv,.tsv,.xlsx"/>
+        </div>
+        <button id="parseActuals" class="ghost">Read the cost report</button>
+        <button id="demoActuals" class="ghost">Use demo actuals</button>
+      </div>
+      <p id="actualsSummary" class="hint" style="margin-top:10px"></p>
+      <div id="actualsWrap" class="table-wrap" hidden style="margin-top:12px;max-height:260px;overflow-y:auto">
+        <table><thead><tr><th>Code</th><th>Description</th><th class="num">Amount</th><th class="num">Qty</th><th>Vendor</th></tr></thead>
+        <tbody id="actualsRows"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 ─────────────────────────────────────────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="n">03</span><h2>The variance ledger</h2></div>
+    <div class="step-body">
+      <div class="toolbar" style="margin-top:0">
+        <div class="field" style="width:150px">
+          <label for="threshold">Materiality</label>
+          <select id="threshold"><option value="0.10">10% (the SOW)</option><option value="0.05">5%</option><option value="0.15">15%</option></select>
+        </div>
+        <button id="compute">Build the ledger</button>
+        <button id="ledgerXlsx" class="ghost" disabled>Ledger .xlsx</button>
+        <button id="addProduction" class="ghost" disabled>Add this production &amp; start another</button>
+      </div>
+      <div id="ledgerStats" class="stats" hidden></div>
+      <div id="ledgerWrap" class="table-wrap" hidden style="margin-top:12px">
+        <table><thead><tr>
+          <th>Line</th><th>Status</th><th class="num">Budget</th><th class="num">Actual</th>
+          <th class="num">Variance</th><th class="num">%</th><th>Classified as</th>
+        </tr></thead><tbody id="ledgerRows"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 ─────────────────────────────────────────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="n">04</span><h2>Across the productions</h2></div>
+    <div class="step-body">
+      <p class="hint" id="basket">No productions added yet. A recurring pattern needs at least two.</p>
+      <div class="toolbar" style="margin-top:12px">
+        <div class="field" style="width:190px">
+          <label for="volume">Productions a year</label>
+          <input id="volume" type="number" min="1" value="40"/>
+        </div>
+        <div class="field" style="flex:1 1 220px">
+          <label for="client">Client name (for the report)</label>
+          <input id="client" placeholder="e.g. Corcoise Films"/>
+        </div>
+        <button id="teardown" disabled>Find the pattern</button>
+        <button id="report" class="ghost" disabled>Open the Stage 0 report</button>
+      </div>
+      <div id="patternWrap" hidden style="margin-top:16px">
+        <div id="annualised" class="stats"></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Line</th><th class="num">Productions</th><th>Direction</th>
+            <th class="num">Average</th><th class="num">Avg variance</th><th>Classified as</th></tr></thead>
+          <tbody id="patternRows"></tbody></table>
+        </div>
+      </div>
+      <div id="reportPanel" class="panel" hidden style="margin-top:18px">
+        <div class="panel-head">Stage 0 report</div>
+        <div class="panel-body">
+          <div class="actions" style="margin:0 0 12px">
+            <button id="printReport">Print / Save as PDF</button>
+            <button id="downloadReport" class="ghost">Download .html</button>
+          </div>
+          <iframe id="reportFrame" title="Stage 0 teardown report"
+            style="width:100%;height:620px;border:1px solid var(--paper-line);background:#fff"></iframe>
+        </div>
+      </div>
+
+      <div id="proposalsPanel" class="panel" hidden style="margin-top:18px">
+        <div class="panel-head">Rate corrections these actuals propose</div>
+        <div class="panel-body">
+          <p class="hint">A rate derived from real spend is worth more than any market reference —
+            but one production is one observation. Review before writing them to the library.</p>
+          <div class="table-wrap" style="margin-top:12px">
+            <table><thead><tr><th></th><th>Item</th><th class="num">Proposed rate</th><th>Basis</th><th>Source</th></tr></thead>
+            <tbody id="proposalRows"></tbody></table>
+          </div>
+          <div class="actions"><button id="applyProposals">Write the ticked rates</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/mark-api.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const statusEl = $('status');
+
+let budget = null;
+let actuals = [];
+let ledger = null;
+let basket = [];          // ledgers for every production added so far
+let proposals = [];
+
+const DEMO_BUDGET = {
+  title: 'DEMO TVC', production_type: 'TVC', shoot_days: 3, scale_tier: 'mid',
+  sections: [
+    { code: '11300', name: 'CAMERA', type: 'below_the_line', items: [
+      { code: '11301', desc: 'Camera package rental — Alexa 35', sub: '3 days × 1 unit', amount: 180000, gst_rate: 0.18, conf: 'green', item_key: 'camera.package.alexa35' },
+      { code: '11302', desc: 'Director of photography', sub: '3 days', amount: 225000, gst_rate: 0.18, conf: 'green', item_key: 'dop' }]},
+    { code: '12400', name: 'LOCATION HIRE', type: 'below_the_line', items: [
+      { code: '12401', desc: 'Bungalow location fee', sub: '2 days', amount: 300000, gst_rate: 0.18, conf: 'amber', item_key: 'location.bungalow' }]},
+    { code: '12600', name: 'CATERING', type: 'below_the_line', items: [
+      { code: '12601', desc: 'Crew catering', sub: '3 days', amount: 150000, gst_rate: 0.05, conf: 'amber', item_key: 'catering.crew_meal' }]},
+  ],
+};
+const DEMO_ACTUALS = [
+  { code: '11301', desc: 'Camera package rental', amount: 225000, qty: 3, vendor: 'Kit House' },
+  { code: '11302', desc: 'Director of photography', amount: 225000, qty: 3 },
+  { code: '12401', desc: 'Bungalow location fee', amount: 465000, qty: 3, vendor: 'Owner' },
+  { desc: 'Police bandobast + society charges', amount: 85000, vendor: 'Local liaison' },
+  { code: '12601', desc: 'Crew catering', amount: 186000, vendor: 'Sagar Caterers' },
+];
+
+function setBudget(b, note) {
+  budget = b;
+  const lines = (b.sections || []).reduce((n, s) => n + (s.items || []).length, 0);
+  const total = (b.sections || []).reduce((t, s) =>
+    t + (s.items || []).reduce((x, i) => x + Number(i.amount || 0), 0), 0);
+  $('budgetSummary').textContent =
+    `${esc(b.title || 'Budget')} — ${lines} lines, ${fmtMoney(total)}${note ? ' · ' + note : ''}`;
+}
+
+/* ── 1 · budget ────────────────────────────────────────────────────── */
+$('demoBudget').addEventListener('click', () => {
+  $('production').value = $('production').value || 'DEMO TVC A';
+  $('budgetJson').value = JSON.stringify(DEMO_BUDGET, null, 2);
+  setBudget(DEMO_BUDGET, 'demo');
+  status(statusEl, 'Demo budget loaded.', 'ok');
+});
+
+$('importBudget').addEventListener('click', async () => {
+  const f = $('budgetFile').files[0];
+  if (!f) { status(statusEl, 'Choose an .xlsx budget first.', 'error'); return; }
+  try {
+    status(statusEl, 'Reading the budget…');
+    const fd = new FormData(); fd.append('file', f);
+    const out = await apiPost('/budget/import', fd, { timeout: 180000 });
+    setBudget(out.budget, out.budget.flags?.[0] || '');
+    status(statusEl, `Imported ${out.budget.imported.lines} lines from ${esc(f.name)}.`, 'ok');
+  } catch (err) { status(statusEl, err.message, 'error'); }
+});
+
+$('budgetJson').addEventListener('change', () => {
+  try {
+    if ($('budgetJson').value.trim()) setBudget(JSON.parse($('budgetJson').value), 'pasted');
+  } catch { status(statusEl, 'That is not valid JSON.', 'error'); }
+});
+
+/* ── 2 · actuals ───────────────────────────────────────────────────── */
+$('demoActuals').addEventListener('click', () => {
+  actuals = DEMO_ACTUALS;
+  renderActuals(actuals, actuals.reduce((t, r) => t + r.amount, 0));
+  status(statusEl, 'Demo actuals loaded.', 'ok');
+});
+
+$('parseActuals').addEventListener('click', async () => {
+  const f = $('actualsFile').files[0];
+  if (!f) { status(statusEl, 'Choose a cost report first.', 'error'); return; }
+  try {
+    status(statusEl, 'Reading the cost report…');
+    const fd = new FormData(); fd.append('file', f);
+    const out = await apiPost('/actuals/parse', fd, { timeout: 180000 });
+    actuals = out.rows;
+    renderActuals(out.rows, out.total);
+    status(statusEl, `${out.count} cost lines read. Subtotal and header rows were dropped.`, 'ok');
+  } catch (err) { status(statusEl, err.message, 'error'); }
+});
+
+function renderActuals(rows, total) {
+  $('actualsRows').innerHTML = rows.map(r => `<tr>
+    <td>${esc(r.code || '')}</td><td>${esc(r.desc)}</td>
+    <td class="num">${fmtMoney(r.amount)}</td>
+    <td class="num">${r.quantity ?? r.qty ?? '—'}</td>
+    <td>${esc(r.vendor || '')}</td></tr>`).join('');
+  $('actualsWrap').hidden = false;
+  $('actualsSummary').textContent = `${rows.length} line(s) · ${fmtMoney(total)} total spend read.`;
+}
+
+/* ── 3 · ledger ────────────────────────────────────────────────────── */
+$('compute').addEventListener('click', async () => {
+  if (!budget) { status(statusEl, 'Load a budget first.', 'error'); return; }
+  if (!actuals.length) { status(statusEl, 'Load a cost report first.', 'error'); return; }
+  try {
+    status(statusEl, 'Reconciling…');
+    const out = await apiPost('/variance/compute', {
+      budget, actuals,
+      threshold: Number($('threshold').value),
+      production: $('production').value.trim() || 'Unnamed production',
+      currency: 'INR',
+    });
+    ledger = out.ledger;
+    renderLedger(ledger);
+    $('ledgerXlsx').disabled = false;
+    $('addProduction').disabled = false;
+    status(statusEl, ledger.totals.material_lines
+      ? `${ledger.totals.material_lines} line(s) moved beyond the threshold.`
+      : 'Nothing moved beyond the threshold.', 'ok');
+  } catch (err) { status(statusEl, err.message, 'error'); }
+});
+
+function renderLedger(l) {
+  const t = l.totals;
+  $('ledgerStats').innerHTML = `
+    <div class="stat"><div class="v">${fmtMoney(t.budget, 'INR', { compact: true })}</div><div class="k">Budgeted</div></div>
+    <div class="stat"><div class="v">${fmtMoney(t.actual, 'INR', { compact: true })}</div><div class="k">Actual</div></div>
+    <div class="stat ${t.delta > 0 ? 'warn' : ''}"><div class="v">${fmtMoney(t.delta, 'INR', { compact: true })}</div>
+      <div class="k">Variance ${fmtPct(t.delta_pct)}</div></div>
+    <div class="stat ${t.unbudgeted_spend ? 'warn' : ''}"><div class="v">${fmtMoney(t.unbudgeted_spend, 'INR', { compact: true })}</div>
+      <div class="k">Spent off-budget</div></div>
+    <div class="stat"><div class="v">${fmtMoney(t.unspent_budget, 'INR', { compact: true })}</div><div class="k">Never spent</div></div>
+    <div class="stat"><div class="v">${t.material_lines}</div><div class="k">Material lines</div></div>`;
+  $('ledgerStats').hidden = false;
+
+  $('ledgerRows').innerHTML = l.lines.map(li => `<tr class="${li.material ? 'material' : ''}">
+    <td>${esc(li.desc)}${li.basis ? `<div class="evidence">${esc(li.basis)}</div>` : ''}</td>
+    <td><span class="tag ${li.status === 'over' || li.status === 'unbudgeted' ? 'bad' : ''}">${esc(li.status.replace('_', ' '))}</span></td>
+    <td class="num">${fmtMoney(li.budget)}</td>
+    <td class="num">${fmtMoney(li.actual)}</td>
+    <td class="num">${fmtMoney(li.delta)}</td>
+    <td class="num">${fmtPct(li.delta_pct)}</td>
+    <td>${esc((li.classification || '').replace(/_/g, ' '))}</td></tr>`).join('');
+  $('ledgerWrap').hidden = false;
+}
+
+$('ledgerXlsx').addEventListener('click', async () => {
+  try {
+    const out = await apiPost('/variance/export', { ledger });
+    download(out.filename, b64ToBlob(out.base64, out.content_type), out.content_type);
+    status(statusEl, `Downloaded ${out.filename}.`, 'ok');
+  } catch (err) { status(statusEl, err.message, 'error'); }
+});
+
+/* ── 4 · across productions ────────────────────────────────────────── */
+$('addProduction').addEventListener('click', () => {
+  if (!ledger) return;
+  basket.push(ledger);
+  ledger = null;
+  actuals = [];
+  $('actualsWrap').hidden = true;
+  $('ledgerWrap').hidden = true;
+  $('ledgerStats').hidden = true;
+  $('ledgerXlsx').disabled = true;
+  $('addProduction').disabled = true;
+  $('production').value = '';
+  $('actualsFile').value = '';
+  renderBasket();
+  status(statusEl, `Added. ${basket.length} production(s) on the bench — load the next one at step 2.`, 'ok');
+});
+
+function renderBasket() {
+  $('basket').textContent = basket.length
+    ? `${basket.length} production(s) on the bench: ${basket.map(l => l.production).join(', ')}.`
+      + (basket.length < 2 ? ' A recurring pattern needs at least two.' : '')
+    : 'No productions added yet. A recurring pattern needs at least two.';
+  $('teardown').disabled = basket.length < 2;
+  $('report').disabled = basket.length < 1;
+}
+
+$('teardown').addEventListener('click', async () => {
+  try {
+    status(statusEl, 'Looking for the pattern…');
+    const out = await apiPost('/teardown/compute', {
+      ledgers: basket, productions_per_year: Number($('volume').value) || 12 });
+    renderPatterns(out);
+    status(statusEl, `${out.recurring_patterns.length} recurring line(s) across ${out.productions} productions.`, 'ok');
+  } catch (err) { status(statusEl, err.message, 'error'); }
+});
+
+function renderPatterns(out) {
+  const a = out.annualised || {};
+  $('annualised').innerHTML = `
+    <div class="stat"><div class="v">${fmtMoney(a.recurring_cost_per_production, 'INR', { compact: true })}</div>
+      <div class="k">Recurring, per production</div></div>
+    <div class="stat warn"><div class="v">${fmtMoney(a.recurring_cost_per_year, 'INR', { compact: true })}</div>
+      <div class="k">Recurring, per year</div></div>
+    <div class="stat"><div class="v">${a.sample_productions ?? out.productions}</div><div class="k">Sampled</div></div>
+    <div class="stat"><div class="v">${a.productions_per_year ?? '—'}</div><div class="k">Stated annual volume</div></div>`;
+  $('patternRows').innerHTML = out.recurring_patterns.map(p => `<tr class="material">
+    <td>${esc(p.desc)}</td><td class="num">${p.productions}</td><td>${esc(p.direction)}</td>
+    <td class="num">${p.avg_delta_pct === null ? '—' : fmtPct(p.avg_delta_pct)}</td>
+    <td class="num">${fmtMoney(p.avg_delta)}</td>
+    <td>${esc((p.classifications || []).join(', ').replace(/_/g, ' '))}</td></tr>`).join('')
+    || '<tr><td colspan="6" class="empty">No line moved the same way on every production. That is a finding too.</td></tr>';
+  $('patternWrap').hidden = false;
+
+  proposals = out.rate_proposals || [];
+  const seen = new Set();
+  const unique = proposals.filter(p => !seen.has(p.item_key) && seen.add(p.item_key));
+  proposals = unique;
+  $('proposalRows').innerHTML = unique.map((p, i) => `<tr class="${p.needs_review ? 'unverified' : ''}">
+    <td><input type="checkbox" data-p="${i}" ${p.needs_review ? '' : 'checked'}/></td>
+    <td><code>${esc(p.item_key)}</code></td>
+    <td class="num">${fmtMoney(p.rate)} / ${esc(p.unit)}</td>
+    <td>${p.needs_review
+      ? '<span class="tag off">divided by the budgeted quantity — check it</span>'
+      : '<span class="tag on">from the actual quantity</span>'}</td>
+    <td class="evidence">${esc(p.source)}</td></tr>`).join('')
+    || '<tr><td colspan="5" class="empty">No line carried enough information to propose a rate.</td></tr>';
+  $('proposalsPanel').hidden = !unique.length;
+}
+
+$('applyProposals').addEventListener('click', async () => {
+  const picked = [...document.querySelectorAll('#proposalRows input:checked')]
+    .map(cb => proposals[Number(cb.dataset.p)]);
+  if (!picked.length) { status(statusEl, 'Nothing ticked.', 'error'); return; }
+  try {
+    const out = await apiPost('/rates/apply-proposals', { proposals: picked });
+    status(statusEl, `${out.written} rate(s) written to the library. They are now binding on the next budget.`, 'ok');
+  } catch (err) { status(statusEl, err.message, 'error'); }
+});
+
+/* The report renders inline rather than in a new window. A pop-up blocker
+   swallowing the one document the client is paying for is not an acceptable
+   failure mode, and an iframe prints identically. */
+let reportHtml = '';
+
+$('report').addEventListener('click', async () => {
+  try {
+    status(statusEl, 'Rendering the report…');
+    const out = await apiPost('/teardown/report', {
+      ledgers: basket,
+      client: $('client').value.trim(),
+      productions_per_year: basket.length >= 2 ? (Number($('volume').value) || 12) : null,
+    });
+    reportHtml = out.html;
+    const frame = $('reportFrame');
+    frame.srcdoc = reportHtml;
+    $('reportPanel').hidden = false;
+    frame.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    status(statusEl, `Report built from ${out.productions} production(s). Print it, or download it.`, 'ok');
+  } catch (err) { status(statusEl, err.message, 'error'); }
+});
+
+$('printReport').addEventListener('click', () => {
+  const frame = $('reportFrame');
+  frame.contentWindow.focus();
+  frame.contentWindow.print();
+});
+
+$('downloadReport').addEventListener('click', () => {
+  const name = ($('client').value.trim() || 'teardown').replace(/[^\w-]+/g, '-').toLowerCase();
+  download(`${name}-stage-0-teardown.html`, reportHtml, 'text/html');
+});
+
+renderBasket();
+</script>
+</body>
+</html>

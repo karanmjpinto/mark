@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import Optional
@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 import httpx
 import time
 import hashlib
+import hmac
 import collections
 from dotenv import load_dotenv
 
@@ -29,6 +30,16 @@ import observability
 import tenancy
 import connections
 import metering
+import ratecard
+import schedule as scheduling
+import variance
+import compliance
+import screenplay
+import budgetdiff
+import exporters
+import teardown_report
+import delivery
+import roster
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
@@ -133,6 +144,9 @@ def _raw_get(key):
 # Wire the shared clients into the tenant-aware helper modules.
 connections.init(r)
 metering.init(r)
+ratecard.init(r)
+delivery.init(r)
+roster.init(r)
 
 def now():
     return datetime.now(timezone.utc).isoformat()
@@ -247,6 +261,11 @@ class BudgetGenerate(BaseModel):
     breakdown: Optional[dict] = None  # output of /script/parse summary, when available
     model: Optional[str] = None  # optional model override (e.g. async path requests Sonnet)
     version: Optional[str] = "1.0"
+    # Rate-library resolution. `city` is the shoot city — supplying it stops
+    # another city's rates being substituted (see ratecard._city_rank).
+    city: Optional[str] = ""
+    tier: Optional[str] = "mid"
+    use_rates: Optional[bool] = True
 
 class CallSheetRefine(BaseModel):
     callsheet: dict
@@ -523,6 +542,491 @@ async def usage(_=Depends(require_api_key)):
     enforcement is on."""
     return {"success": True, "usage": metering.usage()}
 
+# ── RATE LIBRARY ──────────────────────────────────────────────────────────────
+# The per-tenant rate card. See ratecard.py for why this exists: rate knowledge
+# that lives in a prompt cannot be corrected, versioned or compounded, and it is
+# the one asset every engagement is supposed to accumulate.
+
+class RateUpsert(BaseModel):
+    rate: dict
+
+class RateQuery(BaseModel):
+    region: Optional[str] = None
+    city: Optional[str] = ""
+    tier: Optional[str] = "mid"
+    currency: Optional[str] = None
+
+class RateId(BaseModel):
+    id: str
+
+class RateSeed(BaseModel):
+    region: str
+    overwrite: Optional[bool] = False
+
+@app.post("/rates/list")
+def rates_list(data: RateQuery = None, _=Depends(require_api_key)):
+    data = data or RateQuery()
+    rows = ratecard.all_rates()
+    if data.region:
+        rows = [r for r in rows if r.get("region") == data.region.strip().lower()]
+    if data.city:
+        rows = [r for r in rows if (r.get("city") or "") == data.city.strip().lower()]
+    rows.sort(key=lambda r: (r.get("section") or "", r.get("item_key") or ""))
+    return {"success": True, "rates": rows, "count": len(rows),
+            "verified": sum(1 for r in rows if ratecard.is_verified(r))}
+
+@app.post("/rates/upsert")
+def rates_upsert(data: RateUpsert, _=Depends(require_api_key)):
+    try:
+        row = ratecard.upsert(data.rate)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    return {"success": True, "rate": row}
+
+@app.post("/rates/delete")
+def rates_delete(data: RateId, _=Depends(require_api_key)):
+    return {"success": True, "deleted": ratecard.delete_rate(data.id)}
+
+@app.post("/rates/seed")
+def rates_seed(data: RateSeed, _=Depends(require_api_key)):
+    """Load the market-reference seed for a region. Non-destructive by default —
+    a tenant that has corrected its rates cannot be stamped on."""
+    try:
+        result = ratecard.seed(data.region, overwrite=bool(data.overwrite))
+    except FileNotFoundError as e:
+        raise HTTPException(404, f"{e}. Available: {ratecard.available_seeds()}")
+    return {"success": True, **result}
+
+@app.post("/rates/pack")
+def rates_pack(data: RateQuery, _=Depends(require_api_key)):
+    """The compact pack handed to the budget agent, plus the verified-coverage
+    number worth quoting to a client."""
+    region = (data.region or "india")
+    pack = ratecard.resolve_pack(region, city=data.city or "", tier=data.tier or "mid",
+                                 currency=data.currency)
+    return {"success": True, "pack": pack,
+            "coverage": ratecard.coverage(region, city=data.city or "", tier=data.tier or "mid")}
+
+# ── SCHEDULE ──────────────────────────────────────────────────────────────────
+
+class ScheduleGenerate(BaseModel):
+    project_id: Optional[str] = None
+    scenes: Optional[list] = None          # per-scene list from /script/parse
+    breakdown: Optional[dict] = None       # falls back to the aggregate summary
+    shoot_days: Optional[int] = None       # binding when supplied
+    eighths_per_day: Optional[int] = None
+    start_date: Optional[str] = None
+    title: Optional[str] = ""
+    save: Optional[bool] = True
+
+class ScheduleRef(BaseModel):
+    project_id: str
+
+class CallsheetFromSchedule(BaseModel):
+    project_id: Optional[str] = None
+    schedule: Optional[dict] = None
+    day: int
+
+def _scenes_for(data: "ScheduleGenerate") -> list:
+    if data.scenes:
+        return data.scenes
+    bd = data.breakdown or {}
+    if bd.get("scenes"):
+        return bd["scenes"]
+    if bd:
+        return scheduling.scenes_from_summary(bd)
+    return []
+
+@app.post("/schedule/generate")
+def schedule_generate(data: ScheduleGenerate, _=Depends(require_api_key)):
+    scenes = _scenes_for(data)
+    if not scenes:
+        raise HTTPException(422, "No scenes supplied. Pass `scenes` from /script/parse, "
+                                 "or `breakdown` to synthesise an indicative shape.")
+    sched = scheduling.build_schedule(
+        scenes,
+        shoot_days=data.shoot_days,
+        eighths_per_day=data.eighths_per_day or scheduling.DEFAULT_EIGHTHS_PER_DAY,
+        start_date=data.start_date,
+        title=data.title or "",
+    )
+    if data.project_id and data.save:
+        sched["project_id"] = data.project_id
+        sched["updated_at"] = now()
+        db_set(f"schedule:{data.project_id}", sched)
+    return {"success": True, "schedule": sched}
+
+class ScheduleSave(BaseModel):
+    project_id: Optional[str] = None
+    days: list                      # [[scene, ...], ...] — the producer's assignment
+    start_date: Optional[str] = None
+    title: Optional[str] = ""
+
+@app.post("/schedule/save")
+def schedule_save(data: ScheduleSave, _=Depends(require_api_key)):
+    """Store a hand-edited schedule. The day→scene assignment is the producer's
+    and is honoured exactly; every derived figure is recomputed server-side so
+    the stored schedule and the numbers on screen cannot drift apart."""
+    sched = scheduling.rebuild(data.days, start_date=data.start_date, title=data.title or "")
+    if data.project_id:
+        sched["project_id"] = data.project_id
+        sched["updated_at"] = now()
+        db_set(f"schedule:{data.project_id}", sched)
+    return {"success": True, "schedule": sched}
+
+@app.post("/schedule/get")
+def schedule_get(data: ScheduleRef, _=Depends(require_api_key)):
+    sched = db_get(f"schedule:{data.project_id}")
+    if not sched:
+        raise HTTPException(404, "No schedule saved for this project")
+    return {"success": True, "schedule": sched}
+
+@app.post("/schedule/reconcile")
+def schedule_reconcile(data: ScheduleRef, _=Depends(require_api_key)):
+    """Does the budget pay for the number of days the script implies? The check
+    that was impossible before the schedule existed."""
+    sched = db_get(f"schedule:{data.project_id}")
+    if not sched:
+        raise HTTPException(404, "No schedule saved for this project")
+    budget = db_get(f"budget:{data.project_id}:latest")
+    if not budget:
+        raise HTTPException(404, "No budget saved for this project")
+    return {"success": True,
+            "reconciliation": scheduling.reconcile_with_budget(sched, budget.get("budget_data") or {})}
+
+@app.post("/callsheet/from-schedule")
+def callsheet_from_schedule(data: CallsheetFromSchedule, _=Depends(require_api_key)):
+    """Seed a call sheet from one shooting day. Partial by design — call times,
+    weather and hospital are left for the producer and the call-sheet agent
+    rather than invented."""
+    sched = data.schedule
+    project = None
+    crew: list = []
+    if not sched and data.project_id:
+        sched = db_get(f"schedule:{data.project_id}")
+        project = db_get(f"project:{data.project_id}")
+        crew = [c for c in (db_get(f"crew:{cid}") for cid in db_smembers(f"project:{data.project_id}:crew")) if c]
+    if not sched:
+        raise HTTPException(404, "No schedule supplied or saved for this project")
+    try:
+        cs = scheduling.callsheet_seed(sched, data.day, project=project, crew=crew)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    return {"success": True, "callsheet": cs}
+
+# ── VARIANCE / TEARDOWN ───────────────────────────────────────────────────────
+# The Stage 0 teardown as a product feature rather than five days of spreadsheet
+# work. See variance.py.
+
+class VarianceCompute(BaseModel):
+    project_id: Optional[str] = None
+    budget: Optional[dict] = None          # budget_data shape
+    actuals: Optional[list] = None         # rows of {code?, desc, amount, qty?, vendor?}
+    actuals_csv: Optional[str] = None      # or a pasted CSV/TSV cost report
+    threshold: Optional[float] = None
+    currency: Optional[str] = "INR"
+    production: Optional[str] = ""
+    overrides: Optional[dict] = None       # line code → classification, from the interview
+    save: Optional[bool] = True
+
+class TeardownCompute(BaseModel):
+    project_id: Optional[str] = None
+    ledger_ids: Optional[list] = None
+    ledgers: Optional[list] = None
+    productions_per_year: int = 12
+
+def _resolve_budget(project_id: Optional[str], budget: Optional[dict]) -> dict:
+    if budget:
+        return budget
+    if project_id:
+        stored = db_get(f"budget:{project_id}:latest")
+        if stored:
+            return stored.get("budget_data") or {}
+    raise HTTPException(422, "Pass `budget`, or a `project_id` that has a saved budget")
+
+@app.post("/variance/compute")
+def variance_compute(data: VarianceCompute, _=Depends(require_api_key)):
+    budget = _resolve_budget(data.project_id, data.budget)
+    actuals = data.actuals or []
+    if not actuals and data.actuals_csv:
+        actuals = variance.parse_actuals_csv(data.actuals_csv)
+    if not actuals:
+        raise HTTPException(422, "No actuals supplied. Pass `actuals` rows, `actuals_csv`, "
+                                 "or upload a cost report to /actuals/parse first.")
+    ledger = variance.build_ledger(
+        budget, actuals,
+        threshold=data.threshold if data.threshold is not None else variance.DEFAULT_THRESHOLD,
+        currency=data.currency or "INR",
+        production=data.production or "",
+        overrides=data.overrides or {},
+    )
+    lid = str(uuid.uuid4())
+    ledger["id"] = lid
+    ledger["created_at"] = now()
+    if data.project_id and data.save:
+        ledger["project_id"] = data.project_id
+        db_set(f"ledger:{lid}", ledger)
+        db_sadd(f"project:{data.project_id}:ledgers", lid)
+    return {"success": True, "ledger": ledger}
+
+@app.post("/actuals/parse")
+async def actuals_parse(file: UploadFile = File(...), _=Depends(require_api_key)):
+    """Upload a cost report (.csv/.tsv/.xlsx) and get normalised actual rows back.
+
+    Deliberately separate from /variance/compute: a producer should see what was
+    read out of their file — and what was dropped as a subtotal — before any
+    finding is computed from it."""
+    name = (file.filename or "").lower()
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "Empty file")
+    if len(raw) > _MAX_TEMPLATE_BYTES:
+        raise HTTPException(413, f"File too large (max {_MAX_TEMPLATE_BYTES // 1024 // 1024} MB)")
+    try:
+        if name.endswith(".xlsx"):
+            rows = await run_in_threadpool(variance.parse_actuals_xlsx, raw)
+        elif name.endswith((".csv", ".tsv", ".txt")):
+            rows = variance.parse_actuals_csv(raw.decode("utf-8", "ignore"))
+        else:
+            raise HTTPException(400, "Supported: .csv, .tsv, .xlsx")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(422, f"Could not read the cost report: {type(e).__name__}: {e}")
+    if not rows:
+        raise HTTPException(422, "No cost lines found. The sheet needs a header row with an "
+                                 "amount column and a description or code column.")
+    return {"success": True, "rows": rows, "count": len(rows),
+            "total": round(sum(r["amount"] for r in rows), 2)}
+
+@app.post("/teardown/compute")
+def teardown_compute(data: TeardownCompute, _=Depends(require_api_key)):
+    """Across ledgers: the recurring lines and the annualised cost — deliverables
+    D2 and D3 of the Stage 0 SOW."""
+    ledgers = data.ledgers or []
+    if not ledgers and data.ledger_ids:
+        ledgers = [db_get(f"ledger:{lid}") for lid in data.ledger_ids]
+        ledgers = [l for l in ledgers if l]
+    if not ledgers and data.project_id:
+        ledgers = [db_get(f"ledger:{lid}") for lid in db_smembers(f"project:{data.project_id}:ledgers")]
+        ledgers = [l for l in ledgers if l]
+    if not ledgers:
+        raise HTTPException(422, "No ledgers found. Run /variance/compute for each production first.")
+    patterns = variance.recurring_patterns(ledgers)
+    return {
+        "success": True,
+        "productions": len(ledgers),
+        "recurring_patterns": patterns,
+        "annualised": variance.annualise(ledgers, productions_per_year=data.productions_per_year,
+                                         patterns=patterns),
+        "rate_proposals": [
+            p for led in ledgers
+            for p in ratecard.propose_from_variance(led, region="india", city="mumbai",
+                                                    source=f"teardown: {led.get('production') or led.get('id')}")
+        ][:200],
+    }
+
+class RateProposals(BaseModel):
+    proposals: list
+
+@app.post("/rates/apply-proposals")
+def rates_apply_proposals(data: RateProposals, _=Depends(require_api_key)):
+    """Commit rate corrections a producer accepted. Repeated observations blend
+    into the existing rate and grow its sample size."""
+    try:
+        written = ratecard.apply_proposals(data.proposals)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    return {"success": True, "written": len(written), "rates": written}
+
+# ── INDIA COMPLIANCE (GST + TDS) ──────────────────────────────────────────────
+
+class ComplianceCompute(BaseModel):
+    project_id: Optional[str] = None
+    budget: Optional[dict] = None
+    payee_types: Optional[dict] = None     # line code → "individual" | "entity"
+    apply_thresholds: Optional[bool] = True
+
+class PaymentScheduleRequest(BaseModel):
+    project_id: Optional[str] = None
+    budget: Optional[dict] = None
+    advance_pct: Optional[float] = 0.4
+    payee_types: Optional[dict] = None
+
+@app.post("/compliance/compute")
+def compliance_compute(data: ComplianceCompute, _=Depends(require_api_key)):
+    budget = _resolve_budget(data.project_id, data.budget)
+    return {"success": True,
+            "compliance": compliance.compute_budget(
+                budget,
+                payee_types=data.payee_types or {},
+                apply_thresholds=bool(data.apply_thresholds))}
+
+@app.post("/compliance/payment-schedule")
+def compliance_payment_schedule(data: PaymentScheduleRequest, _=Depends(require_api_key)):
+    budget = _resolve_budget(data.project_id, data.budget)
+    return {"success": True,
+            "payment_schedule": compliance.payment_schedule(
+                budget,
+                advance_pct=data.advance_pct if data.advance_pct is not None else 0.4,
+                payee_types=data.payee_types or {})}
+
+# ── VERSIONS, DIFF AND EXPORT ─────────────────────────────────────────────────
+# Budgets were already versioned in storage; what was missing was any way to see
+# what moved between two of them, and any way to get a budget out of Mark into
+# the tools the money actually lives in. See budgetdiff.py and exporters.py.
+
+class BudgetDiffRequest(BaseModel):
+    project_id: Optional[str] = None
+    before_id: Optional[str] = None
+    after_id: Optional[str] = None
+    before: Optional[dict] = None
+    after: Optional[dict] = None
+    currency: Optional[str] = "INR"
+
+class BudgetExport(BaseModel):
+    project_id: Optional[str] = None
+    budget: Optional[dict] = None
+    currency: Optional[str] = "INR"
+    format: Optional[str] = "xlsx"   # xlsx | mm | csv
+
+class TeardownReportRequest(BaseModel):
+    project_id: Optional[str] = None
+    ledger_ids: Optional[list] = None
+    ledgers: Optional[list] = None
+    client: Optional[str] = ""
+    productions_per_year: Optional[int] = None
+    currency: Optional[str] = "INR"
+
+def _budget_versions(project_id: str) -> list[dict]:
+    ids = db_smembers(f"project:{project_id}:budgets")
+    records = [db_get(f"budget:{bid}") for bid in ids]
+    rows = [budgetdiff.version_summary(r) for r in records if r]
+    rows.sort(key=lambda v: v.get("created_at") or "", reverse=True)
+    return rows
+
+def _resolve_ledgers(data) -> list[dict]:
+    ledgers = data.ledgers or []
+    if not ledgers and data.ledger_ids:
+        ledgers = [db_get(f"ledger:{lid}") for lid in data.ledger_ids]
+    if not ledgers and data.project_id:
+        ledgers = [db_get(f"ledger:{lid}") for lid in db_smembers(f"project:{data.project_id}:ledgers")]
+    ledgers = [l for l in ledgers if l]
+    ledgers.sort(key=lambda l: l.get("created_at") or "")
+    return ledgers
+
+@app.post("/budget/versions")
+def budget_versions(data: ProjectIdRequest, _=Depends(require_api_key)):
+    """Every stored version of a project's budget, newest first, each with its
+    line count and total — enough to pick two and diff them."""
+    return {"success": True, "versions": _budget_versions(data.project_id)}
+
+@app.post("/budget/diff")
+def budget_diff(data: BudgetDiffRequest, _=Depends(require_api_key)):
+    """What moved between two versions. Pass two budget objects, two stored ids,
+    or a project_id alone to compare its two most recent versions."""
+    before, after = data.before, data.after
+    if not (before and after):
+        if data.before_id and data.after_id:
+            b = db_get(f"budget:{data.before_id}")
+            a = db_get(f"budget:{data.after_id}")
+            if not b or not a:
+                raise HTTPException(404, "One or both budget versions not found")
+            before, after = b.get("budget_data") or {}, a.get("budget_data") or {}
+        elif data.project_id:
+            versions = _budget_versions(data.project_id)
+            if len(versions) < 2:
+                raise HTTPException(422, f"Need two saved versions to diff; this project has "
+                                         f"{len(versions)}")
+            a_rec = db_get(f"budget:{versions[0]['id']}")
+            b_rec = db_get(f"budget:{versions[1]['id']}")
+            before, after = (b_rec.get("budget_data") or {}), (a_rec.get("budget_data") or {})
+        else:
+            raise HTTPException(422, "Pass `before`/`after`, `before_id`/`after_id`, or a project_id")
+    return {"success": True, "diff": budgetdiff.diff(before, after, currency=data.currency or "INR")}
+
+@app.post("/budget/export")
+def budget_export(data: BudgetExport, _=Depends(require_api_key)):
+    """Budget → .xlsx, or a Movie Magic interchange file.
+
+    Returns base64 rather than a file response so the same call works from the
+    browser, an agent over MCP and a scheduled job. The `note` on the Movie Magic
+    format is deliberate: it is a delimited import file, not a `.mmb`."""
+    budget = _resolve_budget(data.project_id, data.budget)
+    fmt = (data.format or "xlsx").lower()
+    currency = data.currency or "INR"
+    title = (budget.get("title") or "budget").replace("/", "-")[:60]
+    if fmt == "xlsx":
+        raw = exporters.to_xlsx(budget, currency=currency)
+        return {"success": True, "filename": f"{title}.xlsx",
+                "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "base64": base64.b64encode(raw).decode()}
+    if fmt in ("mm", "movie-magic", "mmb"):
+        text = exporters.to_mm_interchange(budget, currency=currency)
+        return {"success": True, "filename": f"{title}-mm-import.csv", "content_type": "text/csv",
+                "text": text,
+                "note": "Delimited account/detail file for Movie Magic Budgeting's import. "
+                        "Not a .mmb — that format is proprietary and undocumented, and a wrong "
+                        "one opens with wrong numbers."}
+    raise HTTPException(422, "format must be one of: xlsx, mm")
+
+@app.post("/budget/import")
+async def budget_import(file: UploadFile = File(...), _=Depends(require_api_key)):
+    """Read a client's own budget spreadsheet into Mark's shape, so a first
+    engagement starts from their numbers. Reports what it skipped."""
+    name = (file.filename or "").lower()
+    if not name.endswith(".xlsx"):
+        raise HTTPException(400, "Supported: .xlsx (export the sheet from Excel or Sheets first)")
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "Empty file")
+    if len(raw) > _MAX_TEMPLATE_BYTES:
+        raise HTTPException(413, f"File too large (max {_MAX_TEMPLATE_BYTES // 1024 // 1024} MB)")
+    try:
+        budget = await run_in_threadpool(exporters.from_xlsx, raw,
+                                         title=(file.filename or "Imported budget").rsplit(".", 1)[0])
+    except Exception as e:
+        raise HTTPException(422, f"Could not read the budget: {type(e).__name__}: {e}")
+    if not budget.get("sections"):
+        raise HTTPException(422, "; ".join(budget.get("flags") or ["Nothing importable found"]))
+    return {"success": True, "budget": budget}
+
+@app.post("/variance/export")
+def variance_export(data: dict = None, _=Depends(require_api_key)):
+    """The Variance Ledger as a spreadsheet — deliverable D2, which the SOW
+    specifies as a spreadsheet because the client will want to sort it."""
+    data = data or {}
+    ledger = data.get("ledger")
+    if not ledger and data.get("ledger_id"):
+        ledger = db_get(f"ledger:{data['ledger_id']}")
+    if not ledger:
+        raise HTTPException(422, "Pass `ledger` or a stored `ledger_id`")
+    raw = exporters.ledger_to_xlsx(ledger)
+    name = (ledger.get("production") or "variance-ledger").replace("/", "-")[:60]
+    return {"success": True, "filename": f"{name}-variance-ledger.xlsx",
+            "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "base64": base64.b64encode(raw).decode()}
+
+@app.post("/teardown/report")
+def teardown_report_endpoint(data: TeardownReportRequest, _=Depends(require_api_key)):
+    """The Stage 0 report (D1, D3, D4) as printable HTML. Print → Save as PDF.
+
+    Every figure traces to a ledger line; the renderer states what it cannot
+    support rather than filling gaps."""
+    ledgers = _resolve_ledgers(data)
+    if not ledgers:
+        raise HTTPException(422, "No ledgers found. Run /variance/compute for each production first.")
+    patterns = variance.recurring_patterns(ledgers)
+    annualised = None
+    if data.productions_per_year and len(ledgers) >= 2:
+        annualised = variance.annualise(ledgers, productions_per_year=data.productions_per_year,
+                                        patterns=patterns)
+    html_doc = teardown_report.render(
+        ledgers, client=data.client or "", annualised=annualised, patterns=patterns,
+        currency=data.currency or "INR")
+    return {"success": True, "html": html_doc, "productions": len(ledgers),
+            "recurring_patterns": len(patterns)}
+
 @app.post("/budget/save")
 def save_budget(data: BudgetSave, _=Depends(require_api_key)):
     p = db_get(f"project:{data.project_id}")
@@ -619,96 +1123,10 @@ def list_feedback(_=Depends(require_api_key)):
     return {"success": True, "feedback": items, "total": len(items)}
 
 # ── SCRIPT PARSING ────────────────────────────────────────────────────────────
-# Uses SMASH-CUT/screenplay-pdf-to-json to turn a PDF screenplay into structured
-# scene/location/INT-EXT/character data. The agent uses this as ground truth so
-# it doesn't have to re-extract structure from prose every call.
+# Parsing lives in screenplay.py — pure, and therefore covered offline in
+# evals/. This endpoint owns the upload, the size cap and the PDF call only.
+_process_pages = screenplay.process_pages
 
-def _iter_scenes(pages: list):
-    """
-    Yield (scene_info, snippets) for every scene block in a parsed screenplay.
-    The actual parser shape is:
-        [{ "page": int, "content": [{ "scene_info": {...}|None, "scene": [...] }, ...], "type"?: "FIRST_PAGES" }]
-    The README documents a flatter shape — it is wrong. Verified against parser output.
-    """
-    for page in pages or []:
-        if page.get("type") == "FIRST_PAGES":
-            continue
-        for block in page.get("content", []) or []:
-            if not isinstance(block, dict):
-                continue
-            yield block.get("scene_info") or None, block.get("scene") or []
-
-# Caps on summary lists — top-N by scene_count keeps Claude input-token cost bounded.
-# Long-tail one-line characters and one-off locations don't drive budget decisions.
-_MAX_LOCATIONS = 25
-_MAX_CHARACTERS = 30
-
-def _process_pages(pages: list) -> tuple[dict, str]:
-    """
-    Single pass over the parser output: builds both the compact summary
-    AND reconstructs plain script text. Avoids two traversals of a large structure.
-    """
-    int_count = ext_count = day_count = night_count = total_scenes = 0
-    locations: dict = {}
-    characters: dict = {}
-    text_chunks: list = []
-
-    for scene_info, snippets in _iter_scenes(pages):
-        if scene_info:
-            total_scenes += 1
-            region = (scene_info.get("region") or "").upper()
-            if "INT" in region:
-                int_count += 1
-            if "EXT" in region:
-                ext_count += 1
-            for t in scene_info.get("time") or []:
-                tu = (t or "").upper()
-                if any(k in tu for k in ("DAY", "MORNING", "AFTERNOON")):
-                    day_count += 1
-                if any(k in tu for k in ("NIGHT", "EVENING", "DUSK")):
-                    night_count += 1
-            loc = scene_info.get("location")
-            if loc:
-                locations[loc] = locations.get(loc, 0) + 1
-            heading = (
-                f"{scene_info.get('region','')} {scene_info.get('location','') or ''}"
-                f" - {' / '.join(scene_info.get('time') or [])}"
-            ).strip(" -")
-            if heading:
-                text_chunks.append(heading)
-        for snippet in snippets:
-            content = snippet.get("content")
-            if snippet.get("type") == "CHARACTER" and isinstance(content, dict):
-                name = content.get("character")
-                if name:
-                    characters[name] = characters.get(name, 0) + 1
-            if isinstance(content, str):
-                text_chunks.append(content)
-            elif isinstance(content, dict):
-                for v in content.values():
-                    if isinstance(v, str):
-                        text_chunks.append(v)
-                    elif isinstance(v, list):
-                        text_chunks.extend(x for x in v if isinstance(x, str))
-            elif isinstance(content, list):
-                text_chunks.extend(x for x in content if isinstance(x, str))
-
-    summary = {
-        "total_scenes": total_scenes,
-        "int_count": int_count,
-        "ext_count": ext_count,
-        "day_count": day_count,
-        "night_count": night_count,
-        "unique_locations": [
-            {"name": k, "scene_count": v}
-            for k, v in sorted(locations.items(), key=lambda kv: kv[1], reverse=True)[:_MAX_LOCATIONS]
-        ],
-        "characters": [
-            {"name": k, "scene_count": v}
-            for k, v in sorted(characters.items(), key=lambda kv: kv[1], reverse=True)[:_MAX_CHARACTERS]
-        ],
-    }
-    return summary, "\n".join(c for c in text_chunks if c)
 
 _MAX_PDF_BYTES = int(os.getenv("MAX_PDF_BYTES", str(25 * 1024 * 1024)))  # 25MB default
 
@@ -902,6 +1320,33 @@ def _pick_account(accounts: list, providers: set) -> Optional[dict]:
             return a
     return None
 
+def _provider_message_id(resp) -> Optional[str]:
+    """Pull the provider's message id out of a Unipile response.
+
+    Delivery and read receipts arrive later as webhooks keyed on this id, so a
+    send that does not capture it can never report anything but "sent". Unipile
+    is not consistent about where it puts the id across endpoints, hence the
+    tolerance — and a miss is silent by design, because failing a successful
+    send over a missing receipt id would be the wrong trade.
+    """
+    try:
+        body = resp.json()
+    except Exception:
+        return None
+    if not isinstance(body, dict):
+        return None
+    for key in ("message_id", "id", "chat_id", "tracking_id"):
+        value = body.get(key)
+        if isinstance(value, (str, int)) and str(value).strip():
+            return str(value)
+    nested = body.get("message") or body.get("data") or {}
+    if isinstance(nested, dict):
+        for key in ("message_id", "id"):
+            value = nested.get(key)
+            if isinstance(value, (str, int)) and str(value).strip():
+                return str(value)
+    return None
+
 def _render_callsheet_text(cs: dict, recipient: dict) -> str:
     """Plain-text call sheet body for WhatsApp / LinkedIn / Telegram. Kept
     short — these channels render best with a compact summary plus a few
@@ -973,6 +1418,21 @@ def _render_callsheet_html(cs: dict, recipient: dict) -> str:
 # prompt or rate card eventually invalidates).
 _BUDGET_CACHE_TTL_SECONDS = 7 * 24 * 3600
 
+def _rate_fingerprint(pack: Optional[list]) -> Optional[str]:
+    """A short, order-independent hash of the rate pack that priced a budget.
+
+    Only the fields that change the number are included — item, rate, unit and
+    whether it was verified. Descriptions and sources move without changing the
+    arithmetic and would otherwise bust the cache for nothing."""
+    if not pack:
+        return None
+    rows = sorted(
+        (str(p.get("item_key")), float(p.get("rate") or 0), str(p.get("unit")), bool(p.get("verified")))
+        for p in pack
+    )
+    blob = json.dumps(rows, separators=(",", ":"))
+    return hashlib.sha256(blob.encode()).hexdigest()[:16]
+
 def _budget_cache_key(payload: dict) -> str:
     # Stable serialisation: sort_keys + drop None so two semantically equal
     # inputs hash the same. Project state isn't included — caching across
@@ -986,6 +1446,12 @@ def _budget_cache_key(payload: dict) -> str:
         # Model is part of the key so a Haiku (sync) and Sonnet (async) result for
         # the same inputs don't collide. Absent on the sync path → keys unchanged.
         "model": payload.get("model"),
+        # Rate pack fingerprint. This cache is deliberately global (two producers
+        # asking for the same TVC should see the same number), but rate cards are
+        # per-tenant — without this, tenant A's rate-priced budget would be
+        # served to tenant B, and a corrected rate would keep returning the
+        # pre-correction budget until the cache expired.
+        "rates": _rate_fingerprint(payload.get("rates")),
     }
     blob = json.dumps(canon, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(blob.encode("utf-8")).hexdigest()[:24]
@@ -1112,9 +1578,22 @@ async def generate_budget(data: BudgetGenerate, _=Depends(require_api_key)):
         "qa": qa,
     }
     if data.breakdown:
-        payload["breakdown"] = data.breakdown
+        # The per-scene list is for the scheduler, not the costing agent — it is
+        # large and adds nothing the aggregates don't already carry.
+        payload["breakdown"] = {k: v for k, v in data.breakdown.items()
+                                if k not in ("scenes", "scenes_truncated")}
     if data.model:
         payload["model"] = data.model
+
+    # Rate library → the agent. A rate the tenant has verified is binding; the
+    # prompt is told to use it verbatim and cite its source rather than
+    # estimating. This is the whole point of ratecard.py.
+    if data.use_rates:
+        pack = ratecard.resolve_pack(region, city=(data.city or "").strip().lower(),
+                                     tier=data.tier or "mid",
+                                     currency=(currency or {}).get("code"))
+        if pack:
+            payload["rates"] = pack
 
     # Cache lookup — same canonical inputs always return the same budget.
     # Project context (project record + crew) doesn't go into the cache key
@@ -1525,10 +2004,21 @@ async def _execute_callsheet_send(cs: dict, channels: list, project_id, pdf_base
         }
         db_set(f"callsheet-send:{sid}", record)
         db_sadd("callsheet-sends:all", sid)
+        # The delivery board is ours, not Unipile's — it opens on the mocked path
+        # too, so the confirmation flow is exercisable in dev and the board is
+        # never a surprise the first time real credentials are added.
+        try:
+            board = delivery.open_board(sid, crew, channels=channels,
+                                        shoot_day=cs.get("shoot_day", ""),
+                                        date=cs.get("date", ""), project_id=project_id or "")
+        except Exception as e:  # noqa: BLE001
+            board = None
+            print(f"⚠️  delivery board not opened for mocked send {sid}: {type(e).__name__}: {e}")
         return {
             "success": True,
             "send_id": sid,
             "status": "mocked",
+            "delivery": {"total": board["total"], "confirmed": 0} if board else None,
             "message": f"Unipile not configured — would send to {len(email_recipients)} via email and {len(whatsapp_recipients)} via WhatsApp.",
             "recipients": {
                 "email": [r.get("email") for r in email_recipients],
@@ -1599,7 +2089,8 @@ async def _execute_callsheet_send(cs: dict, channels: list, project_id, pdf_base
             }
             r = await _unipile_request("POST", "/api/v1/emails", json_body=payload, timeout=45)
         if r.is_success:
-            return {"channel": "email", "name": recipient.get("name"), "ok": True, "to": addr, "attached": bool(pdf_bytes)}
+            return {"channel": "email", "name": recipient.get("name"), "ok": True, "to": addr,
+                    "attached": bool(pdf_bytes), "message_id": _provider_message_id(r)}
         return {"channel": "email", "name": recipient.get("name"), "ok": False, "to": addr, "error": (r.text or '')[:300], "status": r.status_code}
 
     async def _send_chat(recipient: dict, account_id: str, channel: str, identifier_field: str):
@@ -1617,7 +2108,8 @@ async def _execute_callsheet_send(cs: dict, channels: list, project_id, pdf_base
         }
         r = await _unipile_request("POST", "/api/v1/chats", data=form, timeout=45)
         if r.is_success:
-            return {"channel": channel, "name": recipient.get("name"), "ok": True, "to": ident}
+            return {"channel": channel, "name": recipient.get("name"), "ok": True, "to": ident,
+                    "message_id": _provider_message_id(r)}
         return {"channel": channel, "name": recipient.get("name"), "ok": False, "to": ident, "error": (r.text or '')[:300], "status": r.status_code}
 
     # EMAIL
@@ -1670,6 +2162,19 @@ async def _execute_callsheet_send(cs: dict, channels: list, project_id, pdf_base
     }
     db_set(f"callsheet-send:{sid}", record)
     db_sadd("callsheet-sends:all", sid)
+
+    # Delivery board. Sending was never the hard part — knowing who has it at
+    # 11pm is. Opening the board here means every send is tracked without the
+    # caller having to remember to ask for it. A failure here must never fail a
+    # send that actually went out.
+    try:
+        delivery.open_board(sid, crew, channels=channels,
+                            shoot_day=cs.get("shoot_day", ""), date=cs.get("date", ""),
+                            project_id=project_id or "")
+        board = delivery.record_send(sid, results)
+        record["delivery"] = {"confirmed": board["confirmed"], "total": board["total"]}
+    except Exception as e:  # noqa: BLE001
+        print(f"⚠️  delivery board not updated for send {sid}: {type(e).__name__}: {e}")
 
     if ok_count and not fail_count:
         msg = f"Sent to {ok_count} recipient(s) via Unipile."
@@ -1739,6 +2244,272 @@ async def confirm_callsheet_send(data: SendConfirm, _=Depends(require_api_key)):
     proposal["executed_at"] = now()
     _raw_set(key, proposal, ttl=_SEND_PROPOSAL_TTL_SECONDS)
     return {"success": True, **result}
+
+# ── CREW & VENDOR ROSTER ──────────────────────────────────────────────────────
+# What this company paid this person, last time. See roster.py.
+
+class RosterUpsert(BaseModel):
+    entry: dict
+
+class RosterRef(BaseModel):
+    id: str
+
+class RosterSearch(BaseModel):
+    query: Optional[str] = ""
+    kind: Optional[str] = ""
+    tag: Optional[str] = ""
+
+class EngagementCreate(BaseModel):
+    roster_id: str
+    engagement: dict
+
+class RosterImport(BaseModel):
+    project_id: Optional[str] = None
+    crew: Optional[list] = None
+    production: Optional[str] = ""
+
+class RosterFromLedger(BaseModel):
+    ledger_id: Optional[str] = None
+    ledger: Optional[dict] = None
+    production: Optional[str] = ""
+
+class RosterProposeRates(BaseModel):
+    region: Optional[str] = "india"
+    city: Optional[str] = ""
+    tier: Optional[str] = "mid"
+    min_engagements: Optional[int] = 2
+
+@app.post("/roster/search")
+def roster_search(data: RosterSearch = None, _=Depends(require_api_key)):
+    data = data or RosterSearch()
+    rows = roster.search(data.query or "", kind=data.kind or "", tag=data.tag or "")
+    return {"success": True, "entries": rows, "count": len(rows)}
+
+@app.post("/roster/upsert")
+def roster_upsert(data: RosterUpsert, _=Depends(require_api_key)):
+    try:
+        return {"success": True, "entry": roster.upsert(data.entry)}
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+@app.post("/roster/get")
+def roster_get(data: RosterRef, _=Depends(require_api_key)):
+    entry = roster.get(data.id)
+    if not entry:
+        raise HTTPException(404, "Not on the roster")
+    return {"success": True, "entry": entry}
+
+@app.post("/roster/delete")
+def roster_delete(data: RosterRef, _=Depends(require_api_key)):
+    return {"success": True, "deleted": roster.delete(data.id)}
+
+@app.post("/roster/engagement")
+def roster_engagement(data: EngagementCreate, _=Depends(require_api_key)):
+    """Record one job at one rate. This is what a rate history is made of."""
+    try:
+        return {"success": True, "engagement": roster.record_engagement(data.roster_id, data.engagement)}
+    except KeyError:
+        raise HTTPException(404, "Not on the roster")
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+@app.post("/roster/history")
+def roster_history(data: RosterRef, _=Depends(require_api_key)):
+    """What we have actually paid them — median, spread, and the direction of
+    travel, with every figure traceable to one engagement."""
+    try:
+        return {"success": True, "history": roster.rate_history(data.id)}
+    except KeyError:
+        raise HTTPException(404, "Not on the roster")
+
+@app.post("/roster/import-crew")
+def roster_import_crew(data: RosterImport, _=Depends(require_api_key)):
+    """Pull a project's crew into the roster. Idempotent — run it after every job."""
+    crew = data.crew or []
+    if not crew and data.project_id:
+        crew = [c for c in (db_get(f"crew:{cid}")
+                            for cid in db_smembers(f"project:{data.project_id}:crew")) if c]
+    if not crew:
+        raise HTTPException(422, "Pass `crew`, or a project_id that has crew on it")
+    return {"success": True, **roster.import_crew(crew, production=data.production or "")}
+
+@app.post("/roster/from-ledger")
+def roster_from_ledger(data: RosterFromLedger, _=Depends(require_api_key)):
+    """Record what vendors were actually paid, from a variance ledger. The join
+    that makes a teardown populate the vendor history, not just the rate card."""
+    ledger = data.ledger
+    if not ledger and data.ledger_id:
+        ledger = db_get(f"ledger:{data.ledger_id}")
+    if not ledger:
+        raise HTTPException(422, "Pass `ledger` or a stored `ledger_id`")
+    return {"success": True, **roster.ingest_ledger(ledger, production=data.production or "")}
+
+@app.post("/roster/propose-rates")
+def roster_propose_rates(data: RosterProposeRates = None, _=Depends(require_api_key)):
+    """Roster history → rate-card proposals, on the median of at least two jobs.
+    Feed the accepted ones to /rates/apply-proposals."""
+    data = data or RosterProposeRates()
+    return {"success": True, "proposals": roster.propose_rates(
+        region=data.region or "india", city=data.city or "", tier=data.tier or "mid",
+        min_engagements=data.min_engagements or 2)}
+
+# ── CALL-SHEET DELIVERY STATE ─────────────────────────────────────────────────
+# Sending existed; knowing who has it did not. See delivery.py.
+
+class DeliveryRef(BaseModel):
+    send_id: str
+
+class ConfirmRequest(BaseModel):
+    send_id: str
+    recipient_id: str
+    token: str
+    declined: Optional[bool] = False
+    note: Optional[str] = ""
+
+@app.post("/callsheet/delivery/board")
+def delivery_board(data: DeliveryRef, _=Depends(require_api_key)):
+    """Who has the call sheet, who has read it, who has said they'll be there —
+    and, ordered by how worried to be, who to ring."""
+    board = delivery.get_board(data.send_id)
+    if not board:
+        raise HTTPException(404, "No delivery board for that send id")
+    return {"success": True, "board": board}
+
+@app.post("/callsheet/delivery/webhook")
+async def delivery_webhook(request: Request):
+    """Delivery and read receipts from the messaging provider.
+
+    Deliberately not behind the normal API key — a provider cannot send one. It
+    is behind a shared secret instead, and when that secret is not configured the
+    endpoint refuses rather than accepting anonymous writes: an open webhook that
+    can mark arbitrary crew as having read a call sheet is not a small hole.
+    """
+    secret = os.getenv("WEBHOOK_SECRET", "").strip()
+    if not secret:
+        raise HTTPException(503, "WEBHOOK_SECRET is not configured — refusing to accept "
+                                 "unauthenticated delivery events")
+    supplied = request.headers.get("X-Mark-Webhook-Secret", "")
+    if not hmac.compare_digest(supplied, secret):
+        raise HTTPException(401, "bad webhook secret")
+    try:
+        event = await request.json()
+    except Exception:
+        raise HTTPException(400, "expected a JSON body")
+    applied = delivery.apply_provider_event(event if isinstance(event, dict) else {})
+    # 200 either way: a provider that gets a 4xx for an event we simply don't
+    # care about will retry it forever.
+    return {"success": True, "applied": applied}
+
+@app.post("/callsheet/confirm")
+def callsheet_confirm(data: ConfirmRequest):
+    """A crew member's answer. No API key: the signed token in the link IS the
+    credential, and it is scoped to one person on one call sheet."""
+    try:
+        return {"success": True, **delivery.confirm(
+            data.send_id, data.recipient_id, data.token,
+            declined=bool(data.declined), note=data.note or "")}
+    except PermissionError as e:
+        raise HTTPException(403, str(e))
+    except KeyError as e:
+        raise HTTPException(404, str(e).strip("'"))
+
+@app.get("/c/{send_id}/{recipient_id}/{token}", response_class=HTMLResponse)
+def confirm_page(send_id: str, recipient_id: str, token: str):
+    """The page a crew member opens from WhatsApp.
+
+    One screen, two buttons, no login, no app. It is read on a phone at 6am by
+    someone who is already late, so it carries only what they need to answer:
+    which day, what date, their call time.
+    """
+    board = delivery.get_board(send_id)
+    rec = None
+    if board:
+        rec = next((r for r in board["recipients"] if r["id"] == recipient_id), None)
+    if not board or not rec or not delivery.token_matches(token, send_id, recipient_id):
+        return HTMLResponse(_confirm_html(None, None, None, error="This link isn't valid any more."),
+                            status_code=404)
+    return HTMLResponse(_confirm_html(board, rec, token))
+
+def _confirm_html(board, rec, token, *, error: str = "") -> str:
+    import html as _html
+    e = lambda v: _html.escape(str(v or ""))
+    if error:
+        body = f'<p class="err">{e(error)}</p><p class="sub">Ask the production office to resend it.</p>'
+    else:
+        already = rec["state"] in ("confirmed", "declined")
+        call = rec.get("call_time")
+        # Built outside the f-string: an apostrophe inside an f-string
+        # expression is a syntax error, and "can't" is unavoidable here.
+        CONFIRMED_MSG = "You're confirmed. See you there."
+        DECLINED_MSG = "You said you can't make it. Production has been told."
+        done_msg = DECLINED_MSG if rec["state"] == "declined" else CONFIRMED_MSG
+        body = f"""
+      <p class="kicker">Call sheet</p>
+      <h1>{e(board.get('shoot_day') or 'Shoot day')}</h1>
+      <p class="date">{e(board.get('date') or '')}</p>
+      <p class="who">{e(rec['name'])}{' · ' + e(rec['role']) if rec.get('role') else ''}</p>
+      {f'<p class="call">Your call: <strong>{e(call)}</strong></p>' if call else ''}
+      <div id="done" class="done" {'' if already else 'hidden'}>
+        <p class="ok">{e(done_msg)}</p>
+      </div>
+      <div id="ask" {'hidden' if already else ''}>
+        <button class="yes" onclick="answer(false)">I'll be there</button>
+        <button class="no" onclick="answer(true)">I can't make it</button>
+        <textarea id="note" rows="2" placeholder="Anything production should know (optional)"></textarea>
+      </div>
+      <p id="err" class="err" hidden></p>
+      <script>
+      async function answer(declined) {{
+        document.querySelectorAll('button').forEach(b => b.disabled = true);
+        try {{
+          const r = await fetch('/callsheet/confirm', {{
+            method: 'POST', headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{ send_id: {json.dumps(board['sheet_id'])},
+              recipient_id: {json.dumps(rec['id'])}, token: {json.dumps(token)},
+              declined, note: document.getElementById('note').value }})
+          }});
+          if (!r.ok) throw new Error((await r.json()).detail || 'Could not save that.');
+          document.getElementById('ask').hidden = true;
+          const done = document.getElementById('done');
+          done.querySelector('.ok').textContent = declined
+            ? {json.dumps(DECLINED_MSG)} : {json.dumps(CONFIRMED_MSG)};
+          done.hidden = false;
+        }} catch (err) {{
+          const el = document.getElementById('err');
+          el.textContent = err.message + ' Try again, or ring the production office.';
+          el.hidden = false;
+          document.querySelectorAll('button').forEach(b => b.disabled = false);
+        }}
+      }}
+      </script>"""
+    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Call sheet — confirm</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{background:#171714;color:#D5D6CE;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;line-height:1.5}}
+main{{width:100%;max-width:420px}}
+.kicker{{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#8A8B83;font-weight:700}}
+h1{{font-size:34px;line-height:1.05;margin:10px 0 4px;font-weight:800;letter-spacing:-.01em}}
+.date{{color:#B3B3B3;font-size:17px}}
+.who{{margin-top:22px;font-size:19px;font-weight:600}}
+.call{{margin-top:6px;color:#B3B3B3;font-size:17px}}
+.call strong{{color:#D5D6CE;font-size:22px}}
+button{{display:block;width:100%;margin-top:14px;padding:20px;font-size:18px;font-weight:700;
+  font-family:inherit;border:1px solid #D5D6CE;background:#D5D6CE;color:#171714;cursor:pointer;
+  border-radius:2px}}
+button.no{{background:transparent;color:#D5D6CE}}
+button:disabled{{opacity:.5}}
+#ask{{margin-top:26px}}
+textarea{{width:100%;margin-top:14px;padding:12px;font-family:inherit;font-size:16px;
+  background:#1D1D19;color:#D5D6CE;border:1px solid #2E2E29;border-radius:2px}}
+.done{{margin-top:26px;padding:18px;border-left:2px solid #D5D6CE;background:#1D1D19}}
+.ok{{font-size:18px;font-weight:600}}
+.err{{margin-top:18px;color:#E8724F;font-size:16px}}
+.sub{{margin-top:8px;color:#8A8B83;font-size:15px}}
+[hidden]{{display:none!important}}
+</style></head><body><main>{body}</main></body></html>"""
 
 @app.post("/crew/enrich")
 async def enrich_crew_member(data: CrewEnrich, _=Depends(require_api_key)):

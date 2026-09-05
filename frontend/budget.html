@@ -4102,6 +4102,10 @@ document.addEventListener('keydown', (e) => {
 .mk-ft-office{display:inline-block;margin-top:4px;opacity:0.85;}
 .mk-ft-mail{font-size:12px;letter-spacing:0.06em;color:var(--ink-soft,#3A352D);text-decoration:none;flex-shrink:0;}
 .mk-ft-mail:hover{color:var(--accent,#C8330A);}
+.mk-ft-tools{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;}
+.mk-ft-tools a{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:inherit;opacity:.72;text-decoration:none;}
+.mk-ft-tools a:hover{opacity:1;text-decoration:underline;text-underline-offset:3px;}
 @media(max-width:760px){
   .mk-ft{flex-direction:column;gap:14px;text-align:center;padding:28px 20px;}
   .mk-ft-copy{padding:0;}
@@ -4124,6 +4128,9 @@ document.addEventListener('keydown', (e) => {
     </svg>
     <span>MARK</span>
   </a>
+  <nav class="mk-ft-tools" aria-label="Mark tools">
+    <a href="budget.html">Budget</a><a href="schedule.html">Stripboard</a><a href="callsheet.html">Call sheet</a><a href="rates.html">Rates</a><a href="teardown.html">Teardown</a>
+  </nav>
   <div class="mk-ft-copy">
     &copy; 2026 MARK &middot; Production OS &middot; The Mario Jude Ltd &middot; Registered in England &amp; Wales no. 15842207
     <span class="mk-ft-office">Registered office: Flat 52, Niemann Court, Louis Close, London N7 0FQ</span>

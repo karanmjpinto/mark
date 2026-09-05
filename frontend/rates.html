@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MARK — Rate library</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'&gt;&lt;rect width='80' height='80' rx='4' fill='%23171714'/&gt;&lt;text x='40' y='68' fill='%23D5D6CE' font-family='Impact,sans-serif' font-size='52' text-anchor='middle'&gt;M&lt;/text&gt;&lt;circle cx='69' cy='69' r='3.4' fill='%23C8330A'/&gt;&lt;/svg&gt;"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/mark-tool.css"/>
+</head>
+<body>
+<div class="slate-stripe"></div>
+<nav>
+  <a class="nav-logo" href="index.html">
+    <svg viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" fill="#171714"/>
+      <text x="40" y="68" fill="#D5D6CE" font-family="Anton, Impact, sans-serif" font-size="52" text-anchor="middle">M</text>
+      <circle cx="69" cy="69" r="3.4" fill="#C8330A"/></svg>
+    <span>Mark</span>
+  </a>
+  <div class="nav-links">
+    <a href="budget.html">Budget</a>
+    <a href="schedule.html">Schedule</a>
+    <a href="callsheet.html">Call sheet</a>
+    <a href="rates.html" aria-current="page">Rates</a>
+    <a href="teardown.html">Teardown</a>
+  </div>
+</nav>
+
+<main>
+  <p class="page-kicker">Rate library</p>
+  <h1 class="display">What things<br>actually cost</h1>
+  <p class="page-lede">The budget agent is handed these rates and told to use them verbatim and cite
+    the source. A <strong>verified</strong> rate came off a real production and is binding; an
+    unverified one is a market reference and is marked amber wherever it appears. Correcting a rate
+    here is the single highest-value thing anyone can do in Mark.</p>
+
+  <div class="toolbar">
+    <div class="field" style="width:150px">
+      <label for="region">Region</label>
+      <select id="region"><option value="india">India</option><option value="uk">UK</option><option value="usa">USA</option></select>
+    </div>
+    <div class="field" style="width:170px">
+      <label for="city">City</label>
+      <input id="city" type="text" value="mumbai" placeholder="all cities"/>
+    </div>
+    <div class="field" style="width:120px">
+      <label for="tier">Tier</label>
+      <select id="tier"><option value="mid">Mid</option><option value="low">Low</option><option value="high">High</option><option value="any">Any</option></select>
+    </div>
+    <button id="load">Load</button>
+    <button id="seed" class="ghost">Seed this region</button>
+    <button id="addToggle" class="ghost">Add a rate</button>
+  </div>
+
+  <div id="status" class="status" hidden></div>
+  <div id="coverage" class="stats" hidden></div>
+
+  <div id="addPanel" class="panel" hidden style="margin-bottom:18px">
+    <div class="panel-head">New rate</div>
+    <div class="panel-body">
+      <div class="toolbar" style="margin:0;background:transparent;border:none;padding:0">
+        <div class="field" style="width:190px"><label for="n_key">Item key</label>
+          <input id="n_key" placeholder="camera.package.alexa35"/></div>
+        <div class="field" style="flex:1 1 240px"><label for="n_desc">Description</label>
+          <input id="n_desc" placeholder="ARRI Alexa 35 body + primes"/></div>
+        <div class="field" style="width:100px"><label for="n_section">Section</label>
+          <input id="n_section" placeholder="11300"/></div>
+        <div class="field" style="width:120px"><label for="n_unit">Unit</label>
+          <select id="n_unit"><option>day</option><option>person_day</option><option>flat</option>
+            <option>unit</option><option>week</option><option>hour</option><option>shift</option><option>episode</option></select></div>
+        <div class="field" style="width:130px"><label for="n_rate">Rate</label>
+          <input id="n_rate" type="number" min="0" step="any"/></div>
+        <div class="field" style="width:110px"><label for="n_gst">GST</label>
+          <input id="n_gst" type="number" min="0" max="1" step="0.01" value="0.18"/></div>
+        <div class="field" style="width:150px"><label for="n_verified">Verified on</label>
+          <input id="n_verified" type="date"/></div>
+        <div class="field" style="flex:1 1 200px"><label for="n_source">Source</label>
+          <input id="n_source" placeholder="e.g. teardown: 3 productions, Aug 2026"/></div>
+        <button id="addSave">Save rate</button>
+      </div>
+      <p class="hint" style="margin-top:12px">GST is a decimal multiplier — 0.18, never 18. Leave
+        “verified on” blank unless the number came from a real production; an unverified rate is
+        still used, it is just marked amber and the budget line says so.</p>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Item</th><th>Description</th><th>Section</th><th>Unit</th>
+        <th class="num">Rate</th><th class="num">GST</th><th>TDS</th><th>Tier</th><th>City</th>
+        <th>Source</th><th>State</th><th></th>
+      </tr></thead>
+      <tbody id="rows"><tr><td colspan="12" class="empty">Load a region to begin.</td></tr></tbody>
+    </table>
+  </div>
+  <p class="hint" style="margin-top:10px">Edit any cell and press Enter, or click away, to save.
+    Changing the item key, tier or city creates a new rate rather than moving the old one — identity
+    is (region, city, tier, item).</p>
+</main>
+
+<script src="assets/mark-api.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const statusEl = $('status');
+let rates = [];
+
+function currencyFor(region) {
+  return { india: 'INR', uk: 'GBP', usa: 'USD' }[region] || 'INR';
+}
+
+async function load() {
+  const region = $('region').value;
+  const city = $('city').value.trim().toLowerCase();
+  try {
+    status(statusEl, 'Loading…');
+    const [list, pack] = await Promise.all([
+      apiPost('/rates/list', { region, city: city || null }),
+      apiPost('/rates/pack', { region, city, tier: $('tier').value }),
+    ]);
+    rates = list.rates || [];
+    renderCoverage(pack.coverage, list);
+    renderRows();
+    status(statusEl, `${rates.length} rate(s) · ${list.verified} verified.`, 'ok');
+  } catch (err) {
+    status(statusEl, err.message, 'error');
+  }
+}
+
+function renderCoverage(cov, list) {
+  const pct = cov.rates ? Math.round(cov.verified_pct * 100) : 0;
+  $('coverage').innerHTML = `
+    <div class="stat"><div class="v">${cov.rates}</div><div class="k">In the pack (${esc(cov.tier)})</div></div>
+    <div class="stat ${pct === 0 ? 'warn' : ''}"><div class="v">${pct}%</div><div class="k">Verified coverage</div></div>
+    <div class="stat"><div class="v">${list.count}</div><div class="k">Rates stored</div></div>
+    <div class="stat"><div class="v">${list.count - list.verified}</div><div class="k">Still market reference</div></div>`;
+  $('coverage').hidden = false;
+}
+
+function renderRows() {
+  const tbody = $('rows');
+  if (!rates.length) {
+    tbody.innerHTML = '<tr><td colspan="12" class="empty">No rates yet. Seed the region, or add one.</td></tr>';
+    return;
+  }
+  const cur = currencyFor($('region').value);
+  tbody.innerHTML = rates.map(r => {
+    const verified = !!r.verified_at;
+    return `<tr class="${verified ? '' : 'unverified'}" data-id="${esc(r.id)}">
+      <td><code>${esc(r.item_key)}</code></td>
+      <td contenteditable="plaintext-only" data-f="desc">${esc(r.desc)}</td>
+      <td contenteditable="plaintext-only" data-f="section">${esc(r.section || '')}</td>
+      <td contenteditable="plaintext-only" data-f="unit">${esc(r.unit)}</td>
+      <td class="num" contenteditable="plaintext-only" data-f="rate">${Number(r.rate).toLocaleString(cur === 'INR' ? 'en-IN' : 'en-US')}</td>
+      <td class="num" contenteditable="plaintext-only" data-f="gst_rate">${r.gst_rate}</td>
+      <td contenteditable="plaintext-only" data-f="tds_section">${esc(r.tds_section || '')}</td>
+      <td>${esc(r.tier)}</td>
+      <td>${esc(r.city || '—')}</td>
+      <td class="evidence" contenteditable="plaintext-only" data-f="source">${esc(r.source || '')}</td>
+      <td>${verified
+        ? `<span class="tag on">Verified ${esc(String(r.verified_at).slice(0, 10))}</span>`
+        : '<span class="tag off">Market ref</span>'}
+        ${r.sample_size ? `<span class="tag">n=${r.sample_size}</span>` : ''}</td>
+      <td><button class="small ghost" data-verify="${esc(r.id)}">${verified ? 'Unverify' : 'Verify'}</button>
+          <button class="small ghost" data-del="${esc(r.id)}">Delete</button></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('[contenteditable]').forEach(cell => {
+    cell.addEventListener('blur', () => saveCell(cell));
+    cell.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); cell.blur(); }
+      if (e.key === 'Escape') { renderRows(); }
+    });
+  });
+  tbody.querySelectorAll('[data-del]').forEach(b =>
+    b.addEventListener('click', () => removeRate(b.dataset.del)));
+  tbody.querySelectorAll('[data-verify]').forEach(b =>
+    b.addEventListener('click', () => toggleVerified(b.dataset.verify)));
+}
+
+function rateById(id) { return rates.find(r => r.id === id); }
+
+async function saveCell(cell) {
+  const tr = cell.closest('tr');
+  const row = rateById(tr.dataset.id);
+  if (!row) return;
+  const field = cell.dataset.f;
+  let value = cell.textContent.trim();
+  if (field === 'rate') value = Number(value.replace(/[^\d.-]/g, ''));
+  if (field === 'gst_rate') value = Number(value);
+  if (String(row[field] ?? '') === String(value)) return;   // nothing moved
+  await upsert({ ...row, [field]: value });
+}
+
+async function toggleVerified(id) {
+  const row = rateById(id);
+  if (!row) return;
+  const verified_at = row.verified_at ? null : new Date().toISOString().slice(0, 10);
+  await upsert({
+    ...row, verified_at,
+    confidence: verified_at ? 'green' : 'amber',
+    source: row.source || (verified_at ? 'confirmed by producer' : ''),
+  });
+}
+
+async function upsert(rate) {
+  try {
+    const out = await apiPost('/rates/upsert', { rate });
+    const i = rates.findIndex(r => r.id === out.rate.id);
+    if (i > -1) rates[i] = out.rate; else rates.push(out.rate);
+    renderRows();
+    refreshCoverage();
+    status(statusEl, `Saved ${out.rate.item_key}.`, 'ok');
+  } catch (err) {
+    status(statusEl, err.message, 'error');
+    renderRows();   // put the cell back to the stored value
+  }
+}
+
+async function removeRate(id) {
+  const row = rateById(id);
+  if (!row || !confirm(`Delete the rate for ${row.item_key}? This cannot be undone.`)) return;
+  try {
+    await apiPost('/rates/delete', { id });
+    rates = rates.filter(r => r.id !== id);
+    renderRows();
+    refreshCoverage();
+    status(statusEl, 'Deleted.', 'ok');
+  } catch (err) { status(statusEl, err.message, 'error'); }
+}
+
+async function refreshCoverage() {
+  try {
+    const pack = await apiPost('/rates/pack', {
+      region: $('region').value, city: $('city').value.trim().toLowerCase(), tier: $('tier').value });
+    renderCoverage(pack.coverage, { count: rates.length, verified: rates.filter(r => r.verified_at).length });
+  } catch { /* the table is still correct; coverage can lag */ }
+}
+
+$('load').addEventListener('click', load);
+$('region').addEventListener('change', () => {
+  $('city').value = { india: 'mumbai', uk: 'london', usa: 'los angeles' }[$('region').value] || '';
+  load();
+});
+$('tier').addEventListener('change', load);
+$('seed').addEventListener('click', async () => {
+  const region = $('region').value;
+  try {
+    status(statusEl, 'Seeding…');
+    const out = await apiPost('/rates/seed', { region });
+    status(statusEl, `${out.written} seeded, ${out.skipped} left alone. ${out.note}`, 'ok');
+    load();
+  } catch (err) { status(statusEl, err.message, 'error'); }
+});
+$('addToggle').addEventListener('click', () => { $('addPanel').hidden = !$('addPanel').hidden; });
+$('addSave').addEventListener('click', async () => {
+  const region = $('region').value;
+  const rate = {
+    region,
+    city: $('city').value.trim().toLowerCase(),
+    tier: $('tier').value,
+    item_key: $('n_key').value.trim(),
+    desc: $('n_desc').value.trim(),
+    section: $('n_section').value.trim(),
+    unit: $('n_unit').value,
+    rate: Number($('n_rate').value),
+    currency: currencyFor(region),
+    gst_rate: Number($('n_gst').value || 0),
+    verified_at: $('n_verified').value || null,
+    confidence: $('n_verified').value ? 'green' : 'amber',
+    source: $('n_source').value.trim(),
+  };
+  await upsert(rate);
+  ['n_key', 'n_desc', 'n_section', 'n_rate', 'n_source'].forEach(id => { $(id).value = ''; });
+});
+
+load();
+</script>
+</body>
+</html>

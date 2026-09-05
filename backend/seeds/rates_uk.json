@@ -1,0 +1,22 @@
+{
+  "region": "uk",
+  "currency": "GBP",
+  "note": "UNVERIFIED market-reference placeholders. London commercials, 2026. Same rules as the India seed — replace before quoting.",
+  "rates": [
+    {"item_key": "director.tvc",           "section": "10300", "city": "london", "tier": "mid",  "desc": "Director fee — commercial, per film",   "unit": "flat",       "rate": 12000, "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "ad.first",               "section": "10600", "city": "london", "tier": "any",  "desc": "1st Assistant Director",                "unit": "day",        "rate": 550,   "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "line_producer",          "section": "10800", "city": "london", "tier": "any",  "desc": "Line producer",                         "unit": "day",        "rate": 700,   "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "production_manager",     "section": "10800", "city": "london", "tier": "any",  "desc": "Production manager",                    "unit": "day",        "rate": 450,   "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "dop",                    "section": "11300", "city": "london", "tier": "mid",  "desc": "Director of photography",               "unit": "day",        "rate": 1400,  "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "focus_puller",           "section": "11300", "city": "london", "tier": "any",  "desc": "Focus puller",                          "unit": "day",        "rate": 500,   "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "camera.package.alexa35", "section": "11300", "city": "london", "tier": "mid",  "desc": "ARRI Alexa 35 + prime set, rental",     "unit": "day",        "rate": 1500,  "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "lighting.package.tvc",   "section": "11500", "city": "london", "tier": "mid",  "desc": "Lighting + grip package, mid commercial","unit": "day",       "rate": 2200,  "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "gaffer",                 "section": "11500", "city": "london", "tier": "any",  "desc": "Gaffer",                                "unit": "day",        "rate": 600,   "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "art_director",           "section": "11000", "city": "london", "tier": "mid",  "desc": "Art director",                          "unit": "day",        "rate": 600,   "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "location.studio_floor",  "section": "12400", "city": "london", "tier": "mid",  "desc": "Stage hire, mid-size",                  "unit": "day",        "rate": 3500,  "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "catering.crew_meal",     "section": "12600", "city": "london", "tier": "any",  "desc": "Crew catering, per head per day",       "unit": "person_day", "rate": 32,    "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "editorial.offline",      "section": "12900", "city": "london", "tier": "mid",  "desc": "Offline editor + suite",                "unit": "day",        "rate": 900,   "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "editorial.grade",        "section": "12900", "city": "london", "tier": "mid",  "desc": "Grade, colourist + suite",              "unit": "day",        "rate": 2500,  "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"},
+    {"item_key": "post_sound.mix",         "section": "13100", "city": "london", "tier": "mid",  "desc": "Sound design + mix, short-form",        "unit": "flat",       "rate": 3500,  "currency": "GBP", "gst_rate": 0.2, "source": "market reference, unverified"}
+  ]
+}
