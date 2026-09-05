@@ -12,14 +12,14 @@ name: budget-evals
 on:
   push:
     paths:
-      - "mark/evals/**"
-      - "mark/flue-agents/**"
-      - "mark/backend/**"
+      - "evals/**"
+      - "flue-agents/**"
+      - "backend/**"
   pull_request:
     paths:
-      - "mark/evals/**"
-      - "mark/flue-agents/**"
-      - "mark/backend/**"
+      - "evals/**"
+      - "flue-agents/**"
+      - "backend/**"
   workflow_dispatch:
 
 jobs:
@@ -31,17 +31,17 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run invariant suite (offline)
-        working-directory: mark/evals
+        working-directory: evals
         run: python run_evals.py
       - name: Run negative tests
-        working-directory: mark/evals
+        working-directory: evals
         run: python test_invariants.py
       # Pure-logic suites for the rate library, scheduler, variance ledger and
       # the India GST/TDS engine. No dependencies — these import the backend
       # modules directly, which is why none of them import FastAPI at module
       # level.
       - name: Run unit tests (ratecard / schedule / variance / compliance)
-        working-directory: mark/evals
+        working-directory: evals
         run: python run_unit_tests.py
 
   live:
@@ -53,7 +53,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run invariant suite (live) against deployed backend
-        working-directory: mark/evals
+        working-directory: evals
         env:
           MARK_API_BASE: ${{ secrets.MARK_API_BASE }}
           MARK_API_KEY: ${{ secrets.MARK_API_KEY }}
