@@ -39,9 +39,41 @@ Its own endpoints:
 | `POST /enrol` | Pushes this agent's operator list into Mark's own roster, so the backend refuses a stranger even if the agent is bypassed. |
 | `POST /` | A self-test: is Mark reachable, are the `/chat` endpoints deployed, which device sends, who is enrolled, what is still missing. |
 
-Secrets set: `MARK_API_BASE`, `MARK_API_KEY` (placeholder `unset` — the key header
-is omitted until a real key is stored), `MARK_WA_PHONE_ID`, `MARK_OPERATORS`
-(`447472960640:producer`).
+Live wiring, 7 Oct 2026:
+
+| Thing | Value |
+|---|---|
+| Agent service | `mark_whatsapp_agent_0584417b` |
+| Sender device | `+44 7472 960640` (`phn_f91d7b5b...`), subscribed to `mark_whatsapp_agent_0584417b/webhook` |
+| Operators | `+447472960640` and `+447472174253`, both `producer` |
+| Model | `claude-sonnet-4-6` |
+
+The sender number is also an operator, so the normal path is the owner's own
+"Message yourself" chat. The webhook therefore accepts two shapes: an inbound DM
+from an enrolled number, and the owner typing in the self-chat (`is_from_me`
+true, `chat_id` equal to `device_id`). `is_from_me` gates the chat and is never
+the echo guard — that is a Redis set of the ids this agent has sent, so the
+agent does not answer its own replies. The owner's DMs with anybody else are
+refused.
+
+### How the API key works
+
+`tenancy.py` runs `AUTH_MODE=off` by default: when the backend's `API_KEY` env
+var is empty every request is allowed, and when it holds a value every request
+must carry the same value in `X-API-Key`. Three callers hold that key and each
+omits the header while its own copy is empty, so the key can be rolled out
+caller-first and switched on last:
+
+| Caller | Where the key lives |
+|---|---|
+| The web app | `localStorage.mark_api_key_header` in the producer's browser ([`frontend/assets/mark-api.js`](../frontend/assets/mark-api.js)) |
+| The WhatsApp agent | the CodeWords secret `MARK_API_KEY` (placeholder `unset`) |
+| The MCP server | the `MARK_API_KEY` env var ([`mcp/README.md`](../mcp/README.md)) |
+
+Set the three callers first, then `API_KEY` on Railway. The reverse order locks
+the web app out until the browser copy is in place. The login-free pages —
+`/s/{id}/{token}` and `/c/{send_id}/...` — take no key in either case, by
+design: they are opened by crew who will never have an account.
 
 ## Setup
 
