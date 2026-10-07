@@ -47,7 +47,7 @@ Live wiring, 7 Oct 2026:
 | Sender device | `+44 7472 960640` (`phn_f91d7b5b...`), subscribed to `mark_whatsapp_agent_0584417b/webhook` |
 | Operators | `+447472960640` and `+447472174253`, both `producer` |
 | Model | `claude-sonnet-4-6` |
-| Public base | `MARK_PUBLIC_URL=https://askmark.filmsbykp.com`, so share links go out on the custom domain |
+| Public base | `MARK_PUBLIC_URL=https://backend-production-6ea4.up.railway.app` — the **backend's** host, not the site's |
 
 The sender number is also an operator, so the normal path is the owner's own
 "Message yourself" chat. The webhook therefore accepts two shapes: an inbound DM
@@ -56,6 +56,18 @@ true, `chat_id` equal to `device_id`). `is_from_me` gates the chat and is never
 the echo guard — that is a Redis set of the ids this agent has sent, so the
 agent does not answer its own replies. The owner's DMs with anybody else are
 refused.
+
+### Why the share host is the Railway one
+
+`MARK_PUBLIC_URL` must name the host that serves `/s/{id}/{token}`, and that is
+the **backend**. `askmark.filmsbykp.com` is GitHub Pages: it serves the frontend
+and knows nothing about that path, so pointing the variable at it produced share
+links that resolved to a Pages 404 — the message was right and the link was dead.
+Verified both ways before and after the correction.
+
+A prettier link needs a custom domain on the Railway *service* (`api.filmsbykp.com`,
+say): add it in Railway, point a CNAME at the target Railway gives you, then set
+`MARK_PUBLIC_URL` to it. The backend has no custom domain today.
 
 ### How the API key works
 
