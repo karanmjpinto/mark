@@ -67,7 +67,7 @@ caller-first and switched on last:
 
 | Caller | Where the key lives |
 |---|---|
-| The web app | `localStorage.mark_api_key_header`, set once per browser by opening a `…/budget.html#key=<key>` link ([`frontend/assets/mark-api.js`](../frontend/assets/mark-api.js)). A fragment is never sent to a server, so the key stays out of access logs and out of the `Referer` header; the page stores it and strips it from the address bar. `#key=` with nothing after it forgets it. A 401 tells the producer to open that link rather than quoting FastAPI at them. |
+| The web app | `localStorage.mark_api_key_header`, set once per browser by opening a `…/budget.html#key=<key>` link. The logic lives in [`frontend/assets/mark-api.js`](../frontend/assets/mark-api.js) and, because `budget.html` and `callsheet.html` predate the shared client and still carry their own copy of the wrapper, in those two files as well — three copies, each covered by the same offline test. A fragment is never sent to a server, so the key stays out of access logs and out of the `Referer` header; the page stores it and strips it from the address bar. `#key=` with nothing after it forgets it. A 401 tells the producer to open that link rather than quoting FastAPI at them. |
 | The WhatsApp agent | the CodeWords secret `MARK_API_KEY` |
 | The MCP server | the `MARK_API_KEY` env var ([`mcp/README.md`](../mcp/README.md)) |
 
