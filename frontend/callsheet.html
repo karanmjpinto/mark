@@ -1504,7 +1504,29 @@ const MARK_API = (() => {
   return localStorage.getItem('mark_api')
     || (location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://backend-production-6ea4.up.railway.app');
 })();
-const MARK_API_KEY = localStorage.getItem('mark_api_key_header') || '';
+const MARK_API_KEY = (() => {
+  // Same contract as assets/mark-api.js: the key arrives once per browser as a
+  // fragment (#key=…), which a browser never sends to a server, so it stays out
+  // of access logs and the Referer header. Stored, then stripped from the
+  // address bar; `#key=` with nothing after it forgets it. This page predates
+  // the shared client and still carries its own copy of the wrapper.
+  try {
+    const frag = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+    if (frag.has('key')) {
+      const given = (frag.get('key') || '').trim();
+      if (given) localStorage.setItem('mark_api_key_header', given);
+      else localStorage.removeItem('mark_api_key_header');
+      frag.delete('key');
+      const rest = frag.toString();
+      history.replaceState(null, '', location.pathname + location.search + (rest ? '#' + rest : ''));
+    }
+  } catch { /* private mode, or no storage — fall through to no key */ }
+  try {
+    return localStorage.getItem('mark_api_key_header') || '';
+  } catch {
+    return '';
+  }
+})();
 
 // Pings /health on first call so Railway's free-tier sleeping container has
 // a chance to wake before the first real POST. Auto-retries once on transient
@@ -1546,6 +1568,10 @@ async function _doFetch(path, opts) {
     if (!resp.ok) {
       let detail = null;
       try { const err = await resp.json(); detail = err.detail || err.error?.message; } catch {}
+      if (resp.status === 401) {
+        detail = 'This browser has no API key for Mark. Open the link the production '
+          + 'office sent you — it ends in #key=… — and try again.';
+      }
       const error = new Error(detail || `Server error ${resp.status}`);
       error._status = resp.status;
       throw error;
