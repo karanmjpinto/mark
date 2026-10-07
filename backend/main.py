@@ -40,6 +40,7 @@ import exporters
 import teardown_report
 import delivery
 import roster
+import chatops
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
@@ -147,6 +148,7 @@ metering.init(r)
 ratecard.init(r)
 delivery.init(r)
 roster.init(r)
+chatops.init(r)
 
 def now():
     return datetime.now(timezone.utc).isoformat()
@@ -2510,6 +2512,208 @@ textarea{{width:100%;margin-top:14px;padding:12px;font-family:inherit;font-size:
 .sub{{margin-top:8px;color:#8A8B83;font-size:15px}}
 [hidden]{{display:none!important}}
 </style></head><body><main>{body}</main></body></html>"""
+
+# ── CHAT CHANNEL (WhatsApp) ───────────────────────────────────────────────────
+# The inbound half of agent-native. Mark already sends to WhatsApp; this is the
+# half where a producer drives Mark *from* WhatsApp. The agent itself lives on a
+# chat platform (CodeWords — see `whatsapp/`), holds this tenant's API key, and
+# relays one person's messages. Three things it needs and the rest of the API
+# does not provide: who is texting (`/chat/session`), the same numbers at
+# message size (`/chat/render`), and a login-free URL for the document that
+# cannot fit in a thread (`/s/{id}/{token}`). Logic lives in chatops.py.
+
+class ChatPhone(BaseModel):
+    phone: str
+
+class ChatEnrol(BaseModel):
+    phone: str
+    name: Optional[str] = ""
+    role: Optional[str] = chatops.DEFAULT_ROLE
+
+class ChatActiveProject(BaseModel):
+    phone: str
+    project_id: Optional[str] = None
+
+class ChatRender(BaseModel):
+    phone: str
+    kind: str                                 # budget|schedule|variance|teardown|delivery
+    project_id: Optional[str] = None
+    ledger_id: Optional[str] = None
+    send_id: Optional[str] = None
+    payload: Optional[dict] = None            # something the agent just generated, unsaved
+    productions_per_year: Optional[int] = 6
+    share: Optional[bool] = True
+
+
+def _public_base(request: Request) -> str:
+    """Where a crew member's phone can reach us. Behind Railway's proxy the
+    request's own host is right; MARK_PUBLIC_URL overrides it for the custom
+    domain, which is what actually goes out over WhatsApp."""
+    return (os.getenv("MARK_PUBLIC_URL") or str(request.base_url)).rstrip("/")
+
+
+def _chat_operator(phone: str, action: str = "read") -> dict:
+    """Resolve the human on the other end, or refuse. The agent's number is
+    public, so this is the only thing standing between a stranger's message and
+    a tenant's budgets — it runs before any tool does work."""
+    op = chatops.operator(phone)
+    if not op:
+        raise HTTPException(403, "This number is not enrolled on Mark. Ask the production "
+                                 "office to add it.")
+    if not chatops.can(op, action):
+        raise HTTPException(403, f"{op.get('name') or 'This number'} is a {op.get('role')} "
+                                 f"and cannot {action} — ask a producer.")
+    return op
+
+@app.post("/chat/operators/enrol")
+def chat_enrol(data: ChatEnrol, _=Depends(require_api_key)):
+    """Admit a phone number to this tenant's chat channel."""
+    try:
+        return {"success": True, "operator": chatops.enrol(data.phone, name=data.name or "",
+                                                           role=data.role or chatops.DEFAULT_ROLE)}
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+@app.post("/chat/operators/list")
+def chat_operators(_=Depends(require_api_key)):
+    return {"success": True, "operators": chatops.operators(), "roles": sorted(chatops.ROLES)}
+
+@app.post("/chat/operators/revoke")
+def chat_revoke(data: ChatPhone, _=Depends(require_api_key)):
+    return {"success": True, "revoked": chatops.revoke(data.phone)}
+
+@app.post("/chat/session")
+def chat_session(data: ChatPhone, _=Depends(require_api_key)):
+    """The agent's first call on every inbound message: who this is, what they
+    may do, and which production the thread is about."""
+    _chat_operator(data.phone)
+    sess = chatops.session(data.phone)
+    project = db_get(f"project:{sess['active_project']}") if sess.get("active_project") else None
+    if sess.get("active_project") and not project:
+        chatops.set_active_project(data.phone, None)       # the project was deleted
+        sess["active_project"] = None
+    return {"success": True, "session": sess,
+            "project": {"id": project["id"], "name": project.get("name"),
+                        "project_type": project.get("project_type"),
+                        "currency": project.get("currency") or "INR",
+                        "status": project.get("status")} if project else None}
+
+@app.post("/chat/active-project")
+def chat_active_project(data: ChatActiveProject, _=Depends(require_api_key)):
+    """Pin the thread to one production, so 'what's the budget' is unambiguous."""
+    _chat_operator(data.phone, "write")
+    if data.project_id and not db_get(f"project:{data.project_id}"):
+        raise HTTPException(404, "Project not found")
+    op = chatops.set_active_project(data.phone, data.project_id)
+    return {"success": True, "operator": op}
+
+@app.post("/chat/render")
+def chat_render(data: ChatRender, request: Request, _=Depends(require_api_key)):
+    """One of Mark's objects, at message size, with a link to the full document.
+
+    The agent may pass `payload` for something it has just generated and not
+    saved; otherwise this reads what is stored for the project. The share link
+    is built from Mark's own renderers — a caller cannot supply HTML for us to
+    host (see chatops.create_share)."""
+    op = _chat_operator(data.phone)
+    kind = (data.kind or "").strip().lower()
+    project_id = data.project_id or op.get("active_project")
+    project = db_get(f"project:{project_id}") if project_id else None
+    currency = (project or {}).get("currency") or "INR"
+    want_share = data.share is not False
+    share, share_error = None, None
+
+    def _share(title: str, build):
+        """Park the document, if it can be built. A share link is the extra; the
+        message is the product, so a document that cannot be rendered from what
+        the agent passed costs the link and not the answer."""
+        nonlocal share_error
+        if not want_share:
+            return None
+        try:
+            rec = chatops.create_share(kind=kind, title=title, html=build())
+        except Exception as e:  # noqa: BLE001 — a malformed payload must not 500 a chat reply
+            share_error = f"The document could not be built: {type(e).__name__}."
+            print(f"⚠️  /chat/render share failed ({kind}): {type(e).__name__}: {e}")
+            return None
+        return {**rec, "url": chatops.share_url(_public_base(request), rec)}
+
+    if kind == "budget":
+        budget = data.payload
+        if not budget:
+            stored = db_get(f"budget:{project_id}:latest") if project_id else None
+            if not stored:
+                raise HTTPException(404, "No budget saved for this project")
+            budget = stored.get("budget_data") or {}
+        title = budget.get("title") or (project or {}).get("name") or "Budget"
+        share = _share(title, lambda: chatops.budget_html(budget, currency=currency, title=title))
+        text = chatops.budget_text(budget, currency=currency, url=(share or {}).get("url", ""))
+
+    elif kind == "schedule":
+        sched = data.payload or (db_get(f"schedule:{project_id}") if project_id else None)
+        if not sched:
+            raise HTTPException(404, "No schedule saved for this project")
+        text = chatops.schedule_text(sched)
+
+    elif kind == "variance":
+        ledger = data.payload
+        if not ledger and data.ledger_id:
+            ledger = db_get(f"ledger:{data.ledger_id}")
+        if not ledger and project_id:
+            ids = sorted(db_smembers(f"project:{project_id}:ledgers"))
+            ledger = next((l for l in (db_get(f"ledger:{i}") for i in ids) if l), None)
+        if not ledger:
+            raise HTTPException(404, "No variance ledger found. Upload a cost report first.")
+        share = _share(f"Teardown — {ledger.get('production') or 'production'}",
+                       lambda: teardown_report.render(
+                           [ledger], client=(project or {}).get("client_name") or "",
+                           currency=ledger.get("currency") or currency))
+        text = chatops.variance_text(ledger, url=(share or {}).get("url", ""))
+
+    elif kind == "teardown":
+        result = data.payload
+        ledgers = []
+        if not result:
+            ids = sorted(db_smembers(f"project:{project_id}:ledgers")) if project_id else []
+            ledgers = [l for l in (db_get(f"ledger:{i}") for i in ids) if l]
+            if not ledgers:
+                raise HTTPException(404, "No ledgers found. Run a teardown per production first.")
+            patterns = variance.recurring_patterns(ledgers)
+            result = {"productions": len(ledgers), "recurring_patterns": patterns,
+                      "annualised": variance.annualise(
+                          ledgers, productions_per_year=data.productions_per_year or 6,
+                          patterns=patterns)}
+        if ledgers:
+            share = _share("Stage 0 report", lambda: teardown_report.render(
+                ledgers, client=(project or {}).get("client_name") or "",
+                annualised=result.get("annualised"), patterns=result.get("recurring_patterns"),
+                currency=currency))
+        text = chatops.teardown_text(result, currency=currency, url=(share or {}).get("url", ""))
+
+    elif kind == "delivery":
+        if not data.send_id:
+            raise HTTPException(422, "send_id is required to read a delivery board")
+        board = delivery.get_board(data.send_id)
+        if not board:
+            raise HTTPException(404, "No delivery board for that send")
+        text = chatops.delivery_text(delivery.summarise(board))
+
+    else:
+        raise HTTPException(422, "kind must be one of: budget, schedule, variance, "
+                                 "teardown, delivery")
+
+    return {"success": True, "kind": kind, "text": text, "chars": len(text),
+            "share": share, "share_error": share_error, "project_id": project_id}
+
+@app.get("/s/{share_id}/{token}", response_class=HTMLResponse)
+def share_page(share_id: str, token: str):
+    """A document from a chat thread. No login — the token is the credential,
+    and it expires, because the link is forwarded to people who will never have
+    an account here."""
+    record = chatops.get_share(share_id, token)
+    if not record:
+        return HTMLResponse(chatops.expired_page("This link isn't valid any more."), status_code=404)
+    return HTMLResponse(chatops.share_page(record))
 
 @app.post("/crew/enrich")
 async def enrich_crew_member(data: CrewEnrich, _=Depends(require_api_key)):
