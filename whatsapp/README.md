@@ -34,7 +34,7 @@ Its own endpoints:
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /webhook` | Inbound WhatsApp. Gates in order: event → own message → text → group → duplicate → stale → allowlist. |
+| `POST /webhook` | Inbound WhatsApp. Gates in order: event → text or document → group → own message (self-chat only) → duplicate → echo → stale → allowlist. |
 | `POST /set-access` | Who may drive Mark from WhatsApp, as `{numbers:[{phone, role}]}`. |
 | `POST /enrol` | Pushes this agent's operator list into Mark's own roster, so the backend refuses a stranger even if the agent is bypassed. |
 | `POST /` | A self-test: is Mark reachable, are the `/chat` endpoints deployed, which device sends, who is enrolled, what is still missing. |
@@ -47,6 +47,7 @@ Live wiring, 7 Oct 2026:
 | Sender device | `+44 7472 960640` (`phn_f91d7b5b...`), subscribed to `mark_whatsapp_agent_0584417b/webhook` |
 | Operators | `+447472960640` and `+447472174253`, both `producer` |
 | Model | `claude-sonnet-4-6` |
+| Public base | `MARK_PUBLIC_URL=https://askmark.filmsbykp.com`, so share links go out on the custom domain |
 
 The sender number is also an operator, so the normal path is the owner's own
 "Message yourself" chat. The webhook therefore accepts two shapes: an inbound DM
@@ -66,8 +67,8 @@ caller-first and switched on last:
 
 | Caller | Where the key lives |
 |---|---|
-| The web app | `localStorage.mark_api_key_header` in the producer's browser ([`frontend/assets/mark-api.js`](../frontend/assets/mark-api.js)) |
-| The WhatsApp agent | the CodeWords secret `MARK_API_KEY` (placeholder `unset`) |
+| The web app | `localStorage.mark_api_key_header`, set once per browser by opening a `…/budget.html#key=<key>` link ([`frontend/assets/mark-api.js`](../frontend/assets/mark-api.js)). A fragment is never sent to a server, so the key stays out of access logs and out of the `Referer` header; the page stores it and strips it from the address bar. `#key=` with nothing after it forgets it. A 401 tells the producer to open that link rather than quoting FastAPI at them. |
+| The WhatsApp agent | the CodeWords secret `MARK_API_KEY` |
 | The MCP server | the `MARK_API_KEY` env var ([`mcp/README.md`](../mcp/README.md)) |
 
 Set the three callers first, then `API_KEY` on Railway. The reverse order locks
@@ -133,6 +134,14 @@ manage the roster.
   how many lines sit on market placeholders; the shared document repeats it in
   the legend. A number that has never been teardown-verified must not reach a
   client looking finished.
+- **A screenplay reaches Mark as a PDF only.** A producer can attach the script
+  in the thread: the webhook pulls a public URL for it through the device
+  manager (the `chat_id` from that same webhook is required, and cannot be
+  recovered later), parks it for two hours, and the `parse_script` tool uploads
+  it to `/script/parse`. The tool hands back a `breakdown` handle for
+  `generate_budget` and a `scenes` handle for `generate_schedule`, so the budget
+  rests on the real scene list rather than on a filename. `.fdx` and `.docx` are
+  refused with that sentence; a photo of a page is refused too.
 - **A hand-assembled ledger will not render a report.** Pass cost reports
   through `/variance/compute` so the ledger has `material_lines` and each line's
   `basis`; a ledger the agent builds itself loses the link (`share_error` says

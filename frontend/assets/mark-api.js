@@ -6,6 +6,8 @@
    reinvent them (and drift):
 
      · base URL from ?api=, then localStorage, then the deployed backend
+     · the API key from #key=, then localStorage — never from the source, which
+       is public on GitHub Pages
      · the backend sleeps on Railway's free tier, so warm it once per page
        load and retry a network-level failure exactly once
      · FastAPI returns errors as {detail}, so surface that rather than a
@@ -24,7 +26,30 @@ const MARK_API = (() => {
         : 'https://backend-production-6ea4.up.railway.app');
 })();
 
-const MARK_API_KEY = localStorage.getItem('mark_api_key_header') || '';
+const MARK_API_KEY = (() => {
+  // The backend enforces X-API-Key once API_KEY is set on it. The key reaches a
+  // browser once, as a fragment — askmark.filmsbykp.com/budget.html#key=… — and
+  // a fragment is never sent to a server, so it stays out of access logs and out
+  // of the Referer header, unlike ?api=. It is stored, then stripped from the
+  // address bar so a screenshot or a shared tab does not carry it.
+  // `#key=` with nothing after it forgets the stored key.
+  try {
+    const frag = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+    if (frag.has('key')) {
+      const given = (frag.get('key') || '').trim();
+      if (given) localStorage.setItem('mark_api_key_header', given);
+      else localStorage.removeItem('mark_api_key_header');
+      frag.delete('key');
+      const rest = frag.toString();
+      history.replaceState(null, '', location.pathname + location.search + (rest ? '#' + rest : ''));
+    }
+  } catch { /* private mode, or no storage — fall through to no key */ }
+  try {
+    return localStorage.getItem('mark_api_key_header') || '';
+  } catch {
+    return '';
+  }
+})();
 
 let _warmed = false;
 async function warmBackend() {
@@ -63,6 +88,10 @@ async function apiPost(path, body, { timeout = 120000, retry = true } = {}) {
         const j = await resp.json();
         detail = j.detail || j.error || detail;
       } catch { /* non-JSON error body */ }
+      if (resp.status === 401) {
+        throw new Error('This browser has no API key for Mark. Open the link the '
+          + 'production office sent you — it ends in #key=… — and try again.');
+      }
       if (retry && [502, 503, 504].includes(resp.status)) {
         await new Promise(r => setTimeout(r, 1200));
         return apiPost(path, body, { timeout, retry: false });

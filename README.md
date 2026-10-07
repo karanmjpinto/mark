@@ -139,7 +139,10 @@ Added on top of the core pipeline (see `architecture.html` for the diagram):
   `producer` can release a send). `/chat/render` returns the same numbers at
   message size — ≤1,400 characters, `₹1.86 Cr` not `18600000`. `/s/{id}/{token}`
   parks a Mark-rendered budget or Stage 0 report behind an opaque, expiring,
-  login-free URL, because a link is the only thing a chat reliably carries.
+  login-free URL, because a link is the only thing a chat reliably carries. A
+  producer can attach the screenplay in the thread: the agent pulls the PDF off
+  WhatsApp and feeds it to `/script/parse`, so the budget rests on the real
+  scene list.
 
 ## Scale layer (multi-tenant)
 
