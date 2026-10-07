@@ -35,7 +35,10 @@ mark/
 ├── evals/          Budget regression gate — invariants + golden fixtures + CI,
 │                   plus offline unit suites for the four modules above.
 │                   `python evals/run_evals.py && python evals/run_unit_tests.py`
-└── mcp/            MCP server — exposes Mark's tools to Claude/Cursor/agents.
+├── mcp/            MCP server — exposes Mark's tools to Claude/Cursor/agents.
+└── whatsapp/       The WhatsApp agent: the Cody brief and API reference pasted
+                    into CodeWords, which hosts the agent and the number. Mark's
+                    side is `backend/chatops.py` + `/chat/*` + `/s/{id}/{token}`.
 ```
 
 Each directory has its own README with detail.
@@ -128,6 +131,15 @@ Added on top of the core pipeline (see `architecture.html` for the diagram):
   `list_rates`, `upsert_rate`, `rate_pack`, `generate_schedule`,
   `callsheet_from_schedule`, `variance_ledger`, `teardown`, `india_compliance`
   and `payment_schedule`.
+- **WhatsApp** (`chatops.py`, `whatsapp/`) — the inbound half: a producer driving
+  Mark from a thread. The agent is hosted on CodeWords with the number; this
+  repo supplies the tools and the three things a chat channel needs and the web
+  UI never did. `/chat/session` turns a phone number into an enrolled operator
+  with a role (an unenrolled number is refused before any tool runs, and only a
+  `producer` can release a send). `/chat/render` returns the same numbers at
+  message size — ≤1,400 characters, `₹1.86 Cr` not `18600000`. `/s/{id}/{token}`
+  parks a Mark-rendered budget or Stage 0 report behind an opaque, expiring,
+  login-free URL, because a link is the only thing a chat reliably carries.
 
 ## Scale layer (multi-tenant)
 
@@ -197,6 +209,20 @@ uvicorn main:app --reload --port 8000
    full budget snapshot for quality review.
 
 ## Deploy
+
+**Live:** the site is <https://askmark.filmsbykp.com> (GitHub Pages, from `main`)
+and the API is `https://backend-production-6ea4.up.railway.app`.
+
+**Both deploy on a push to `main`.** The Railway `backend` service is connected
+to this repository with root directory `backend`, so merging to `main` builds and
+releases the API; GitHub Pages publishes `frontend/` from the same commit. There
+is no manual deploy step and no `railway up` — before September 2026 the service
+had no source attached, which is why it could only be released by CLI upload from
+one particular machine.
+
+Because both move together, **deploy order matters when an endpoint is new**: the
+API must be live before the pages that call it. Merging one commit does both in
+the right order; splitting them across two merges does not.
 
 - **Backend** → Railway (Dockerfile included). Set `ANTHROPIC_API_KEY`,
   `FLUE_BASE_URL`, `API_KEY` (optional shared secret), `ALLOWED_ORIGINS`,
