@@ -41,6 +41,7 @@ import teardown_report
 import delivery
 import roster
 import chatops
+import callsheet as callsheets
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
@@ -1845,6 +1846,41 @@ async def refine_budget(data: BudgetRefine, _=Depends(require_api_key)):
     db_sadd(f"project:{data.project_id}:budgets", bid)
     return {"success": True, "budget_id": bid, "budget": budget}
 
+# A commercial rarely has a script, so the call sheet cannot start from one.
+# These two build and amend a sheet from the facts a producer actually has, and
+# answer what is still missing before it can go to crew. Logic in callsheet.py.
+
+class CallsheetNew(BaseModel):
+    project_id: Optional[str] = None
+    facts: Optional[dict] = None          # date, location, call_time, crew, cast, hospital…
+
+class CallsheetUpdate(BaseModel):
+    callsheet: dict
+    facts: dict                            # only the fields this message names
+
+@app.post("/callsheet/new")
+def callsheet_new(data: CallsheetNew, _=Depends(require_api_key)):
+    """Start a call sheet with no script. Returns the sheet and what it still
+    needs — scenes are not among them."""
+    facts = dict(data.facts or {})
+    if data.project_id:
+        project = db_get(f"project:{data.project_id}")
+        if not project:
+            raise HTTPException(404, "Project not found")
+        facts.setdefault("project_title", project.get("name") or "")
+        facts.setdefault("client", project.get("client_name") or "")
+    sheet = callsheets.from_facts(**facts)
+    if data.project_id:
+        sheet["project_id"] = data.project_id
+    return {"success": True, "callsheet": sheet, "summary": callsheets.summary(sheet)}
+
+@app.post("/callsheet/update")
+def callsheet_update(data: CallsheetUpdate, _=Depends(require_api_key)):
+    """Apply one message's worth of facts. Fields the message does not name are
+    left exactly as they were, so nothing has to be retyped."""
+    sheet = callsheets.merge(data.callsheet, data.facts)
+    return {"success": True, "callsheet": sheet, "summary": callsheets.summary(sheet)}
+
 @app.post("/callsheet/refine")
 async def refine_callsheet(data: CallSheetRefine, _=Depends(require_api_key)):
     """Apply a producer's free-text instruction to a call sheet via the
@@ -2536,7 +2572,7 @@ class ChatActiveProject(BaseModel):
 
 class ChatRender(BaseModel):
     phone: str
-    kind: str                                 # budget|schedule|variance|teardown|delivery
+    kind: str                                 # budget|schedule|variance|teardown|delivery|callsheet
     project_id: Optional[str] = None
     ledger_id: Optional[str] = None
     send_id: Optional[str] = None
@@ -2690,6 +2726,17 @@ def chat_render(data: ChatRender, request: Request, _=Depends(require_api_key)):
                 currency=currency))
         text = chatops.teardown_text(result, currency=currency, url=(share or {}).get("url", ""))
 
+    elif kind == "callsheet":
+        sheet = data.payload
+        if not sheet and project_id:
+            ids = sorted(db_smembers(f"project:{project_id}:callsheets"))
+            record = next((r for r in (db_get(f"callsheet:{i}") for i in reversed(ids)) if r), None)
+            sheet = (record or {}).get("callsheet")
+        if not sheet:
+            raise HTTPException(404, "No call sheet yet. Start one with /callsheet/new.")
+        sheet = callsheets.merge(sheet, {})        # recompute needs on whatever we were handed
+        text = chatops.callsheet_text(sheet)
+
     elif kind == "delivery":
         if not data.send_id:
             raise HTTPException(422, "send_id is required to read a delivery board")
@@ -2700,7 +2747,7 @@ def chat_render(data: ChatRender, request: Request, _=Depends(require_api_key)):
 
     else:
         raise HTTPException(422, "kind must be one of: budget, schedule, variance, "
-                                 "teardown, delivery")
+                                 "teardown, delivery, callsheet")
 
     return {"success": True, "kind": kind, "text": text, "chars": len(text),
             "share": share, "share_error": share_error, "project_id": project_id}

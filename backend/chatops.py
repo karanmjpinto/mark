@@ -508,6 +508,58 @@ def variance_text(ledger: dict, *, url: str = "", top: int = 5) -> str:
     return clip("\n".join(head + lines))
 
 
+def callsheet_text(sheet: dict, *, url: str = "") -> str:
+    """A call sheet as it stands, and the one thing to ask for next.
+
+    The producer builds this over several messages, so the state has to be
+    readable at any point — and `needs` is the half that drives the next
+    question. Nothing here is invented: an empty field is shown as missing.
+    """
+    sheet = sheet or {}
+    needs = [n for n in (sheet.get("needs") or []) if n.get("blocking")]
+    advisory = [n for n in (sheet.get("needs") or []) if not n.get("blocking")]
+    locations = sheet.get("locations") or []
+    where = locations[0].get("name") or locations[0].get("address") if locations else ""
+    if locations and locations[0].get("address") and locations[0].get("name"):
+        where = f"{locations[0]['name']}, {locations[0]['address']}"
+
+    head = [f"*{sheet.get('project_title') or 'Call sheet'}"
+            f"{' · ' + sheet['shoot_day'] if sheet.get('shoot_day') else ''}*"]
+    when = " · ".join(f for f in [
+        sheet.get("date") or "",
+        f"call {sheet['general_call_time']}" if sheet.get("general_call_time") else "",
+        f"wrap {sheet['wrap_time']}" if sheet.get("wrap_time") else "",
+    ] if f)
+    if when:
+        head.append(when)
+    if where:
+        head.append(where)
+
+    crew = sheet.get("crew") or []
+    cast = sheet.get("cast") or []
+    reachable = sum(1 for c in crew if c.get("phone") or c.get("email"))
+    counts = []
+    if crew:
+        counts.append(f"{_n(len(crew), 'crew member')} ({reachable} reachable)")
+    if cast:
+        counts.append(_n(len(cast), "cast"))
+    if counts:
+        head.append(" · ".join(counts))
+    if sheet.get("nearest_hospital"):
+        head.append(f"Hospital: {sheet['nearest_hospital']}")
+
+    lines = []
+    if needs:
+        lines += ["", "Still needed:"] + [f"• {n['ask']}" for n in needs]
+    else:
+        lines += ["", f"Ready to send to {_n(reachable, 'person', 'people')}."]
+    if advisory:
+        lines.append("Nice to have: " + "; ".join(n["ask"] for n in advisory))
+    if url:
+        lines += ["", f"Full sheet: {url}"]
+    return clip("\n".join(head + lines))
+
+
 def teardown_text(result: dict, *, currency: str = "INR", url: str = "") -> str:
     result = result or {}
     a = result.get("annualised") or {}

@@ -330,6 +330,35 @@ def test_an_expired_link_explains_itself_without_leaking_anything():
     assert "production office" in page and "<script" not in page
 
 
+def test_a_call_sheet_shows_its_state_and_asks_for_what_is_missing():
+    sheet = {"project_title": "Nike — Dawn Training", "shoot_day": "Day 1 of 1",
+             "date": "2026-11-04", "general_call_time": "06:30",
+             "locations": [{"name": "Bandra Rooftop", "address": "14 Hill Road"}],
+             "crew": [{"name": "Ravi", "phone": "+9198"}, {"name": "Meera"}],
+             "cast": [{"artist": "Aisha"}],
+             "needs": [{"field": "nearest_hospital", "ask": "the nearest hospital",
+                        "blocking": True},
+                       {"field": "wrap_time", "ask": "the estimated wrap", "blocking": False}]}
+    text = chatops.callsheet_text(sheet)
+    assert "Nike — Dawn Training · Day 1 of 1" in text
+    assert "call 06:30" in text and "Bandra Rooftop, 14 Hill Road" in text
+    assert "2 crew members (1 reachable)" in text, text
+    assert "Still needed:" in text and "the nearest hospital" in text
+    assert "Nice to have: the estimated wrap" in text
+    assert "Ready to send" not in text
+
+
+def test_a_complete_call_sheet_says_how_many_it_reaches():
+    sheet = {"project_title": "Nike", "general_call_time": "06:30",
+             "nearest_hospital": "Lilavati",
+             "locations": [{"name": "Rooftop", "address": "14 Hill Road"}],
+             "crew": [{"name": "Ravi", "phone": "+9198"}, {"name": "Meera", "email": "m@x.com"}],
+             "needs": []}
+    text = chatops.callsheet_text(sheet)
+    assert "Ready to send to 2 people." in text, text
+    assert "Still needed" not in text
+
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
