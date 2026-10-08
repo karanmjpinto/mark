@@ -359,6 +359,44 @@ def test_a_complete_call_sheet_says_how_many_it_reaches():
     assert "Still needed" not in text
 
 
+def test_a_share_can_carry_a_file_and_hands_back_its_bytes():
+    blob = b"PK\x03\x04 pretend xlsx"
+    xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    share = chatops.create_share(kind="budget", title="Nike budget", blob=blob,
+                                 content_type=xlsx)
+    assert share["content_type"] == xlsx
+    assert share["filename"] == "Nike budget.xlsx"
+    record = chatops.get_share(share["share_id"], share["token"])
+    assert chatops.share_bytes(record) == blob
+    assert chatops.share_page(record) == "", "a file share has no page"
+
+
+def test_a_share_carries_exactly_one_of_html_or_a_file():
+    for kwargs in ({}, {"html": "<p>x</p>", "blob": b"x",
+                        "content_type": "text/csv"}):
+        try:
+            chatops.create_share(kind="budget", title="T", **kwargs)
+        except ValueError:
+            continue
+        raise AssertionError(f"accepted an ambiguous share: {kwargs}")
+
+
+def test_a_file_type_we_do_not_write_is_refused():
+    for bad in ("text/html", "image/svg+xml", "application/x-msdownload", ""):
+        try:
+            chatops.create_share(kind="x", title="T", blob=b"x", content_type=bad)
+        except ValueError:
+            continue
+        raise AssertionError(f"accepted {bad!r} as a shareable file")
+
+
+def test_an_html_share_has_no_bytes():
+    share = chatops.create_share(kind="budget", title="T", html="<p>x</p>")
+    record = chatops.get_share(share["share_id"], share["token"])
+    assert chatops.share_bytes(record) is None
+    assert chatops.share_page(record) == "<p>x</p>"
+
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

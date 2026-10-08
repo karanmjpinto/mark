@@ -32,6 +32,7 @@ covered offline in `evals/test_chatops.py`.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import html as _html
@@ -276,12 +277,30 @@ def _share_key(share_id: str) -> str:
     return f"g:share:{share_id}"
 
 
-def create_share(*, kind: str, title: str, html: str, ttl: Optional[int] = None) -> dict:
+# A share can also carry a file, because WhatsApp will send a document from a
+# URL but not from base64. The list is closed: only formats this backend writes
+# itself, served as an attachment, never as something a browser will execute.
+SHAREABLE_TYPES = {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+    "text/csv": ".csv",
+    "application/pdf": ".pdf",
+}
+
+
+def create_share(*, kind: str, title: str, html: Optional[str] = None,
+                 blob: Optional[bytes] = None, content_type: str = "",
+                 filename: str = "", ttl: Optional[int] = None) -> dict:
     """Park one Mark-rendered document behind a login-free URL.
 
-    `html` always comes from this backend's own renderers. Nothing user-supplied
-    is stored here: a share is not a hosting endpoint.
+    The content always comes from this backend's own renderers and writers.
+    Nothing user-supplied is stored here: a share is not a hosting endpoint, and
+    a file type we do not write ourselves is refused.
     """
+    if (html is None) == (blob is None):
+        raise ValueError("a share carries exactly one of html or blob")
+    if blob is not None and content_type not in SHAREABLE_TYPES:
+        raise ValueError(f"not a shareable content type: {content_type!r}")
     ttl = int(SHARE_TTL_SECONDS if ttl is None else ttl)   # ttl=0 means "already gone"
     share_id = secrets.token_hex(8)
     record = {
@@ -289,6 +308,9 @@ def create_share(*, kind: str, title: str, html: str, ttl: Optional[int] = None)
         "kind": kind,
         "title": title,
         "html": html,
+        "blob_b64": base64.b64encode(blob).decode() if blob is not None else None,
+        "content_type": content_type if blob is not None else "text/html",
+        "filename": filename or (title + SHAREABLE_TYPES.get(content_type, "")) if blob is not None else "",
         "created_at": _now(),
         "expires_at": (datetime.now(timezone.utc) + timedelta(seconds=ttl)).isoformat(),
     }
@@ -297,7 +319,8 @@ def create_share(*, kind: str, title: str, html: str, ttl: Optional[int] = None)
     else:
         _mem_shares[share_id] = record
     return {"share_id": share_id, "token": make_share_token(share_id),
-            "kind": kind, "title": title, "expires_at": record["expires_at"]}
+            "kind": kind, "title": title, "expires_at": record["expires_at"],
+            "content_type": record["content_type"], "filename": record["filename"]}
 
 
 def get_share(share_id: str, token: str) -> Optional[dict]:
@@ -699,8 +722,19 @@ Replace it from a teardown before this number reaches a client.</p>
 
 
 def share_page(record: dict) -> str:
-    """What `/s/{id}/{token}` serves: the stored document, unchanged."""
+    """What `/s/{id}/{token}` serves for an HTML share: the document, unchanged."""
     return record.get("html") or ""
+
+
+def share_bytes(record: dict) -> Optional[bytes]:
+    """The file behind a file share, or None when the share carries HTML."""
+    raw = (record or {}).get("blob_b64")
+    if not raw:
+        return None
+    try:
+        return base64.b64decode(raw)
+    except Exception:  # noqa: BLE001 — a corrupt record is a 404, not a 500
+        return None
 
 
 def expired_page(message: str = "This link has expired.") -> str:
