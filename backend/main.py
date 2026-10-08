@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, Response
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import Optional
@@ -42,6 +42,7 @@ import delivery
 import roster
 import chatops
 import callsheet as callsheets
+import documents
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
@@ -1858,6 +1859,103 @@ class CallsheetUpdate(BaseModel):
     callsheet: dict
     facts: dict                            # only the fields this message names
 
+# One door for every document a producer sends, routed by what the file is
+# rather than by which feature asked for it, plus the matching way out: a real
+# .docx or .xlsx behind a login-free URL, because WhatsApp sends a document
+# from a URL and not from base64. Logic in documents.py.
+
+_MAX_DOC_CHARS = 20000
+
+@app.post("/document/read")
+async def document_read(file: UploadFile = File(...), _=Depends(require_api_key)):
+    """Read a PDF, Word, Excel, CSV or text file into something Mark can use."""
+    name = file.filename or ""
+    kind = documents.kind_of(name)
+    if kind == "unsupported":
+        raise HTTPException(422, documents.refusal_for(name))
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "Empty file")
+    if len(raw) > _MAX_TEMPLATE_BYTES:
+        raise HTTPException(413, f"File too large (max {_MAX_TEMPLATE_BYTES // 1024 // 1024} MB)")
+
+    out = {"success": True, "kind": kind, "filename": name, "bytes": len(raw)}
+    if kind == "pdf":
+        # The only PDF reader here is the screenplay parser, so say so plainly
+        # when a PDF is not a script rather than returning empty text.
+        try:
+            summary, text = await run_in_threadpool(_parse_pdf_sync, raw)
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(422, f"This PDF could not be read as a screenplay ({type(e).__name__}). "
+                                     "A Word, Excel, CSV or text copy can be read instead.")
+        out["summary"] = summary
+        out["text"] = (text or "")[:_MAX_DOC_CHARS]
+    elif kind == "docx":
+        text = await run_in_threadpool(_extract_docx_text, raw)
+        out["text"] = (text or "")[:_MAX_DOC_CHARS]
+    elif kind == "xlsx":
+        rows = await run_in_threadpool(variance.xlsx_rows, raw)
+        out["rows"] = rows[:2000]
+        out["row_count"] = len(rows)
+        out["text"] = (await run_in_threadpool(_extract_xlsx_text, raw))[:_MAX_DOC_CHARS]
+    else:
+        text = raw.decode("utf-8", "ignore")
+        out["text"] = text[:_MAX_DOC_CHARS]
+        if kind == "csv":
+            out["rows"] = [r.split(",") for r in text.splitlines()[:2000]]
+            out["row_count"] = len(text.splitlines())
+    out["truncated"] = len(out.get("text") or "") >= _MAX_DOC_CHARS
+    return out
+
+class DocumentWrite(BaseModel):
+    format: str                                  # docx | xlsx
+    title: Optional[str] = ""
+    callsheet: Optional[dict] = None             # a call sheet, laid out for you
+    blocks: Optional[list] = None                # [{style: title|heading|text, text: "..."}]
+    rows: Optional[list] = None                  # xlsx: [[cell, cell], ...]
+    budget: Optional[dict] = None                # xlsx: a budget, laid out for you
+    currency: Optional[str] = "INR"
+
+@app.post("/document/write")
+def document_write(data: DocumentWrite, request: Request, _=Depends(require_api_key)):
+    """Write a Word or Excel file and return a login-free URL for it.
+
+    The URL is what a chat channel can carry; `base64` is there for callers that
+    want the bytes. Only Mark's own content goes in — this is not a file host.
+    """
+    fmt = (data.format or "").strip().lower()
+    title = (data.title or "").strip()
+    if fmt in ("docx", "word"):
+        if data.callsheet:
+            blob = documents.callsheet_docx(data.callsheet)
+            title = title or data.callsheet.get("project_title") or "Call sheet"
+        elif data.blocks:
+            blob = documents.write_docx(data.blocks, title=title)
+        else:
+            raise HTTPException(422, "docx needs either `callsheet` or `blocks`")
+        content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        filename = documents.safe_filename(title or "document", suffix=".docx")
+    elif fmt in ("xlsx", "excel"):
+        if data.budget:
+            blob = exporters.to_xlsx(data.budget, currency=data.currency or "INR")
+            title = title or data.budget.get("title") or "Budget"
+        elif data.rows:
+            blob = exporters.write_xlsx([[c for c in row] for row in data.rows],
+                                        sheet_name=(title or "Sheet")[:28])
+        else:
+            raise HTTPException(422, "xlsx needs either `budget` or `rows`")
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        filename = documents.safe_filename(title or "document", suffix=".xlsx")
+    else:
+        raise HTTPException(422, "format must be docx or xlsx")
+
+    share = chatops.create_share(kind=f"file:{fmt}", title=title or filename, blob=blob,
+                                 content_type=content_type, filename=filename)
+    return {"success": True, "filename": filename, "content_type": content_type,
+            "bytes": len(blob), "url": chatops.share_url(_public_base(request), share),
+            "expires_at": share["expires_at"],
+            "base64": base64.b64encode(blob).decode()}
+
 @app.post("/callsheet/new")
 def callsheet_new(data: CallsheetNew, _=Depends(require_api_key)):
     """Start a call sheet with no script. Returns the sheet and what it still
@@ -2760,6 +2858,13 @@ def share_page(share_id: str, token: str):
     record = chatops.get_share(share_id, token)
     if not record:
         return HTMLResponse(chatops.expired_page("This link isn't valid any more."), status_code=404)
+    blob = chatops.share_bytes(record)
+    if blob is not None:
+        # A file share: served as an attachment, never inline, and only in the
+        # formats this backend writes itself (chatops.SHAREABLE_TYPES).
+        name = record.get("filename") or "document"
+        return Response(content=blob, media_type=record.get("content_type"),
+                        headers={"Content-Disposition": f'attachment; filename="{name}"'})
     return HTMLResponse(chatops.share_page(record))
 
 @app.post("/crew/enrich")
