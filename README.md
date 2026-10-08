@@ -17,6 +17,8 @@ mark/
 │                   budgetdiff.py— what moved between two budget versions.
 │                   exporters.py — xlsx out, Movie Magic interchange, xlsx in.
 │                   teardown_report.py — the Stage 0 client document.
+│                   callsheet.py — a call sheet from facts, with no script.
+│                   documents.py — the document door, and a Word writer.
 │                   delivery.py  — who has the call sheet, and who confirmed.
 │                   roster.py    — crew & vendors, and what we actually paid them.
 │                   ca_review_pack.py — prints every tax assumption for a CA.
@@ -142,7 +144,12 @@ Added on top of the core pipeline (see `architecture.html` for the diagram):
   login-free URL, because a link is the only thing a chat reliably carries. A
   producer can attach the screenplay in the thread: the agent pulls the PDF off
   WhatsApp and feeds it to `/script/parse`, so the budget rests on the real
-  scene list.
+  scene list. A commercial needs no script at all — `callsheet.py` builds a call
+  sheet from a date, a location and a call time, and says what is still missing
+  before it can go to crew. `documents.py` reads Word, Excel, CSV and text and
+  writes real Word back, so a sheet leaves the thread as a .docx. The agent can
+  also email a vendor and watch the thread, behind the same propose/confirm gate
+  as a crew send.
 
 ## Scale layer (multi-tenant)
 

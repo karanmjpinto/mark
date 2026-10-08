@@ -30,6 +30,24 @@ budget never enters the model context. [`CODY_BRIEF.md`](CODY_BRIEF.md) remains 
 specification — the system prompt, the tool surface and the flows are taken from
 it, and it is still what you paste to Cody to rebuild the agent by chat.
 
+### What Krish asked for, and where it went
+
+Six voice notes on 7 Oct 2026, transcribed locally with `whisper-cli`:
+
+| He said | Where it landed |
+|---|---|
+| "To make a call sheet you don't need a script… usually you won't get a script for commercials." | `backend/callsheet.py`, `/callsheet/new` and `/callsheet/update`, and the agent's `start_callsheet` / `update_callsheet`. `needs` is computed, so scenes are never asked for. |
+| "It needs to read Excel files and Word documents… right now it can only do PDFs." | `POST /document/read` routes PDF, Word, Excel, CSV and text; `documents.write_docx()` writes real Word. The agent's `read_document`. |
+| "Edit it and change it when I give it messages on WhatsApp." | `make_document` + `send_file`: a call sheet goes back as Word, a budget as Excel, delivered into the thread. Each WhatsApp message is one `update_callsheet` call, so nothing is retyped. |
+| "Link to my email and send email confirmations… then give me updates based on what they reply." | `draft_email` → read back → `send_approved_email` (Gmail, via the account's existing Composio connection), then the thread is watched. |
+| "The email that comes back should come back to me on WhatsApp saying they replied, and this is what they said." | `POST /inbox`, on a 30-minute schedule. Replies on threads Mark started are always pushed; other inbox mail has to match a production word, and the message says which word. |
+| "Any messages that come in should be fed and filtered into the chatbot… detect that it has something to do with the production." | The `PRODUCTION_WORDS` filter in the agent. A manual `/inbox` run is a dry run and sends nothing, so the sweep can be tested without messaging anybody. |
+
+**What this deliberately does not do.** It does not edit an arbitrary formatted
+document in place: it reads the content out and writes a Mark document back. A
+producer's own layout is still `/callsheet/render-template`. And no email leaves
+without a yes typed in the thread — `draft_email` stages, it never sends.
+
 Its own endpoints:
 
 | Endpoint | Purpose |
@@ -37,6 +55,7 @@ Its own endpoints:
 | `POST /webhook` | Inbound WhatsApp. Gates in order: event → text or document → group → own message (self-chat only) → duplicate → echo → stale → allowlist. |
 | `POST /set-access` | Who may drive Mark from WhatsApp, as `{numbers:[{phone, role}]}`. |
 | `POST /enrol` | Pushes this agent's operator list into Mark's own roster, so the backend refuses a stranger even if the agent is bypassed. |
+| `POST /inbox` | The email sweep, on a 30-minute schedule. A manual run reports what it would say and sends nothing. |
 | `POST /` | A self-test: is Mark reachable, are the `/chat` endpoints deployed, which device sends, who is enrolled, what is still missing. |
 
 Live wiring, 7 Oct 2026:
