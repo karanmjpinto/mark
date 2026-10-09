@@ -1935,19 +1935,33 @@ def document_write(data: DocumentWrite, request: Request, _=Depends(require_api_
             raise HTTPException(422, "docx needs either `callsheet` or `blocks`")
         content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         filename = documents.safe_filename(title or "document", suffix=".docx")
+    elif fmt == "pdf":
+        if data.callsheet:
+            blob = documents.callsheet_pdf(data.callsheet)
+            title = title or data.callsheet.get("project_title") or "Call sheet"
+        elif data.blocks:
+            blob = documents.write_pdf(data.blocks, title=title)
+        else:
+            raise HTTPException(422, "pdf needs either `callsheet` or `blocks`")
+        content_type = "application/pdf"
+        filename = documents.safe_filename(title or "document", suffix=".pdf")
     elif fmt in ("xlsx", "excel"):
-        if data.budget:
+        if data.callsheet:
+            blob = exporters.write_xlsx(documents.callsheet_rows(data.callsheet),
+                                        sheet_name="Call sheet")
+            title = title or data.callsheet.get("project_title") or "Call sheet"
+        elif data.budget:
             blob = exporters.to_xlsx(data.budget, currency=data.currency or "INR")
             title = title or data.budget.get("title") or "Budget"
         elif data.rows:
             blob = exporters.write_xlsx([[c for c in row] for row in data.rows],
                                         sheet_name=(title or "Sheet")[:28])
         else:
-            raise HTTPException(422, "xlsx needs either `budget` or `rows`")
+            raise HTTPException(422, "xlsx needs `callsheet`, `budget` or `rows`")
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         filename = documents.safe_filename(title or "document", suffix=".xlsx")
     else:
-        raise HTTPException(422, "format must be docx or xlsx")
+        raise HTTPException(422, "format must be docx, xlsx or pdf")
 
     share = chatops.create_share(kind=f"file:{fmt}", title=title or filename, blob=blob,
                                  content_type=content_type, filename=filename)
@@ -2849,6 +2863,16 @@ def chat_render(data: ChatRender, request: Request, _=Depends(require_api_key)):
 
     return {"success": True, "kind": kind, "text": text, "chars": len(text),
             "share": share, "share_error": share_error, "project_id": project_id}
+
+@app.get("/s/{share_id}/{token}/{filename}")
+def share_file(share_id: str, token: str, filename: str):
+    """Same share, with its filename as the last path segment.
+
+    The filename is cosmetic here — the token is still the only credential —
+    but WhatsApp and every browser name the download from the last segment, so
+    a .docx has to arrive with .docx on the end of the URL.
+    """
+    return share_page(share_id, token)
 
 @app.get("/s/{share_id}/{token}", response_class=HTMLResponse)
 def share_page(share_id: str, token: str):

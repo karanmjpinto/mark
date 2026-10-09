@@ -116,6 +116,48 @@ def test_a_filename_survives_a_phone_and_a_filesystem():
     assert len(documents.safe_filename("x" * 200, suffix=".docx")) <= 65
 
 
+def test_the_pdf_is_a_real_pdf_with_a_working_cross_reference_table():
+    blob = documents.callsheet_pdf(SHEET)
+    assert blob.startswith(b"%PDF-1.4") and blob.rstrip().endswith(b"%%EOF")
+    text = blob.decode("latin-1")
+    start = text.rindex("startxref")
+    offset = int(text[start:].split()[1])
+    assert text[offset:offset + 4] == "xref", "startxref must point at the table"
+    count = int(text[offset:].split()[2])
+    assert text.count(" 0 obj") == count - 1, "every object must be in the table"
+
+
+def test_the_pdf_carries_the_content_and_paginates():
+    text = documents.callsheet_pdf(SHEET).decode("latin-1")
+    for expected in ("Nike", "Whittington Hospital", "Ravi Kulkarni", "06:30"):
+        assert expected in text, expected
+    big = documents.write_pdf([{"style": "text", "text": f"Line {i} " + "x" * 60}
+                               for i in range(200)], title="Long")
+    assert b"/Count 4" in big or b"/Count 5" in big, "200 lines must run to several pages"
+
+
+def test_a_bracket_in_a_producers_text_cannot_break_the_pdf():
+    blob = documents.write_pdf(["Camera (Alexa) \\ rig", "Cost (net)"], title="T")
+    text = blob.decode("latin-1")
+    assert r"\(Alexa\)" in text, "an unescaped bracket ends the string operator"
+    assert text.count("startxref") == 1
+
+
+def test_a_call_sheet_becomes_a_table_a_coordinator_can_sort():
+    rows = documents.callsheet_rows(SHEET)
+    flat = [str(r) for r in rows]
+    assert ["Name", "Role", "Call", "Phone", "Email"] in rows, "the crew table needs a header"
+    assert any("Ravi Kulkarni" in f for f in flat)
+    assert any("CAST" in f for f in flat) and any("Aisha Khan" in f for f in flat)
+    assert any("Whittington" in f for f in flat)
+
+
+def test_a_sheet_that_is_not_ready_says_so_in_the_spreadsheet_too():
+    rows = documents.callsheet_rows({
+        **SHEET, "needs": [{"field": "crew", "ask": "the crew", "blocking": True}]})
+    assert any("NOT READY TO SEND" in str(r) for r in rows)
+
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

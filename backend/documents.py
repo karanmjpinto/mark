@@ -237,3 +237,141 @@ def safe_filename(name: str, *, suffix: str) -> str:
     if stem.lower().endswith(suffix.lower()):
         return stem
     return f"{stem}{suffix}"
+
+
+# ── PDF, written from nothing ─────────────────────────────────────────────────
+# Crew get a PDF. Not a Word file they open on a phone and reflow, and not a
+# spreadsheet — a PDF, because it looks the same on every device and prints.
+# Same constraint as the rest of this module: stdlib only, so there is nothing
+# to install and nothing to break on a rebuild.
+
+_PDF_FONTS = {"title": ("F2", 17), "heading": ("F2", 12), "text": ("F1", 10)}
+_PDF_LEADING = 15
+_PDF_TOP = 780
+_PDF_LEFT = 56
+_PDF_BOTTOM = 56
+_PDF_WIDTH_CHARS = 96          # Helvetica 10pt across an A4 text column
+
+
+def _pdf_escape(text: Any) -> str:
+    return (str(text if text is not None else "")
+            .replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)"))
+
+
+def _wrap(text: str, width: int) -> list[str]:
+    words, lines, line = str(text or "").split(), [], ""
+    for word in words:
+        candidate = f"{line} {word}".strip()
+        if len(candidate) <= width:
+            line = candidate
+        else:
+            if line:
+                lines.append(line)
+            line = word
+    if line:
+        lines.append(line)
+    return lines or [""]
+
+
+def write_pdf(blocks: list[dict | str], *, title: str = "") -> bytes:
+    """Blocks → a real PDF. Same block shape as write_docx, paginated."""
+    rows: list[tuple[str, str]] = []
+    if title:
+        rows.append(("title", title))
+    for block in (blocks or []):
+        if isinstance(block, dict):
+            style = str(block.get("style") or "text")
+            style = style if style in _PDF_FONTS else "text"
+            text = block.get("text", "")
+        else:
+            style, text = "text", block
+        for line in _wrap(text, _PDF_WIDTH_CHARS):
+            rows.append((style, line))
+
+    pages: list[list[tuple[str, str]]] = [[]]
+    y = _PDF_TOP
+    for style, line in rows:
+        if y - _PDF_LEADING < _PDF_BOTTOM:
+            pages.append([])
+            y = _PDF_TOP
+        pages[-1].append((style, line))
+        y -= _PDF_LEADING + (6 if style in ("title", "heading") else 0)
+
+    streams = []
+    for page in pages:
+        parts, y = ["BT"], _PDF_TOP
+        for style, line in page:
+            font, size = _PDF_FONTS[style]
+            if style in ("title", "heading"):
+                y -= 6
+            parts.append(f"/{font} {size} Tf 1 0 0 1 {_PDF_LEFT} {y} Tm ({_pdf_escape(line)}) Tj")
+            y -= _PDF_LEADING
+        parts.append("ET")
+        streams.append("\n".join(parts).encode("latin-1", "replace"))
+
+    # Object ids: 1 catalog, 2 pages, 3 F1, 4 F2, then page/content pairs.
+    page_ids = [5 + 2 * i for i in range(len(streams))]
+    objects: dict[int, bytes] = {
+        1: b"<< /Type /Catalog /Pages 2 0 R >>",
+        2: ("<< /Type /Pages /Count " + str(len(streams)) + " /Kids ["
+            + " ".join(f"{pid} 0 R" for pid in page_ids) + "] >>").encode(),
+        3: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        4: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+    }
+    for index, stream in enumerate(streams):
+        pid = page_ids[index]
+        objects[pid] = (
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+            "/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> "
+            f"/Contents {pid + 1} 0 R >>").encode()
+        objects[pid + 1] = (b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n"
+                            + stream + b"\nendstream")
+
+    out = bytearray(b"%PDF-1.4\n")
+    offsets: dict[int, int] = {}
+    for oid in sorted(objects):
+        offsets[oid] = len(out)
+        out += str(oid).encode() + b" 0 obj\n" + objects[oid] + b"\nendobj\n"
+    xref_at = len(out)
+    highest = max(objects)
+    out += b"xref\n0 " + str(highest + 1).encode() + b"\n0000000000 65535 f \n"
+    for oid in range(1, highest + 1):
+        out += ("%010d 00000 n \n" % offsets.get(oid, 0)).encode()
+    out += (b"trailer\n<< /Size " + str(highest + 1).encode() + b" /Root 1 0 R >>\nstartxref\n"
+            + str(xref_at).encode() + b"\n%%EOF\n")
+    return bytes(out)
+
+
+def callsheet_pdf(sheet: dict) -> bytes:
+    return write_pdf(callsheet_blocks(sheet), title=sheet.get("project_title") or "Call sheet")
+
+
+# ── a call sheet as a spreadsheet ─────────────────────────────────────────────
+
+def callsheet_rows(sheet: dict) -> list[list]:
+    """A call sheet as rows, for .xlsx. The crew and cast tables are real
+    tables, so a coordinator can sort and filter them."""
+    sheet = sheet or {}
+    rows: list[list] = [[sheet.get("project_title") or "Call sheet"]]
+    for label, key in (("Client", "client"), ("Shoot day", "shoot_day"), ("Date", "date"),
+                       ("Unit", "unit"), ("General call", "general_call_time"),
+                       ("Estimated wrap", "wrap_time"), ("Nearest hospital", "nearest_hospital"),
+                       ("Weather", "weather"), ("Parking", "parking")):
+        if sheet.get(key):
+            rows.append([label, sheet[key]])
+    for loc in (sheet.get("locations") or []):
+        rows.append(["Location", ", ".join(f for f in [loc.get("name"), loc.get("address")] if f)])
+    if sheet.get("crew"):
+        rows += [[], ["CREW"], ["Name", "Role", "Call", "Phone", "Email"]]
+        rows += [[c.get("name"), c.get("role"), c.get("call_time"), c.get("phone"), c.get("email")]
+                 for c in sheet["crew"]]
+    if sheet.get("cast"):
+        rows += [[], ["CAST"], ["Artist", "Character", "Call", "On set", "Phone"]]
+        rows += [[c.get("artist"), c.get("character"), c.get("call_time"), c.get("on_set"),
+                  c.get("phone")] for c in sheet["cast"]]
+    if sheet.get("notes"):
+        rows += [[], ["NOTES"]] + [[str(n)] for n in sheet["notes"]]
+    blocking = [n["ask"] for n in (sheet.get("needs") or []) if n.get("blocking")]
+    if blocking:
+        rows += [[], ["NOT READY TO SEND"], ["Still missing", "; ".join(blocking)]]
+    return rows
