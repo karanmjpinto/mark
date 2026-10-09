@@ -43,6 +43,37 @@ Six voice notes on 7 Oct 2026, transcribed locally with `whisper-cli`:
 | "The email that comes back should come back to me on WhatsApp saying they replied, and this is what they said." | `POST /inbox`, on a 30-minute schedule. Replies on threads Mark started are always pushed; other inbox mail has to match a production word, and the message says which word. |
 | "Any messages that come in should be fed and filtered into the chatbot… detect that it has something to do with the production." | The `PRODUCTION_WORDS` filter in the agent. A manual `/inbox` run is a dry run and sends nothing, so the sweep can be tested without messaging anybody. |
 
+### Round two — what real use broke
+
+Krish used it and sent findings. Four of the five failures were one defect.
+
+**The content never reached the model.** `compact()` parked any value over
+~1.2 kB in Redis and handed back `{handle, chars}` — so for a document read,
+the model got a byte count and not one character of the file. That is
+"the agent can see that a file arrived, but can't see what's inside it", the
+spreadsheet it "couldn't read the rows" of, and the script whose scene list it
+"only surfaced the unique location names" for. A digest now carries the content:
+7,000 characters of text, 80 rows of a list, and the scalar fields of an object,
+with `read_more` to walk the rest. The handle stays, for passing an object to
+the next tool.
+
+**The file arrived unopenable.** A share URL stopped at the token, and WhatsApp
+names an attachment from the last path segment, so a `.docx` landed with no
+extension. The URL now ends in the filename.
+
+Also from that round: a PDF writer (crew get PDFs), the call sheet as `.xlsx`,
+`script_scenes` for an INT/DAY filter, full email bodies instead of a 320-character
+stub, a per-thread chain log with a `needs_reply` status, a production profile
+held outside the rolling conversation and put in front of the model every turn,
+a greeting that offers to start a production, an email house style with
+Project ref and Shoot date, a send-as alias, `use_my_template` for the producer's
+own layout, `import_crew` from a spreadsheet, and a 5-minute inbox sweep.
+
+**Still open after round two** — each needs something only the production has:
+a 5-minute Google Sheets watch on a live crew list (needs the sheet id and its
+columns), editing an arbitrary formatted document in place, and a real bulk send
+to a crew list.
+
 **What this deliberately does not do.** It does not edit an arbitrary formatted
 document in place: it reads the content out and writes a Mark document back. A
 producer's own layout is still `/callsheet/render-template`. And no email leaves
