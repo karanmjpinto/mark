@@ -42,6 +42,7 @@ import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+from urllib.parse import quote
 
 _redis = None
 
@@ -343,7 +344,16 @@ def get_share(share_id: str, token: str) -> Optional[dict]:
 
 
 def share_url(base_url: str, share: dict) -> str:
-    return f"{(base_url or '').rstrip('/')}/s/{share['share_id']}/{share['token']}"
+    """The link that goes out.
+
+    A file share ends in its own filename. WhatsApp's gateway names the
+    attachment from the last path segment, so a link that stops at the token
+    arrives as a file with no extension — which is what "a random document
+    format that I can't open" was.
+    """
+    base = f"{(base_url or '').rstrip('/')}/s/{share['share_id']}/{share['token']}"
+    name = (share or {}).get("filename") or ""
+    return f"{base}/{quote(name)}" if name else base
 
 
 # ── money, the way a producer says it ─────────────────────────────────────────
