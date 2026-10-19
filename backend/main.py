@@ -1864,7 +1864,10 @@ class CallsheetUpdate(BaseModel):
 # .docx or .xlsx behind a login-free URL, because WhatsApp sends a document
 # from a URL and not from base64. Logic in documents.py.
 
-_MAX_DOC_CHARS = 20000
+# A feature script runs past 150k characters. The cap is here to bound a
+# response, not to decide what a producer may ask about, and the caller
+# pages through what it gets.
+_MAX_DOC_CHARS = 200000
 
 @app.post("/document/read")
 async def document_read(file: UploadFile = File(...), _=Depends(require_api_key)):
@@ -1897,7 +1900,13 @@ async def document_read(file: UploadFile = File(...), _=Depends(require_api_key)
         rows = await run_in_threadpool(variance.xlsx_rows, raw)
         out["rows"] = rows[:2000]
         out["row_count"] = len(rows)
-        out["text"] = (await run_in_threadpool(_extract_xlsx_text, raw))[:_MAX_DOC_CHARS]
+        # TSV from the parsed grid, not a tag-strip: a value is useless without
+        # the row and column it sat in, and that is what a wrong answer about a
+        # budget comes from.
+        out["text"] = "\n".join(
+            "\t".join(str(c if c is not None else "") for c in (r or []))
+            for r in rows
+        )[:_MAX_DOC_CHARS]
     else:
         text = raw.decode("utf-8", "ignore")
         out["text"] = text[:_MAX_DOC_CHARS]
@@ -2017,24 +2026,31 @@ async def refine_callsheet(data: CallSheetRefine, _=Depends(require_api_key)):
 
 @app.post("/callsheet/render-template")
 async def render_callsheet_template(data: CallSheetRenderTemplate, _=Depends(require_api_key)):
-    """Render the call sheet in the producer's own uploaded template format via
-    the render-callsheet-template Flue agent. Returns a self-contained HTML
-    document the frontend drops straight into the preview. The frontend falls
-    back to the standard format if this fails."""
+    """Render the call sheet in the producer's own uploaded template format.
+
+    The producer's layout is the deliverable, so this writes values into their
+    own lines and invents none: `callsheet.fill_template` keeps every line it
+    does not recognise. `not_in_template` names what the sheet holds and the
+    template had no line for — a crew grid, usually — so the caller can say so
+    instead of silently dropping a crew list.
+    """
     if not (data.template_text or "").strip():
         raise HTTPException(400, "template_text is required")
     if not data.callsheet:
         raise HTTPException(400, "callsheet is required")
 
-    payload = {"callsheet": data.callsheet, "template_text": data.template_text}
-    run_id = str(uuid.uuid4())
-    agent_result = await _flue_call("render-callsheet-template", run_id, payload)
-    if isinstance(agent_result, dict) and set(agent_result.keys()) == {"result"}:
-        agent_result = agent_result["result"]
+    out = callsheets.fill_template(data.template_text, data.callsheet)
+    import html as _h
     return {
         "success": True,
-        "html": agent_result.get("html", ""),
-        "source": "flue:render-callsheet-template",
+        # <pre> because the template's own spacing is how a producer reads it.
+        "html": ("<!doctype html><meta charset=\"utf-8\">"
+                 "<pre style=\"font:13px/1.45 ui-monospace,Menlo,monospace;"
+                 "white-space:pre-wrap;margin:24px\">" + _h.escape(out["text"]) + "</pre>"),
+        "text": out["text"],
+        "filled": out["filled"],
+        "not_in_template": out["not_in_template"],
+        "source": "template-fill",
     }
 
 @app.post("/callsheet/save")

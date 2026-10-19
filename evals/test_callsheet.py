@@ -133,6 +133,68 @@ def test_an_empty_sheet_asks_for_everything_it_must_have():
     assert callsheet.summary(sheet)["project_title"] == "Untitled"
 
 
+
+# ── the producer's own template ───────────────────────────────────────────────
+
+_TPL = """CALL SHEET
+PRODUCTION: ___
+Shoot Date:
+GENERAL CALL:
+CREW:
+NEAREST HOSPITAL:
+WEATHER:
+A long sentence that happens to carry a colon: leave this line exactly alone
+"""
+
+def _sheet():
+    return callsheet.from_facts(
+        project_title="Blue Hour", date="2026-11-02", general_call_time="6.30am",
+        nearest_hospital="St Mary's Paddington",
+        locations=["Alexandra Palace, London N22 7AY"],
+        crew=[{"name": "Krish", "role": "1st AD", "phone": "+447706936477", "call_time": "6am"},
+              {"name": "Dev", "role": "Gaffer", "phone": "+447700900111"}],
+        cast=[{"artist": "Ana", "character": "LEAD", "call_time": "7am"}],
+    )
+
+def test_fill_template_keeps_the_producers_lines():
+    out = callsheet.fill_template(_TPL, _sheet())
+    lines = out["text"].splitlines()
+    assert lines[0] == "CALL SHEET", lines[0]
+    assert lines[1] == "PRODUCTION: Blue Hour", lines[1]
+    assert lines[2] == "Shoot Date: 2026-11-02", lines[2]
+    assert lines[3] == "GENERAL CALL: 06:30", lines[3]
+    # prose with a colon is not a label
+    assert lines[-1].startswith("A long sentence"), lines[-1]
+    assert lines[-1].endswith("leave this line exactly alone"), lines[-1]
+
+def test_fill_template_indents_a_crew_list_under_its_label():
+    out = callsheet.fill_template(_TPL, _sheet())
+    lines = out["text"].splitlines()
+    i = lines.index("CREW:")
+    assert lines[i + 1] == "  1st AD — Krish — 06:00 — +447706936477", lines[i + 1]
+    assert lines[i + 2] == "  Gaffer — Dev — +447700900111", lines[i + 2]
+
+def test_fill_template_leaves_a_blank_the_sheet_cannot_fill():
+    out = callsheet.fill_template(_TPL, _sheet())
+    assert "WEATHER:" in out["text"].splitlines()          # untouched, not "WEATHER: None"
+    assert "None" not in out["text"]
+
+def test_fill_template_reports_what_the_template_had_no_line_for():
+    out = callsheet.fill_template(_TPL, _sheet())
+    assert "cast" in out["not_in_template"], out["not_in_template"]
+    assert "locations" in out["not_in_template"], out["not_in_template"]
+    assert "crew" not in out["not_in_template"], out["not_in_template"]
+    assert "NEAREST HOSPITAL" in out["filled"], out["filled"]
+
+def test_fill_template_survives_an_empty_template_and_an_empty_sheet():
+    assert callsheet.fill_template("", _sheet())["text"] == ""
+    out = callsheet.fill_template(_TPL, {})
+    assert out["text"].splitlines()[1] == "PRODUCTION: ___"   # nothing invented
+    assert out["filled"] == [] and out["not_in_template"] == []
+
+def test_template_value_formats_a_location_with_its_address():
+    assert callsheet.template_value(_sheet(), "locations") == "Alexandra Palace — London N22 7AY"
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
