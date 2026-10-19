@@ -262,3 +262,123 @@ def summary(sheet: dict) -> dict:
         "advisory": [n["ask"] for n in needs if not n["blocking"]],
         "ready_to_send": not [n for n in needs if n["blocking"]],
     }
+
+
+# ── the producer's own template ───────────────────────────────────────────────
+# A producer who sends their studio's call sheet wants that sheet back, not
+# ours: the layout, the order and the wording are the deliverable. So the
+# template's own lines are kept byte for byte and only the text after a
+# recognised `LABEL:` is written. No model in the loop, because a model cannot
+# promise it kept a line — and "it will not follow my template" was exactly the
+# complaint.
+
+_TEMPLATE_ALIASES = {
+    "production": "project_title", "production title": "project_title",
+    "project": "project_title", "project title": "project_title",
+    "title": "project_title", "film": "project_title", "job": "project_title",
+    "client": "client", "agency": "client",
+    "date": "date", "shoot date": "date", "shooting date": "date",
+    "day": "shoot_day", "shoot day": "shoot_day", "day number": "shoot_day",
+    "unit": "unit",
+    "call": "general_call_time", "call time": "general_call_time",
+    "general call": "general_call_time", "general call time": "general_call_time",
+    "crew call": "general_call_time", "unit call": "general_call_time",
+    "wrap": "wrap_time", "wrap time": "wrap_time",
+    "est wrap": "wrap_time", "estimated wrap": "wrap_time",
+    "location": "locations", "locations": "locations", "set": "locations",
+    "location address": "locations", "address": "locations",
+    "nearest hospital": "nearest_hospital", "hospital": "nearest_hospital",
+    "nearest a&e": "nearest_hospital", "emergency": "nearest_hospital",
+    "weather": "weather", "forecast": "weather",
+    "parking": "parking", "crew parking": "parking", "unit base": "parking",
+    "notes": "notes", "note": "notes", "special notes": "notes",
+    "crew": "crew", "cast": "cast", "talent": "cast", "artists": "cast",
+}
+
+# Every field worth reporting as absent from a template, in the order a sheet
+# reads. `source` and `created_at` are ours, not the producer's, so they are out.
+_TEMPLATE_FIELDS = (
+    "project_title", "client", "date", "shoot_day", "unit", "general_call_time",
+    "wrap_time", "locations", "nearest_hospital", "weather", "parking", "notes",
+    "crew", "cast",
+)
+
+# A label is short, starts with a letter and ends at the first colon. The length
+# cap is what stops a sentence that happens to contain a colon being rewritten.
+_LABEL_LINE = re.compile(r"^(\s*)([A-Za-z][A-Za-z0-9 &/'.\-]{0,40}?)\s*:(.*)$")
+
+
+def _label_key(label: str) -> str:
+    return re.sub(r"[^a-z0-9&]+", " ", (label or "").lower()).strip()
+
+
+def template_value(sheet: dict, field: str) -> str:
+    """One call-sheet field as a template wants to read it. "" when it is unset.
+
+    Crew and cast come back one person per line; the caller indents them under
+    the label it found.
+    """
+    sheet = sheet or {}
+    if field == "locations":
+        out = []
+        for loc in sheet.get("locations") or []:
+            bits = [str((loc or {}).get(k) or "").strip() for k in ("name", "address")]
+            line = " — ".join(b for b in bits if b)
+            if line:
+                out.append(line)
+        return "; ".join(out)
+    if field == "crew":
+        out = []
+        for c in sheet.get("crew") or []:
+            c = c or {}
+            bits = [str(c.get(k) or "").strip() for k in ("role", "name", "call_time", "phone")]
+            line = " — ".join(b for b in bits if b)
+            if line:
+                out.append(line)
+        return "\n".join(out)
+    if field == "cast":
+        out = []
+        for c in sheet.get("cast") or []:
+            c = c or {}
+            bits = [str(c.get(k) or "").strip() for k in ("character", "artist", "call_time", "phone")]
+            line = " — ".join(b for b in bits if b)
+            if line:
+                out.append(line)
+        return "\n".join(out)
+    if field == "notes":
+        return "; ".join(str(n).strip() for n in (sheet.get("notes") or []) if str(n).strip())
+    return str(sheet.get(field) or "").strip()
+
+
+def fill_template(template_text: str, sheet: dict) -> dict:
+    """The producer's template with the call sheet written into it.
+
+    Returns the filled text, the labels written, and the fields the sheet holds
+    that the template never offered a line for — a crew table the template keeps
+    as a grid is the one loss a producer must hear about now and not on set.
+    """
+    lines, filled, seen = [], [], set()
+    for line in (template_text or "").splitlines():
+        m = _LABEL_LINE.match(line)
+        if not m:
+            lines.append(line)
+            continue
+        indent, label, _rest = m.groups()
+        field = _TEMPLATE_ALIASES.get(_label_key(label))
+        value = template_value(sheet, field) if field else ""
+        if not value:
+            lines.append(line)          # their blank stays their blank
+            continue
+        seen.add(field)
+        filled.append(label.strip())
+        if "\n" in value:
+            lines.append(f"{indent}{label}:")
+            lines.extend(f"{indent}  {v}" for v in value.splitlines())
+        else:
+            lines.append(f"{indent}{label}: {value}")
+    return {
+        "text": "\n".join(lines),
+        "filled": filled,
+        "not_in_template": [f for f in _TEMPLATE_FIELDS
+                            if f not in seen and template_value(sheet, f)],
+    }
