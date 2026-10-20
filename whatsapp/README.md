@@ -74,6 +74,37 @@ a 5-minute Google Sheets watch on a live crew list (needs the sheet id and its
 columns), editing an arbitrary formatted document in place, and a real bulk send
 to a crew list.
 
+### Round three — the template, and memory that forgets
+
+Three of the fourteen items ("cannot copy in the template given", "can't follow
+template", "cannot use the template") were one dead endpoint:
+`/callsheet/render-template` called the `render-callsheet-template` Flue agent,
+`FLUE_BASE_URL` is unset in production, and every call went to localhost and
+returned 503. `callsheet.fill_template` replaced it: values are written after
+the labels it recognises, every other line is kept exactly as the producer sent
+it, a label the sheet cannot fill stays blank, and `not_in_template` names what
+the sheet holds that the template had no line for — usually a crew grid, which
+this does not fill.
+
+Two more items were spreadsheets answered wrongly. `/document/read` built its
+`text` from a tag-strip of the sheet XML and lost which value sat in which
+column; it is TSV from the parsed grid now, and the character cap went from
+20,000 to 200,000 because it was cutting a feature script to a sixth.
+
+On the agent (implementation `cmvh8kzi2`, 20 Oct 2026): `STASH_TTL` and
+`DOC_TTL` were two hours, which is where "The script handle has expired" came
+from in the middle of a shoot — both are 30 days now, the same as the thread
+memory. `INLINE_TEXT_CHARS` 7,000 → 24,000 and `MAX_RESULT_CHARS` 16,000 →
+40,000 together, because raising the first alone would have tripped the second
+and returned a bare handle again. That fallback now trims the text instead of
+discarding it. The prompt gained two rules: never ask for a fact the thread
+already holds or for a file already sent, and never answer a clear request with
+a question.
+
+**Still open after round three:** editing a formatted document in place (item 3,
+"the most important feature"), and a per-chat document store with no expiry at
+all rather than 30 days.
+
 **What this deliberately does not do.** It does not edit an arbitrary formatted
 document in place: it reads the content out and writes a Mark document back. A
 producer's own layout is still `/callsheet/render-template`. And no email leaves
