@@ -1897,15 +1897,25 @@ async def document_read(file: UploadFile = File(...), _=Depends(require_api_key)
         text = await run_in_threadpool(_extract_docx_text, raw)
         out["text"] = (text or "")[:_MAX_DOC_CHARS]
     elif kind == "xlsx":
-        rows = await run_in_threadpool(variance.xlsx_rows, raw)
-        out["rows"] = rows[:2000]
-        out["row_count"] = len(rows)
+        # Every tab, named. Reading only the first one answered half a question
+        # confidently — "it can only read sheet 1" — and a production workbook
+        # keeps the crew on one tab and the schedule on the next.
+        tabs = await run_in_threadpool(variance.xlsx_sheets, raw)
+        out["sheets"] = [{"name": t["name"], "row_count": len(t["rows"]),
+                          "rows": t["rows"][:2000]} for t in tabs]
+        out["sheet_names"] = [t["name"] for t in tabs]
+        rows = tabs[0]["rows"] if tabs else []
+        out["rows"] = rows[:2000]            # the first tab, for older callers
+        out["row_count"] = sum(len(t["rows"]) for t in tabs)
         # TSV from the parsed grid, not a tag-strip: a value is useless without
         # the row and column it sat in, and that is what a wrong answer about a
-        # budget comes from.
-        out["text"] = "\n".join(
-            "\t".join(str(c if c is not None else "") for c in (r or []))
-            for r in rows
+        # budget comes from. Each tab carries its name, so a question about one
+        # of them can be answered without guessing which grid it came from.
+        out["text"] = "\n\n".join(
+            f"### SHEET: {t['name']}\n" + "\n".join(
+                "\t".join(str(c if c is not None else "") for c in (r or []))
+                for r in t["rows"])
+            for t in tabs
         )[:_MAX_DOC_CHARS]
     else:
         text = raw.decode("utf-8", "ignore")

@@ -248,6 +248,60 @@ def test_annualise_states_its_method():
     assert out["caveats"]
 
 
+
+def _multi_tab_xlsx() -> bytes:
+    """A two-tab workbook whose tab order is the reverse of its file names, and
+    whose files sort lexicographically the wrong way (sheet10 before sheet2)."""
+    import io, zipfile
+    def sheet(rows):
+        body = "".join(
+            "<row>" + "".join(f'<c r="{chr(65+i)}{r+1}" t="inlineStr"><is><t>{c}</t></is></c>'
+                              for i, c in enumerate(cells)) + "</row>"
+            for r, cells in enumerate(rows))
+        return ('<?xml version="1.0"?><worksheet xmlns="http://schemas.openxmlformats.org/'
+                f'spreadsheetml/2006/main"><sheetData>{body}</sheetData></worksheet>')
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("xl/workbook.xml",
+                   '<?xml version="1.0"?><workbook xmlns:r="http://schemas.openxmlformats.org/'
+                   'officeDocument/2006/relationships"><sheets>'
+                   '<sheet name="Crew" sheetId="1" r:id="rId1"/>'
+                   '<sheet name="Schedule" sheetId="2" r:id="rId2"/>'
+                   '</sheets></workbook>')
+        z.writestr("xl/_rels/workbook.xml.rels",
+                   '<?xml version="1.0"?><Relationships>'
+                   '<Relationship Id="rId1" Target="worksheets/sheet10.xml"/>'
+                   '<Relationship Id="rId2" Target="worksheets/sheet2.xml"/>'
+                   '</Relationships>')
+        z.writestr("xl/worksheets/sheet10.xml", sheet([["Name", "Role"], ["Krish", "1st AD"]]))
+        z.writestr("xl/worksheets/sheet2.xml", sheet([["Day", "Scenes"], ["1", "14, 15"]]))
+    return buf.getvalue()
+
+
+def test_every_tab_is_read_in_the_order_the_tabs_appear():
+    tabs = variance.xlsx_sheets(_multi_tab_xlsx())
+    assert [t["name"] for t in tabs] == ["Crew", "Schedule"], [t["name"] for t in tabs]
+    assert tabs[0]["rows"][1] == ["Krish", "1st AD"], tabs[0]["rows"]
+    assert tabs[1]["rows"][1] == ["1", "14, 15"], tabs[1]["rows"]
+
+
+def test_xlsx_rows_still_gives_the_first_tab_only():
+    rows = variance.xlsx_rows(_multi_tab_xlsx())
+    assert rows == [["Name", "Role"], ["Krish", "1st AD"]], rows
+
+
+def test_a_workbook_with_no_workbook_part_falls_back_numerically():
+    import io, zipfile
+    src = _multi_tab_xlsx()
+    buf = io.BytesIO()
+    with zipfile.ZipFile(io.BytesIO(src)) as a, zipfile.ZipFile(buf, "w") as b:
+        for n in a.namelist():
+            if n not in ("xl/workbook.xml", "xl/_rels/workbook.xml.rels"):
+                b.writestr(n, a.read(n))
+    tabs = variance.xlsx_sheets(buf.getvalue())
+    # sheet2 before sheet10, which a lexicographic sort gets wrong
+    assert [t["rows"][0][0] for t in tabs] == ["Day", "Name"], [t["rows"][0] for t in tabs]
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
