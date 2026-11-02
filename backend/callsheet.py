@@ -79,6 +79,28 @@ def clock(value: Any) -> str:
 
 # ── people ────────────────────────────────────────────────────────────────────
 
+def _as_list(value: Any) -> list:
+    """One item, a list of items, or a block of lines — always a list of items.
+
+    The model sends `crew` as a list on a good day, and as "Krish, 1st AD, 0770…"
+    or a block of lines on a normal one. A bare string used to be iterated
+    character by character: one note became 57 notes of one letter each (with
+    the spaces dropped, because a space does not survive .strip()), and a crew
+    of four became a crew of ninety. This is the trust boundary between the
+    model's free text and the sheet.
+    """
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    if isinstance(value, dict):
+        return [value]
+    if isinstance(value, str):
+        lines = [ln.strip() for ln in value.splitlines() if ln.strip()]
+        return lines or ([value.strip()] if value.strip() else [])
+    return [value]
+
+
 def _crew_member(entry: Any) -> Optional[dict]:
     """A crew line from whatever the producer sent: a dict, or "Name, Role, phone"."""
     if isinstance(entry, dict):
@@ -163,7 +185,7 @@ def from_facts(**facts: Any) -> dict:
         "nearest_hospital": str(facts.get("nearest_hospital") or facts.get("hospital") or "").strip(),
         "weather": str(facts.get("weather") or "").strip(),
         "parking": str(facts.get("parking") or "").strip(),
-        "notes": [n for n in (facts.get("notes") or []) if str(n).strip()],
+        "notes": [n for n in _as_list(facts.get("notes")) if str(n).strip()],
         "source": "facts",
         "created_at": _now(),
     }
@@ -194,23 +216,23 @@ def merge(sheet: dict, facts: Any) -> dict:
                 sheet[key] = clock(facts[name])
 
     if "locations" in facts:
-        sheet["locations"] = [l for l in (_location(x) for x in (facts["locations"] or [])) if l]
+        sheet["locations"] = [l for l in (_location(x) for x in _as_list(facts["locations"])) if l]
     if "location" in facts and str(facts["location"] or "").strip():
         one = _location(facts["location"])
         sheet["locations"] = [one] if one else sheet.get("locations", [])
     if "crew" in facts:
-        sheet["crew"] = [c for c in (_crew_member(x) for x in (facts["crew"] or [])) if c]
+        sheet["crew"] = [c for c in (_crew_member(x) for x in _as_list(facts["crew"])) if c]
     if "cast" in facts:
-        sheet["cast"] = [c for c in (_cast_member(x) for x in (facts["cast"] or [])) if c]
+        sheet["cast"] = [c for c in (_cast_member(x) for x in _as_list(facts["cast"])) if c]
     for key, fn in (("add_crew", _crew_member), ("add_cast", _cast_member)):
         target = "crew" if key == "add_crew" else "cast"
-        for item in (facts.get(key) or []):
+        for item in _as_list(facts.get(key)):
             row = fn(item)
             if row:
                 sheet.setdefault(target, []).append(row)
     if "notes" in facts:
-        sheet["notes"] = [str(n).strip() for n in (facts["notes"] or []) if str(n).strip()]
-    for note in (facts.get("add_notes") or []):
+        sheet["notes"] = [str(n).strip() for n in _as_list(facts["notes"]) if str(n).strip()]
+    for note in _as_list(facts.get("add_notes")):
         if str(note).strip():
             sheet.setdefault("notes", []).append(str(note).strip())
 

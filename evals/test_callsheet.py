@@ -195,6 +195,39 @@ def test_fill_template_survives_an_empty_template_and_an_empty_sheet():
 def test_template_value_formats_a_location_with_its_address():
     assert callsheet.template_value(_sheet(), "locations") == "Alexandra Palace — London N22 7AY"
 
+
+# ── a string where a list belongs ─────────────────────────────────────────────
+# What the model actually sends. A bare string used to be iterated character by
+# character: one note became 57 notes of one letter each, and the spaces were
+# dropped with them.
+
+def test_one_note_sent_as_a_string_stays_one_note():
+    sheet = callsheet.from_facts(date="01/10/26",
+                                 notes="Nearest Train Station: Liverpool Street. W3W: crass.orders")
+    assert sheet["notes"] == ["Nearest Train Station: Liverpool Street. W3W: crass.orders"], sheet["notes"]
+
+def test_one_crew_member_sent_as_a_string_is_one_person():
+    sheet = callsheet.from_facts(crew="Krish, 1st AD, +447706936477")
+    assert len(sheet["crew"]) == 1, sheet["crew"]
+    assert sheet["crew"][0]["name"] == "Krish"
+    assert sheet["crew"][0]["role"] == "1st AD"
+
+def test_a_crew_block_of_lines_is_one_person_per_line():
+    sheet = callsheet.merge(callsheet.from_facts(),
+                            {"crew": "Krish, 1st AD, 07706936477\nDev, Gaffer, 07700900111"})
+    assert [(c["name"], c["role"]) for c in sheet["crew"]] == [("Krish", "1st AD"), ("Dev", "Gaffer")]
+
+def test_a_location_and_a_cast_member_sent_as_strings_survive():
+    sheet = callsheet.from_facts(locations="Finsbury Circus Gardens, London EC2M 7DT",
+                                 cast="Ana, LEAD, 07:00")
+    assert len(sheet["locations"]) == 1 and sheet["locations"][0]["name"] == "Finsbury Circus Gardens"
+    assert len(sheet["cast"]) == 1 and sheet["cast"][0]["artist"] == "Ana"
+
+def test_add_notes_as_a_string_appends_one_note():
+    sheet = callsheet.from_facts(notes=["first"])
+    sheet = callsheet.merge(sheet, {"add_notes": "Crew dining: lunch only, Floor 7"})
+    assert sheet["notes"] == ["first", "Crew dining: lunch only, Floor 7"], sheet["notes"]
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
