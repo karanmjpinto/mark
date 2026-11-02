@@ -152,21 +152,15 @@ def xlsx_rows(raw: bytes) -> list[list[str]]:
     for mimicking a call-sheet layout and useless for a cost report — a ledger
     needs columns. Blank cells are preserved by position so the header mapping
     doesn't shift halfway down the sheet.
+
+    The FIRST tab only — a ledger is one grid, and every caller here wants one.
+    `xlsx_sheets` is the whole workbook.
     """
-    import zipfile
+    tabs = xlsx_sheets(raw)
+    return tabs[0]["rows"] if tabs else []
 
-    with zipfile.ZipFile(io.BytesIO(raw)) as z:
-        names = z.namelist()
-        shared: list[str] = []
-        if "xl/sharedStrings.xml" in names:
-            blob = z.read("xl/sharedStrings.xml").decode("utf-8", "ignore")
-            shared = [_unescape(re.sub(r"<[^>]+>", "", si))
-                      for si in re.findall(r"<si>(.*?)</si>", blob, re.DOTALL)]
-        sheets = sorted(n for n in names if re.match(r"xl/worksheets/sheet\d+\.xml$", n))
-        if not sheets:
-            return []
-        blob = z.read(sheets[0]).decode("utf-8", "ignore")
 
+def _rows_from_sheet_xml(blob: str, shared: list[str]) -> list[list[str]]:
     rows: list[list[str]] = []
     for row_xml in re.findall(r"<row[^>]*>(.*?)</row>", blob, re.DOTALL):
         cells: dict[int, str] = {}
@@ -193,6 +187,57 @@ def xlsx_rows(raw: bytes) -> list[list[str]]:
             width = max(cells) + 1
             rows.append([cells.get(i, "") for i in range(width)])
     return rows
+
+
+def xlsx_sheets(raw: bytes) -> list[dict]:
+    """Every tab of a workbook, in the order the tabs appear, with its name.
+
+    A production spreadsheet is rarely one grid: the crew is on one tab, the
+    schedule on another. Reading only the first tab answered half a question
+    confidently, which is worse than refusing. Tab order and tab names come
+    from xl/workbook.xml, because the file names in xl/worksheets sort
+    lexicographically (sheet10 before sheet2) and are not the tab order anyway.
+    """
+    import zipfile
+
+    with zipfile.ZipFile(io.BytesIO(raw)) as z:
+        names = set(z.namelist())
+        shared: list[str] = []
+        if "xl/sharedStrings.xml" in names:
+            blob = z.read("xl/sharedStrings.xml").decode("utf-8", "ignore")
+            shared = [_unescape(re.sub(r"<[^>]+>", "", si))
+                      for si in re.findall(r"<si>(.*?)</si>", blob, re.DOTALL)]
+
+        # rId -> part name, so a tab can be matched to its worksheet XML.
+        targets: dict[str, str] = {}
+        if "xl/_rels/workbook.xml.rels" in names:
+            rels = z.read("xl/_rels/workbook.xml.rels").decode("utf-8", "ignore")
+            for attrs in re.findall(r"<Relationship\b([^>]*)/?>", rels):
+                rid = re.search(r'Id="([^"]+)"', attrs)
+                tgt = re.search(r'Target="([^"]+)"', attrs)
+                if rid and tgt:
+                    part = tgt.group(1).lstrip("/")
+                    targets[rid.group(1)] = part if part.startswith("xl/") else f"xl/{part}"
+
+        ordered: list[tuple[str, str]] = []            # (tab name, part)
+        if "xl/workbook.xml" in names:
+            wb = z.read("xl/workbook.xml").decode("utf-8", "ignore")
+            for attrs in re.findall(r"<sheet\b([^>]*)/?>", wb):
+                name = re.search(r'name="([^"]*)"', attrs)
+                rid = re.search(r'r:id="([^"]+)"', attrs)
+                part = targets.get(rid.group(1)) if rid else None
+                if part and part in names:
+                    ordered.append((_unescape(name.group(1)) if name else part, part))
+        if not ordered:
+            # No workbook part, or it names nothing we hold: fall back to the
+            # worksheet files, numerically so sheet2 precedes sheet10.
+            parts = [n for n in names if re.match(r"xl/worksheets/sheet\d+\.xml$", n)]
+            parts.sort(key=lambda n: int(re.search(r"(\d+)", n).group(1)))
+            ordered = [(f"Sheet{i + 1}", n) for i, n in enumerate(parts)]
+
+        return [{"name": tab,
+                 "rows": _rows_from_sheet_xml(z.read(part).decode("utf-8", "ignore"), shared)}
+                for tab, part in ordered]
 
 
 def parse_actuals_xlsx(raw: bytes) -> list[dict]:
