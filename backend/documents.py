@@ -31,6 +31,8 @@ import re
 import zipfile
 from typing import Any
 
+import pdfdoc
+
 KINDS = {
     "pdf": (".pdf",),
     "docx": (".docx",),
@@ -115,23 +117,86 @@ def _paragraph(text: Any, style: str = "Normal") -> str:
             f'<w:r><w:t xml:space="preserve">{_xml_escape(text)}</w:t></w:r></w:p>')
 
 
+def _cell(text: Any, *, bold: bool = False, fill: str = "", white: bool = False) -> str:
+    runs = ("<w:b/>" if bold else "") + ('<w:color w:val="FFFFFF"/>' if white else "")
+    shade = f'<w:shd w:val="clear" w:color="auto" w:fill="{fill}"/>' if fill else ""
+    return (f"<w:tc><w:tcPr><w:tcW w:w=\"0\" w:type=\"auto\"/>{shade}</w:tcPr>"
+            f'<w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr>'
+            f"<w:r><w:rPr>{runs}</w:rPr>"
+            f'<w:t xml:space="preserve">{_xml_escape(text)}</w:t></w:r></w:p></w:tc>')
+
+
+def _docx_table(columns: list, rows: list[list]) -> str:
+    """A real Word table. A crew list pasted as lines of text is a crew list
+    nobody can sort, widen or paste into their own sheet."""
+    columns = [c for c in (columns or [])]
+    if not columns:
+        return ""
+    grid = "".join('<w:gridCol w:w="%d"/>' % (9638 // len(columns)) for _ in columns)
+    border = ('<w:tblBorders>' + "".join(
+        f'<w:{side} w:val="single" w:sz="4" w:space="0" w:color="BFBFBF"/>'
+        for side in ("top", "left", "bottom", "right", "insideH", "insideV")) + "</w:tblBorders>")
+    head = "<w:tr>" + "".join(_cell(c, bold=True, fill="2F3236", white=True)
+                              for c in columns) + "</w:tr>"
+    body = []
+    for number, row in enumerate(rows or []):
+        cells = list(row)[:len(columns)] + [""] * max(0, len(columns) - len(row))
+        body.append("<w:tr>" + "".join(
+            _cell(v, bold=(index == 0), fill=("F5F5F7" if number % 2 else ""))
+            for index, v in enumerate(cells)) + "</w:tr>")
+    return (f'<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/>{border}</w:tblPr>'
+            f"<w:tblGrid>{grid}</w:tblGrid>{head}{''.join(body)}</w:tbl>"
+            + _paragraph(""))
+
+
 def write_docx(blocks: list[dict | str], *, title: str = "") -> bytes:
     """Blocks → .docx bytes.
 
     A block is `{"style": "title"|"heading"|"text", "text": "..."}`, or a bare
-    string for a plain line. An unknown style degrades to text rather than
-    raising: a document that is slightly plainer than intended still opens.
+    string for a plain line. The call-sheet styles (`header`, `strip`, `band`,
+    `kv`, `table`, `banner`, `bullets`) render to the nearest Word equivalent,
+    so one block list makes both documents. An unknown style degrades to text
+    rather than raising: a document that is slightly plainer than intended
+    still opens.
     """
     styles = {"title": "Title", "heading": "Heading1", "text": "Normal"}
     body = []
     if title:
         body.append(_paragraph(title, "Title"))
     for block in (blocks or []):
-        if isinstance(block, dict):
-            body.append(_paragraph(block.get("text", ""),
-                                   styles.get(str(block.get("style") or "text"), "Normal")))
-        else:
+        if not isinstance(block, dict):
             body.append(_paragraph(block, "Normal"))
+            continue
+        style = str(block.get("style") or "text")
+        if style == "header":
+            body.append(_paragraph(block.get("text", ""), "Title"))
+            right = " ".join(f for f in [block.get("right_label") or "",
+                                         block.get("right_value") or ""] if f)
+            for line in list(block.get("lines") or []) + ([right] if right else []):
+                if line:
+                    body.append(_paragraph(line, "Normal"))
+        elif style == "strip":
+            cells = [f"{label}: {value}" for label, value in (block.get("cells") or []) if value]
+            if cells:
+                body.append(_paragraph("   ·   ".join(cells), "Normal"))
+        elif style == "band":
+            body.append(_paragraph(block.get("text", ""), "Heading1"))
+        elif style == "kv":
+            for label, value in (block.get("pairs") or []):
+                if value not in (None, "", []):
+                    body.append(_paragraph(f"{label}: {value}", "Normal"))
+        elif style == "table":
+            body.append(_docx_table(block.get("columns") or [], block.get("rows") or []))
+        elif style == "banner":
+            body.append(_paragraph(str(block.get("text", "")).upper(), "Heading1"))
+            if block.get("detail"):
+                body.append(_paragraph(block["detail"], "Normal"))
+        elif style == "bullets":
+            for item in (block.get("items") or []):
+                body.append(_paragraph(f"- {item}", "Normal"))
+        else:
+            body.append(_paragraph(block.get("text", ""),
+                                   styles.get(style, "Normal")))
     document = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
                 '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
                 f'<w:body>{"".join(body)}'
@@ -151,83 +216,96 @@ def write_docx(blocks: list[dict | str], *, title: str = "") -> bytes:
 
 # ── a call sheet as a document ────────────────────────────────────────────────
 
+def _crew_rows(people: list) -> list[list]:
+    return [[p.get("name") or "", p.get("role") or "", p.get("call_time") or "",
+             p.get("phone") or "", p.get("email") or ""] for p in people]
+
+
+def _cast_rows(people: list) -> list[list]:
+    return [[p.get("artist") or "", p.get("character") or "", p.get("call_time") or "",
+             p.get("on_set") or "", p.get("phone") or ""] for p in people]
+
+
 def callsheet_blocks(sheet: dict) -> list[dict]:
-    """A call sheet → document blocks. Every empty field is omitted rather than
-    printed blank, and `needs` is printed as an explicit warning: a sheet that
-    is not ready to send must not look finished on paper."""
+    """A call sheet → document blocks, in the order a crew member reads them.
+
+    The shape is deliberate, not decorative. The title and the date go in the
+    header band; the call and the wrap go in the strip, because that is what
+    somebody checks at six in the morning; crew and cast are tables, because a
+    name next to a role next to a number is a grid and reads as nothing else.
+    Every empty field is omitted rather than printed blank, and `needs` becomes
+    a banner at the top: a sheet that is not ready to send must not look
+    finished on paper, and must not be scrolled past.
+    """
     sheet = sheet or {}
     out: list[dict] = []
-    head = " · ".join(f for f in [sheet.get("shoot_day") or "", sheet.get("date") or "",
-                                  sheet.get("unit") or ""] if f)
-    if head:
-        out.append({"style": "text", "text": head})
-    if sheet.get("client"):
-        out.append({"style": "text", "text": f"Client: {sheet['client']}"})
 
-    times = " · ".join(f for f in [
-        f"General call {sheet['general_call_time']}" if sheet.get("general_call_time") else "",
-        f"Estimated wrap {sheet['wrap_time']}" if sheet.get("wrap_time") else ""] if f)
-    if times:
-        out.append({"style": "heading", "text": "Times"})
-        out.append({"style": "text", "text": times})
-
-    if sheet.get("locations"):
-        out.append({"style": "heading", "text": "Location"})
-        for loc in sheet["locations"]:
-            line = ", ".join(f for f in [loc.get("name") or "", loc.get("address") or ""] if f)
-            out.append({"style": "text", "text": line})
-            if loc.get("notes"):
-                out.append({"style": "text", "text": loc["notes"]})
-    if sheet.get("parking"):
-        out.append({"style": "text", "text": f"Parking: {sheet['parking']}"})
-    if sheet.get("nearest_hospital"):
-        out.append({"style": "heading", "text": "Nearest hospital"})
-        out.append({"style": "text", "text": sheet["nearest_hospital"]})
-    if sheet.get("weather"):
-        out.append({"style": "heading", "text": "Weather"})
-        out.append({"style": "text", "text": sheet["weather"]})
-
-    if sheet.get("cast"):
-        out.append({"style": "heading", "text": "Cast"})
-        for c in sheet["cast"]:
-            line = " — ".join(f for f in [c.get("artist") or "", c.get("character") or ""] if f)
-            extra = " · ".join(f for f in [
-                f"call {c['call_time']}" if c.get("call_time") else "",
-                f"on set {c['on_set']}" if c.get("on_set") else "",
-                c.get("phone") or ""] if f)
-            out.append({"style": "text", "text": line + (f"  ({extra})" if extra else "")})
-
-    if sheet.get("crew"):
-        out.append({"style": "heading", "text": "Crew"})
-        for c in sheet["crew"]:
-            line = " — ".join(f for f in [c.get("name") or "", c.get("role") or ""] if f)
-            extra = " · ".join(f for f in [
-                f"call {c['call_time']}" if c.get("call_time") else "",
-                c.get("phone") or "", c.get("email") or ""] if f)
-            out.append({"style": "text", "text": line + (f"  ({extra})" if extra else "")})
-
-    if sheet.get("scenes"):
-        out.append({"style": "heading", "text": "Scenes"})
-        for s in sheet["scenes"]:
-            bits = [str(s.get("scene") or ""), s.get("int_ext") or "", s.get("location") or "",
-                    s.get("day_night") or "", s.get("description") or ""]
-            out.append({"style": "text", "text": " · ".join(b for b in bits if b)})
-
-    if sheet.get("notes"):
-        out.append({"style": "heading", "text": "Notes"})
-        for note in sheet["notes"]:
-            out.append({"style": "text", "text": str(note)})
+    out.append({"style": "header",
+                "text": sheet.get("project_title") or "Call sheet",
+                "lines": [" · ".join(f for f in [sheet.get("client") or "",
+                                                 sheet.get("unit") or ""] if f)],
+                "right_label": "CALL SHEET" + (f" · {sheet['shoot_day']}"
+                                               if sheet.get("shoot_day") else ""),
+                "right_value": sheet.get("date") or ""})
 
     blocking = [n["ask"] for n in (sheet.get("needs") or []) if n.get("blocking")]
     if blocking:
-        out.append({"style": "heading", "text": "NOT READY TO SEND"})
-        out.append({"style": "text", "text": "Still missing: " + "; ".join(blocking)})
+        out.append({"style": "banner", "text": "NOT READY TO SEND",
+                    "detail": "Still missing: " + "; ".join(blocking)})
+
+    out.append({"style": "strip", "cells": [
+        ("General call", sheet.get("general_call_time") or ""),
+        ("Estimated wrap", sheet.get("wrap_time") or ""),
+        ("Shoot day", sheet.get("shoot_day") or ""),
+        ("Date", sheet.get("date") or ""),
+    ]})
+
+    pairs: list[tuple[str, Any]] = []
+    for loc in (sheet.get("locations") or []):
+        # "Location" is the label; the name belongs in the value, where it has
+        # the width to be read in full.
+        pairs.append(("Location", " — ".join(f for f in [loc.get("name") or "",
+                                                         loc.get("address") or "",
+                                                         loc.get("notes") or ""] if f)))
+    for label, key in (("Parking", "parking"), ("Nearest hospital", "nearest_hospital"),
+                       ("Weather", "weather")):
+        if sheet.get(key):
+            pairs.append((label, sheet[key]))
+    if pairs:
+        out.append({"style": "band", "text": "Location & logistics"})
+        out.append({"style": "kv", "pairs": pairs})
+
+    if sheet.get("scenes"):
+        rows = [[str(s.get("scene") or ""), s.get("int_ext") or "", s.get("location") or "",
+                 s.get("day_night") or "", s.get("description") or ""]
+                for s in sheet["scenes"]]
+        out.append({"style": "band", "text": "Schedule"})
+        out.append({"style": "table", "columns": ["Sc.", "I/E", "Set", "D/N", "Description"],
+                    "rows": rows, "widths": [0.08, 0.08, 0.24, 0.08, 0.52]})
+
+    if sheet.get("cast"):
+        out.append({"style": "band", "text": "Cast"})
+        out.append({"style": "table",
+                    "columns": ["Artist", "Character", "Call", "On set", "Phone"],
+                    "rows": _cast_rows(sheet["cast"]),
+                    "widths": [0.26, 0.24, 0.12, 0.12, 0.26]})
+
+    if sheet.get("crew"):
+        out.append({"style": "band", "text": "Crew"})
+        out.append({"style": "table",
+                    "columns": ["Name", "Role", "Call", "Phone", "Email"],
+                    "rows": _crew_rows(sheet["crew"]),
+                    "widths": [0.23, 0.21, 0.10, 0.20, 0.26]})
+
+    if sheet.get("notes"):
+        out.append({"style": "band", "text": "Notes"})
+        out.append({"style": "bullets", "items": [str(n) for n in sheet["notes"]]})
     return out
 
 
 def callsheet_docx(sheet: dict) -> bytes:
-    title = sheet.get("project_title") or "Call sheet"
-    return write_docx(callsheet_blocks(sheet), title=title)
+    # No `title=`: the header block already carries the production name.
+    return write_docx(callsheet_blocks(sheet))
 
 
 def safe_filename(name: str, *, suffix: str) -> str:
@@ -239,111 +317,22 @@ def safe_filename(name: str, *, suffix: str) -> str:
     return f"{stem}{suffix}"
 
 
-# ── PDF, written from nothing ─────────────────────────────────────────────────
+# ── PDF ───────────────────────────────────────────────────────────────────────
 # Crew get a PDF. Not a Word file they open on a phone and reflow, and not a
 # spreadsheet — a PDF, because it looks the same on every device and prints.
-# Same constraint as the rest of this module: stdlib only, so there is nothing
-# to install and nothing to break on a rebuild.
+# The drawing lives in pdfdoc.py; this is only the door to it.
 
-_PDF_FONTS = {"title": ("F2", 17), "heading": ("F2", 12), "text": ("F1", 10)}
-_PDF_LEADING = 15
-_PDF_TOP = 780
-_PDF_LEFT = 56
-_PDF_BOTTOM = 56
-_PDF_WIDTH_CHARS = 96          # Helvetica 10pt across an A4 text column
-
-
-def _pdf_escape(text: Any) -> str:
-    return (str(text if text is not None else "")
-            .replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)"))
-
-
-def _wrap(text: str, width: int) -> list[str]:
-    words, lines, line = str(text or "").split(), [], ""
-    for word in words:
-        candidate = f"{line} {word}".strip()
-        if len(candidate) <= width:
-            line = candidate
-        else:
-            if line:
-                lines.append(line)
-            line = word
-    if line:
-        lines.append(line)
-    return lines or [""]
-
-
-def write_pdf(blocks: list[dict | str], *, title: str = "") -> bytes:
-    """Blocks → a real PDF. Same block shape as write_docx, paginated."""
-    rows: list[tuple[str, str]] = []
-    if title:
-        rows.append(("title", title))
-    for block in (blocks or []):
-        if isinstance(block, dict):
-            style = str(block.get("style") or "text")
-            style = style if style in _PDF_FONTS else "text"
-            text = block.get("text", "")
-        else:
-            style, text = "text", block
-        for line in _wrap(text, _PDF_WIDTH_CHARS):
-            rows.append((style, line))
-
-    pages: list[list[tuple[str, str]]] = [[]]
-    y = _PDF_TOP
-    for style, line in rows:
-        if y - _PDF_LEADING < _PDF_BOTTOM:
-            pages.append([])
-            y = _PDF_TOP
-        pages[-1].append((style, line))
-        y -= _PDF_LEADING + (6 if style in ("title", "heading") else 0)
-
-    streams = []
-    for page in pages:
-        parts, y = ["BT"], _PDF_TOP
-        for style, line in page:
-            font, size = _PDF_FONTS[style]
-            if style in ("title", "heading"):
-                y -= 6
-            parts.append(f"/{font} {size} Tf 1 0 0 1 {_PDF_LEFT} {y} Tm ({_pdf_escape(line)}) Tj")
-            y -= _PDF_LEADING
-        parts.append("ET")
-        streams.append("\n".join(parts).encode("latin-1", "replace"))
-
-    # Object ids: 1 catalog, 2 pages, 3 F1, 4 F2, then page/content pairs.
-    page_ids = [5 + 2 * i for i in range(len(streams))]
-    objects: dict[int, bytes] = {
-        1: b"<< /Type /Catalog /Pages 2 0 R >>",
-        2: ("<< /Type /Pages /Count " + str(len(streams)) + " /Kids ["
-            + " ".join(f"{pid} 0 R" for pid in page_ids) + "] >>").encode(),
-        3: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        4: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
-    }
-    for index, stream in enumerate(streams):
-        pid = page_ids[index]
-        objects[pid] = (
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
-            "/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> "
-            f"/Contents {pid + 1} 0 R >>").encode()
-        objects[pid + 1] = (b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n"
-                            + stream + b"\nendstream")
-
-    out = bytearray(b"%PDF-1.4\n")
-    offsets: dict[int, int] = {}
-    for oid in sorted(objects):
-        offsets[oid] = len(out)
-        out += str(oid).encode() + b" 0 obj\n" + objects[oid] + b"\nendobj\n"
-    xref_at = len(out)
-    highest = max(objects)
-    out += b"xref\n0 " + str(highest + 1).encode() + b"\n0000000000 65535 f \n"
-    for oid in range(1, highest + 1):
-        out += ("%010d 00000 n \n" % offsets.get(oid, 0)).encode()
-    out += (b"trailer\n<< /Size " + str(highest + 1).encode() + b" /Root 1 0 R >>\nstartxref\n"
-            + str(xref_at).encode() + b"\n%%EOF\n")
-    return bytes(out)
+def write_pdf(blocks: list[dict | str], *, title: str = "", footer: str = "") -> bytes:
+    """Blocks → a real PDF. Same block shape as write_docx."""
+    return pdfdoc.render(blocks, title=title, footer=footer)
 
 
 def callsheet_pdf(sheet: dict) -> bytes:
-    return write_pdf(callsheet_blocks(sheet), title=sheet.get("project_title") or "Call sheet")
+    sheet = sheet or {}
+    footer = " · ".join(f for f in [sheet.get("project_title") or "Call sheet",
+                                    sheet.get("date") or "",
+                                    sheet.get("shoot_day") or ""] if f)
+    return pdfdoc.render(callsheet_blocks(sheet), footer=footer)
 
 
 # ── a call sheet as a spreadsheet ─────────────────────────────────────────────

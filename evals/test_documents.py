@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 import documents  # noqa: E402
+import pdfdoc  # noqa: E402
 
 
 SHEET = {
@@ -156,6 +157,50 @@ def test_a_sheet_that_is_not_ready_says_so_in_the_spreadsheet_too():
     rows = documents.callsheet_rows({
         **SHEET, "needs": [{"field": "crew", "ask": "the crew", "blocking": True}]})
     assert any("NOT READY TO SEND" in str(r) for r in rows)
+
+
+def test_the_pdf_is_drawn_and_not_just_typed():
+    """The complaint that started this: "it\'s like having claude on whatsapp".
+    A call sheet is bars, rules and tables, so the content stream must contain
+    them — a page of nothing but Tj is the old text dump."""
+    text = documents.callsheet_pdf(SHEET).decode("latin-1")
+    assert " re f" in text, "the header band and the section bars are filled rectangles"
+    assert " l S" in text, "a table needs rules"
+    assert "/F2" in text, "a heading that is not bold is not a heading"
+
+
+def test_a_crew_list_is_a_table_in_word_too():
+    xml = _text_of(documents.callsheet_docx(SHEET))
+    assert "<w:tbl>" in xml, "a crew list pasted as lines is a crew list nobody can sort"
+    assert "Ravi Kulkarni" in xml and "1st AD" in xml
+
+
+def test_a_producers_own_punctuation_survives_into_the_pdf():
+    """WinAnsiEncoding is cp1252. Encoding as latin-1 turned every em dash and
+    pound sign in a producer\'s own words into a question mark on the page."""
+    blob = documents.callsheet_pdf({**SHEET, "project_title": "Nike — Dawn",
+                                    "parking": "Unit base — £0"})
+    assert b"\x97" in blob, "an em dash must be the cp1252 byte, not a question mark"
+    assert b"\xa3" in blob, "a pound sign must survive"
+
+
+def test_a_column_is_measured_rather_than_counted():
+    """Character counting put "iiii" and "WWWW" in the same column width, which
+    is how text used to run over a rule."""
+    assert pdfdoc.width_of("WWWW", "F1", 10) > pdfdoc.width_of("iiii", "F1", 10) * 3
+    assert pdfdoc.fit("an address far too long for the column", 60).endswith("...")
+    assert pdfdoc.width_of(pdfdoc.fit("an address far too long", 60), "F1", 9) <= 60
+    assert pdfdoc.wrap("one two three four five six", 40, "F1", 9)[0] != \
+        "one two three four five six"
+
+
+def test_a_crew_list_that_runs_over_a_page_keeps_its_column_names():
+    sheet = {**SHEET, "crew": [{"name": f"Crew {i}", "role": "Spark", "call_time": "07:00"}
+                               for i in range(60)]}
+    blob = documents.callsheet_pdf(sheet)
+    pages = blob.count(b"/Type /Page\n") or blob.count(b"/Type /Page ")
+    assert pages >= 2, "60 crew must run to a second page"
+    assert blob.count(b"(NAME) Tj") == pages, "the header must repeat on every page"
 
 
 def _run():
