@@ -6,6 +6,9 @@ python-dotenv
 httpx
 python-multipart
 screenplay-pdf-to-json
+# Geometry-aware PDF reading. A production document is a grid, and a
+# screenplay parser throws the geometry away. See pdf_grid.py.
+pdfplumber
 # Optional: enable richer LLM tracing by setting LANGFUSE_PUBLIC_KEY +
 # LANGFUSE_SECRET_KEY. Without it, traces still go to Redis + stdout.
 # langfuse

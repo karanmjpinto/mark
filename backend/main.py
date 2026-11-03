@@ -43,6 +43,7 @@ import roster
 import chatops
 import callsheet as callsheets
 import documents
+import pdf_grid
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
@@ -1884,15 +1885,29 @@ async def document_read(file: UploadFile = File(...), _=Depends(require_api_key)
 
     out = {"success": True, "kind": kind, "filename": name, "bytes": len(raw)}
     if kind == "pdf":
-        # The only PDF reader here is the screenplay parser, so say so plainly
-        # when a PDF is not a script rather than returning empty text.
+        # Geometry first. A production PDF is mostly a grid, and the screenplay
+        # parser flattens a page to one column of words — which is why a crew
+        # table used to come back as no crew at all. The screenplay parser is
+        # still the fallback, and still what /script/parse uses.
+        grid = None
         try:
-            summary, text = await run_in_threadpool(_parse_pdf_sync, raw)
-        except Exception as e:  # noqa: BLE001
-            raise HTTPException(422, f"This PDF could not be read as a screenplay ({type(e).__name__}). "
-                                     "A Word, Excel, CSV or text copy can be read instead.")
-        out["summary"] = summary
-        out["text"] = (text or "")[:_MAX_DOC_CHARS]
+            grid = await run_in_threadpool(pdf_grid.read_pdf, raw)
+        except Exception:  # noqa: BLE001
+            grid = None
+        if grid and grid["text"].strip():
+            out["text"] = grid["text"][:_MAX_DOC_CHARS]
+            out["tables"] = grid["tables"]
+            out["table_count"] = len(grid["tables"])
+            out["page_count"] = grid["page_count"]
+        else:
+            try:
+                summary, text = await run_in_threadpool(_parse_pdf_sync, raw)
+            except Exception as e:  # noqa: BLE001
+                raise HTTPException(422, f"No text could be read out of this PDF "
+                                         f"({type(e).__name__}). It is most likely a scan — "
+                                         "a Word, Excel, CSV or text copy can be read instead.")
+            out["summary"] = summary
+            out["text"] = (text or "")[:_MAX_DOC_CHARS]
     elif kind == "docx":
         text = await run_in_threadpool(_extract_docx_text, raw)
         out["text"] = (text or "")[:_MAX_DOC_CHARS]
