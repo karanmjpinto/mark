@@ -5,10 +5,18 @@ pydantic
 python-dotenv
 httpx
 python-multipart
-screenplay-pdf-to-json
 # Geometry-aware PDF reading. A production document is a grid, and a
 # screenplay parser throws the geometry away. See pdf_grid.py.
-pdfplumber
+#
+# Pinned, and the pin matters. screenplay-pdf-to-json requires
+# pdfminer.six==20200124 exactly, so with both named here pip quietly
+# backtracked pdfplumber to 0.5.3 (2020) — which has no extract_text(layout=)
+# and drags in the abandoned pycrypto. A build that "succeeded" shipped a
+# reader that could not read. screenplay-pdf-to-json is therefore installed
+# --no-deps in the Dockerfile; its pdfminer pin is over-tight, and it returns
+# the same scenes, INT/EXT and day/night split on a current one.
+pdfplumber>=0.11.4,<0.12
+ujson                    # screenplay-pdf-to-json needs it; --no-deps skips it
 # Optional: enable richer LLM tracing by setting LANGFUSE_PUBLIC_KEY +
 # LANGFUSE_SECRET_KEY. Without it, traces still go to Redis + stdout.
 # langfuse
